@@ -1,0 +1,28 @@
+{
+  "app": {
+    "name": "Vora",
+    "description": "Tu asistente de viajes con IA para explorar Perú"
+  },
+  "nav": {
+    "home": "Inicio",
+    "chat": "Chat",
+    "itineraries": "Itinerarios",
+    "profile": "Perfil"
+  },
+  "auth": {
+    "login": "Iniciar Sesión",
+    "register": "Registrarse",
+    "logout": "Cerrar Sesión",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "fullName": "Nombre completo"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "delete": "Eliminar"
+  }
+}

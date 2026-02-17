@@ -1,0 +1,28 @@
+{
+  "app": {
+    "name": "Vora",
+    "description": "Your AI travel assistant to explore Peru"
+  },
+  "nav": {
+    "home": "Home",
+    "chat": "Chat",
+    "itineraries": "Itineraries",
+    "profile": "Profile"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "fullName": "Full name"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete"
+  }
+}
