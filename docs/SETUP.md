@@ -25,7 +25,9 @@ cd vora
 3. Copiar las credenciales:
    - Project URL
    - Anon/Public Key
-   - JWT Secret (en Settings > API)
+   
+   Nota: Supabase ahora usa criptografía asimétrica (ECC P-256) para JWT.
+   No necesitas copiar el JWT Secret, la verificación es automática.
 
 ## 3. Configurar Google Cloud Platform
 
@@ -62,11 +64,14 @@ copy .env.example .env.local
 ```
 
 Configurar las siguientes variables en `.env.local`:
-- `SUPABASE_URL`
-- `SUPABASE_KEY`
-- `OPENAI_API_KEY`
-- `GOOGLE_PLACES_API_KEY`
-- `SECRET_KEY` (generar uno nuevo para producción)
+- `SUPABASE_URL` - URL de tu proyecto Supabase
+- `SUPABASE_KEY` - Anon/Public Key de Supabase
+- `OPENAI_API_KEY` - API Key de OpenAI
+- `GOOGLE_PLACES_API_KEY` - API Key de Google Places
+- `SECRET_KEY` - Generar uno nuevo para producción (para sesiones internas)
+
+Nota: No necesitas `SUPABASE_JWT_SECRET`. Supabase ahora usa ECC P-256 
+para firmar JWT y la verificación es automática.
 
 ```bash
 # Ejecutar servidor

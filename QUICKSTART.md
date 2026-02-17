@@ -61,7 +61,10 @@ SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_KEY=your-anon-key
 OPENAI_API_KEY=sk-...
 GOOGLE_PLACES_API_KEY=AIza...
+SECRET_KEY=your-secret-key-for-internal-sessions
 ```
+
+Nota: No necesitas `SUPABASE_JWT_SECRET`. Supabase usa ECC P-256 para JWT.
 
 ### Frontend (.env.local)
 ```env
@@ -75,7 +78,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 1. **Supabase**: https://supabase.com
    - Crear proyecto
    - Ejecutar `supabase/schema.sql`
-   - Copiar URL y Anon Key
+   - Copiar URL y Anon Key (Settings > API)
+   - JWT se verifica automáticamente con ECC P-256
 
 2. **OpenAI**: https://platform.openai.com
    - Crear API Key

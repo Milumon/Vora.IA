@@ -41,11 +41,12 @@ Usuario → Frontend → API Gateway → Backend Services
 
 ## Seguridad
 
-- Autenticación JWT via Supabase
+- Autenticación JWT via Supabase (ECC P-256)
 - Row Level Security (RLS) en PostgreSQL
 - CORS configurado
 - Rate limiting
 - API Keys con restricciones de dominio
+- Verificación automática de JWT con criptografía asimétrica
 
 ## Escalabilidad
 

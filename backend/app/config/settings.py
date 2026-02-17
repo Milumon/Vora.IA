@@ -25,7 +25,8 @@ class Settings(BaseSettings):
     # Supabase
     SUPABASE_URL: str
     SUPABASE_KEY: str
-    SUPABASE_JWT_SECRET: str = ""
+    # Note: Supabase uses ECC P-256 asymmetric cryptography for JWT
+    # JWT verification is handled automatically by Supabase client
     
     # OpenAI
     OPENAI_API_KEY: str
