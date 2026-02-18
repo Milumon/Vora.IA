@@ -6,21 +6,53 @@ import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { Plus, FolderHeart } from 'lucide-react';
 import Link from 'next/link';
+import { useLocale } from 'next-intl';
+import { itinerariesApi } from '@/lib/api/endpoints';
 
 export default function ItinerariesPage() {
+  const locale = useLocale();
   const [itineraries, setItineraries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // TODO: Fetch itineraries from API
-    // For now, show empty state
-    setLoading(false);
+    let cancelled = false;
+    const fetchItineraries = async () => {
+      try {
+        const { data } = await itinerariesApi.list();
+        if (!cancelled) {
+          setItineraries(Array.isArray(data) ? data : []);
+        }
+      } catch (err: any) {
+        if (!cancelled) {
+          setError(err.response?.data?.detail || err.message || 'Error al cargar itinerarios');
+          setItineraries([]);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    fetchItineraries();
+    return () => { cancelled = true; };
   }, []);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-16">
+        <div className="flex flex-col items-center justify-center text-center max-w-md mx-auto space-y-6">
+          <p className="text-destructive">{error}</p>
+          <Button asChild size="lg" variant="outline">
+            <Link href={`/${locale}/auth/login`}>Iniciar sesión</Link>
+          </Button>
+        </div>
       </div>
     );
   }
@@ -40,7 +72,7 @@ export default function ItinerariesPage() {
             </p>
           </div>
           <Button asChild size="lg" className="gap-2">
-            <Link href="/chat">
+            <Link href={`/${locale}/chat`}>
               <Plus className="h-5 w-5" />
               Crear itinerario
             </Link>
@@ -60,7 +92,7 @@ export default function ItinerariesPage() {
           </p>
         </div>
         <Button asChild className="gap-2">
-          <Link href="/chat">
+          <Link href={`/${locale}/chat`}>
             <Plus className="h-4 w-4" />
             Nuevo itinerario
           </Link>

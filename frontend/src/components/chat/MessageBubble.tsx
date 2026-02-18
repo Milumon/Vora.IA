@@ -35,16 +35,16 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   return (
     <div
       className={cn(
-        'flex gap-3 mb-4',
+        'flex gap-3 mb-6',
         isUser ? 'flex-row-reverse' : 'flex-row'
       )}
     >
       {/* Avatar */}
-      <div className="h-8 w-8 shrink-0 rounded-full overflow-hidden">
+      <div className="h-8 w-8 shrink-0 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
         {isUser ? (
           <Avatar className="h-8 w-8">
             <AvatarImage src={userAvatar} alt={userName} />
-            <AvatarFallback className="bg-primary text-primary-foreground text-sm">
+            <AvatarFallback className="bg-gray-900 text-white text-sm">
               {user ? (userName ? userName.charAt(0).toUpperCase() : user.email?.charAt(0).toUpperCase()) : <User className="h-4 w-4" />}
             </AvatarFallback>
           </Avatar>
@@ -62,22 +62,22 @@ export function MessageBubble({ message }: MessageBubbleProps) {
       {/* Message Content */}
       <div
         className={cn(
-          'flex flex-col gap-1 max-w-[80%] md:max-w-[70%]',
+          'flex flex-col gap-1 max-w-[85%]',
           isUser ? 'items-end' : 'items-start'
         )}
       >
         <div
           className={cn(
-            'rounded-2xl px-4 py-2.5 shadow-subtle break-words overflow-wrap-anywhere',
+            'rounded-2xl px-4 py-2.5 break-words overflow-wrap-anywhere',
             isUser
-              ? 'bg-card border border-border'
-              : 'bg-accent text-accent-foreground'
+              ? 'bg-gray-900 text-white'
+              : 'bg-gray-100 text-gray-900'
           )}
         >
           {isUser ? (
             <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
           ) : (
-            <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-p:break-words">
+            <div className="prose prose-sm max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-p:break-words prose-headings:text-gray-900 prose-p:text-gray-900 prose-li:text-gray-900">
               <ReactMarkdown>{message.content}</ReactMarkdown>
             </div>
           )}
@@ -85,7 +85,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
         {/* Timestamp */}
         {message.timestamp && (
-          <span className="text-xs text-muted-foreground px-2">
+          <span className="text-xs text-gray-500 px-2">
             {new Date(message.timestamp).toLocaleTimeString('es-PE', {
               hour: '2-digit',
               minute: '2-digit',

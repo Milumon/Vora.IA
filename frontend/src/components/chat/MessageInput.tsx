@@ -57,14 +57,15 @@ export function MessageInput({
         rows={1}
         className={cn(
           'min-h-[44px] max-h-[200px] resize-none',
-          'focus-visible:ring-2 focus-visible:ring-primary'
+          'bg-gray-50 border-gray-200 focus-visible:ring-1 focus-visible:ring-gray-900 focus-visible:border-gray-900',
+          'text-gray-900 placeholder:text-gray-500'
         )}
       />
       <Button
         onClick={handleSend}
         disabled={disabled || !message.trim()}
         size="icon"
-        className="h-11 w-11 shrink-0"
+        className="h-11 w-11 shrink-0 bg-gray-900 hover:bg-gray-800 text-white"
       >
         <Send className="h-4 w-4" />
       </Button>

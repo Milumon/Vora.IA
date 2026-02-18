@@ -9,7 +9,7 @@ import { TypingIndicator } from './TypingIndicator';
 import { ItineraryProgress } from './ItineraryProgress';
 import { ItinerarySummaryCard } from './ItinerarySummaryCard';
 import { Card } from '@/components/ui/card';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { itinerariesApi } from '@/lib/api/endpoints';
@@ -23,6 +23,7 @@ const SUGGESTED_PROMPTS = [
 
 export function ChatInterface() {
   const t = useTranslations('chat');
+  const locale = useLocale();
   const router = useRouter();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
@@ -62,30 +63,36 @@ export function ChatInterface() {
 
   const handleSaveItinerary = async () => {
     if (!generatedItinerary) return;
+    if (!user) {
+      alert('Debes iniciar sesión para guardar itinerarios.');
+      router.push(`/${locale}/auth/login`);
+      return;
+    }
 
     try {
       const response = await itinerariesApi.create({
         title: generatedItinerary.title,
-        destination: generatedItinerary.day_plans[0]?.morning[0]?.address || 'Perú',
+        description: generatedItinerary.description,
+        destination: (generatedItinerary as any).destination || generatedItinerary.day_plans?.[0]?.morning?.[0]?.address || 'Perú',
         start_date: new Date().toISOString().split('T')[0],
         end_date: new Date(Date.now() + generatedItinerary.day_plans.length * 24 * 60 * 60 * 1000)
           .toISOString()
           .split('T')[0],
         days: generatedItinerary.day_plans.length,
-        budget: 'medium',
-        travelers: 1,
-        itinerary_data: generatedItinerary,
-        status: 'draft',
+        budget: (generatedItinerary as any).budget || 'medium',
+        travel_style: Array.isArray((generatedItinerary as any).travel_style) 
+          ? (generatedItinerary as any).travel_style?.join(', ') 
+          : (generatedItinerary as any).travel_style,
+        travelers: (generatedItinerary as any).travelers || 1,
+        data: generatedItinerary,
       });
 
-      // Mostrar toast de éxito (implementar con tu sistema de toasts)
       alert('¡Itinerario guardado exitosamente!');
-      
-      // Opcional: navegar al itinerario guardado
-      // router.push(`/itineraries/${response.data.id}`);
-    } catch (error) {
+      router.push(`/${locale}/itineraries/${response.data.id}`);
+    } catch (error: any) {
       console.error('Error guardando itinerario:', error);
-      alert('Error al guardar el itinerario. Por favor intenta de nuevo.');
+      const msg = error.response?.data?.detail || error.message || 'Error al guardar';
+      alert(`Error al guardar el itinerario: ${msg}`);
     }
   };
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,13 +12,13 @@ interface ItineraryCardProps {
   itinerary: {
     id: string;
     title: string;
-    description: string;
+    description?: string | null;
     destination: string;
     days: number;
-    budget: 'low' | 'medium' | 'high';
+    budget?: 'low' | 'medium' | 'high' | string;
     travelers?: number;
     created_at: string;
-    status: 'draft' | 'published' | 'archived';
+    status?: 'draft' | 'published' | 'archived';
   };
 }
 
@@ -30,6 +30,7 @@ const budgetColors = {
 
 export function ItineraryCard({ itinerary }: ItineraryCardProps) {
   const t = useTranslations('itineraries');
+  const locale = useLocale();
   
   return (
     <Card className="group hover:shadow-layered transition-all duration-200 hover:border-primary/50">
@@ -40,14 +41,14 @@ export function ItineraryCard({ itinerary }: ItineraryCardProps) {
               {itinerary.title}
             </h3>
             <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-              {itinerary.description}
+              {itinerary.description || ''}
             </p>
           </div>
           <Badge
             variant="outline"
-            className={cn('shrink-0', budgetColors[itinerary.budget])}
+            className={cn('shrink-0', budgetColors[itinerary.budget as keyof typeof budgetColors] || budgetColors.medium)}
           >
-            {t(`budget.${itinerary.budget}`)}
+            {t(`budget.${itinerary.budget || 'medium'}`)}
           </Badge>
         </div>
       </CardHeader>
@@ -70,7 +71,7 @@ export function ItineraryCard({ itinerary }: ItineraryCardProps) {
           )}
           <div className="flex items-center gap-2 text-muted-foreground">
             <DollarSign className="h-4 w-4 shrink-0" />
-            <span>{t(`budget.${itinerary.budget}`)}</span>
+            <span>{t(`budget.${itinerary.budget || 'medium'}`)}</span>
           </div>
         </div>
       </CardContent>
@@ -85,7 +86,7 @@ export function ItineraryCard({ itinerary }: ItineraryCardProps) {
             })}
           </span>
           <Button asChild size="sm" variant="ghost" className="gap-2">
-            <Link href={`/itineraries/${itinerary.id}`}>
+            <Link href={`/${locale}/itineraries/${itinerary.id}`}>
               <Eye className="h-4 w-4" />
               {t('card.viewDetails')}
             </Link>
