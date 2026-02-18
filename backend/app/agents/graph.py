@@ -4,6 +4,7 @@ from typing import Literal
 from app.agents.state import TravelState
 from app.agents.nodes.intent_classifier import classify_intent
 from app.agents.nodes.preference_extractor import extract_preferences
+from app.agents.nodes.conversation_manager import generate_response
 from app.agents.nodes.place_searcher import search_places
 from app.agents.nodes.itinerary_builder import build_itinerary
 from app.agents.nodes.refinement_handler import handle_refinement
@@ -20,6 +21,7 @@ def create_travel_agent_graph():
     # Agregar nodos
     workflow.add_node("classify_intent", classify_intent)
     workflow.add_node("extract_preferences", extract_preferences)
+    workflow.add_node("generate_response", generate_response)
     workflow.add_node("search_places", search_places)
     workflow.add_node("build_itinerary", build_itinerary)
     workflow.add_node("handle_refinement", handle_refinement)
@@ -34,7 +36,7 @@ def create_travel_agent_graph():
         {
             "new_trip": "extract_preferences",
             "refine": "handle_refinement",
-            "question": "build_itinerary",
+            "question": "generate_response",
             "clarify": "extract_preferences"
         }
     )
@@ -45,10 +47,11 @@ def create_travel_agent_graph():
         check_if_ready,
         {
             "ready": "search_places",
-            "needs_clarification": END
+            "needs_clarification": "generate_response"
         }
     )
     
+    workflow.add_edge("generate_response", END)
     workflow.add_edge("search_places", "build_itinerary")
     workflow.add_edge("build_itinerary", END)
     workflow.add_edge("handle_refinement", END)

@@ -1,0 +1,19 @@
+{
+  "welcome": "¡Hola! Soy tu asistente de viajes",
+  "welcomeWithName": "¡Hola, {name}! Soy tu asistente de viajes",
+  "welcomeDescription": "Cuéntame sobre tu próximo viaje a Perú y te ayudaré a crear el itinerario perfecto",
+  "inputPlaceholder": "Escribe tu mensaje aquí...",
+  "send": "Enviar",
+  "typing": "Escribiendo...",
+  "suggestedPrompts": {
+    "title": "Algunas ideas para empezar:",
+    "prompt1": "Quiero ir a Cusco 5 días con presupuesto medio",
+    "prompt2": "Planifica un viaje romántico a Arequipa",
+    "prompt3": "Destinos de aventura en Perú para 1 semana",
+    "prompt4": "Viaje familiar a playas del norte peruano"
+  },
+  "errors": {
+    "sendFailed": "No se pudo enviar el mensaje. Intenta de nuevo.",
+    "loadFailed": "Error al cargar la conversación"
+  }
+}

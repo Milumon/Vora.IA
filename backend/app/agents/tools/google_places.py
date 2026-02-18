@@ -125,12 +125,12 @@ class GooglePlacesClient:
         """Parsea un lugar de la respuesta de Google Places."""
         photos = []
         if "photos" in place:
-            for photo in place["photos"][:3]:  # Máximo 3 fotos
+            for photo in place["photos"][:8]:
                 photo_ref = photo.get("photo_reference")
                 if photo_ref:
                     photos.append(
                         f"https://maps.googleapis.com/maps/api/place/photo"
-                        f"?maxwidth=400&photoreference={photo_ref}"
+                        f"?maxwidth=800&photo_reference={photo_ref}"
                         f"&key={settings.GOOGLE_PLACES_API_KEY}"
                     )
         

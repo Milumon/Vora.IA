@@ -43,20 +43,23 @@ class TravelState(TypedDict):
     
     # Preferencias del usuario
     destination: Optional[str]
-    destinations: Optional[List[str]]  # Para multi-ciudad
+    destinations: Optional[List[str]]
     start_date: Optional[date]
     end_date: Optional[date]
     days: Optional[int]
     budget: Optional[Literal["low", "medium", "high"]]
-    travel_style: Optional[List[str]]  # ["cultural", "adventure", "relaxed", etc.]
+    travel_style: Optional[List[str]]
     travelers: Optional[int]
     
     # Datos de lugares
     searched_places: List[PlaceInfo]
     
     # Itinerario generado
-    itinerary: Optional[Dict]  # Estructura completa del itinerario
+    itinerary: Optional[Dict]
     day_plans: List[DayPlan]
+    
+    # Contexto acumulado
+    accumulated_summary: Optional[str]
     
     # Control de flujo
     needs_clarification: bool

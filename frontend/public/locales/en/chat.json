@@ -1,0 +1,19 @@
+{
+  "welcome": "Hello! I'm your travel assistant",
+  "welcomeWithName": "Hello, {name}! I'm your travel assistant",
+  "welcomeDescription": "Tell me about your next trip to Peru and I'll help you create the perfect itinerary",
+  "inputPlaceholder": "Type your message here...",
+  "send": "Send",
+  "typing": "Typing...",
+  "suggestedPrompts": {
+    "title": "Some ideas to get started:",
+    "prompt1": "I want to go to Cusco for 5 days with a medium budget",
+    "prompt2": "Plan a romantic trip to Arequipa",
+    "prompt3": "Adventure destinations in Peru for 1 week",
+    "prompt4": "Family trip to northern Peru beaches"
+  },
+  "errors": {
+    "sendFailed": "Could not send message. Please try again.",
+    "loadFailed": "Error loading conversation"
+  }
+}

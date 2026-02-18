@@ -1,0 +1,48 @@
+{
+  "list": {
+    "title": "My Itineraries",
+    "subtitle": "Manage your travel plans",
+    "empty": "No itineraries yet",
+    "emptyDescription": "Start a conversation in the chat to create your first itinerary",
+    "createNew": "Create Itinerary"
+  },
+  "card": {
+    "viewDetails": "View details",
+    "days": "days",
+    "travelers": "travelers",
+    "createdAt": "Created on"
+  },
+  "detail": {
+    "overview": "Overview",
+    "itinerary": "Itinerary",
+    "map": "Map",
+    "budget": "Budget",
+    "duration": "Duration",
+    "destination": "Destination",
+    "travelers": "Travelers",
+    "status": "Status",
+    "actions": {
+      "edit": "Edit",
+      "share": "Share",
+      "delete": "Delete",
+      "export": "Export PDF"
+    }
+  },
+  "budget": {
+    "low": "Budget",
+    "medium": "Medium",
+    "high": "Premium"
+  },
+  "status": {
+    "draft": "Draft",
+    "published": "Published",
+    "archived": "Archived"
+  },
+  "timeline": {
+    "day": "Day",
+    "morning": "Morning",
+    "afternoon": "Afternoon",
+    "evening": "Evening",
+    "night": "Night"
+  }
+}

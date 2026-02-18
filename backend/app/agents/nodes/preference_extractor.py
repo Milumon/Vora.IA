@@ -24,53 +24,109 @@ class ExtractedPreferences(BaseModel):
 
 
 async def extract_preferences(state: TravelState) -> dict:
-    """Extrae preferencias de viaje del mensaje del usuario."""
+    """Extrae preferencias de viaje del mensaje del usuario con validación progresiva."""
     
     llm = ChatOpenAI(
         model=settings.OPENAI_MODEL,
-        temperature=0,
+        temperature=0.3,
         api_key=settings.OPENAI_API_KEY
     )
     
     parser = PydanticOutputParser(pydantic_object=ExtractedPreferences)
     
-    # Contexto de mensajes previos
+    messages = state.get("messages", [])
     conversation_context = "\n".join([
         f"{msg['role']}: {msg['content']}" 
-        for msg in state.get("messages", [])[-5:]  # Últimos 5 mensajes
+        for msg in messages[-15:]
     ])
     
+    current_destination = state.get("destination")
+    current_days = state.get("days")
+    current_budget = state.get("budget")
+    current_style = state.get("travel_style")
+    current_travelers = state.get("travelers")
+    accumulated = state.get("accumulated_summary", "")
+    
+    confirmed_fields = []
+    missing_fields = []
+    
+    if current_destination:
+        confirmed_fields.append(f"✅ Destino: {current_destination}")
+    else:
+        missing_fields.append("❌ Destino: NO definido")
+    
+    if current_days:
+        confirmed_fields.append(f"✅ Días: {current_days}")
+    else:
+        missing_fields.append("❌ Días: NO definido")
+    
+    if current_budget:
+        confirmed_fields.append(f"✅ Presupuesto: {current_budget}")
+    else:
+        missing_fields.append("❌ Presupuesto: NO definido (opcional)")
+    
+    if current_style:
+        style_str = ", ".join(current_style) if isinstance(current_style, list) else current_style
+        confirmed_fields.append(f"✅ Estilo: {style_str}")
+    else:
+        missing_fields.append("❌ Estilo: NO definido (opcional)")
+    
+    if current_travelers:
+        confirmed_fields.append(f"✅ Viajeros: {current_travelers}")
+    else:
+        missing_fields.append("❌ Viajeros: NO definido (opcional)")
+    
+    confirmed_str = "\n".join(confirmed_fields) if confirmed_fields else "Ninguno"
+    missing_str = "\n".join(missing_fields) if missing_fields else "Ninguno"
+    
     prompt = ChatPromptTemplate.from_messages([
-        ("system", """Eres un experto en extraer información de viajes para Perú.
+        ("system", """Eres Layla, una experta en viajes por Perú con un estilo conversacional amigable y entusiasta.
 
-Analiza la conversación y extrae las preferencias del usuario. Si falta información crítica, 
-marca needs_clarification=True y genera preguntas específicas.
+Tu objetivo es extraer información NUEVA del último mensaje del usuario y determinar qué falta.
 
-INFORMACIÓN CRÍTICA NECESARIA:
-1. Destino (ciudad/región de Perú)
-2. Duración del viaje (días)
-3. Presupuesto aproximado (low/medium/high)
+=== INFORMACIÓN YA CONFIRMADA (NO vuelvas a preguntar esto) ===
+{confirmed_fields}
 
-INFORMACIÓN OPCIONAL:
-- Estilo de viaje (cultural, adventure, relaxed, gastronomy, nightlife)
-- Número de viajeros
-- Fechas específicas
+=== INFORMACIÓN QUE FALTA ===
+{missing_fields}
+
+=== RESUMEN ACUMULADO ===
+{accumulated_summary}
+
+REGLAS CRÍTICAS:
+1. NUNCA re-preguntes algo que ya está en "INFORMACIÓN YA CONFIRMADA"
+2. Si el usuario ya dijo el destino, NO preguntes el destino otra vez
+3. Si el usuario ya dijo los días, NO preguntes los días otra vez
+4. Extrae CUALQUIER información nueva del mensaje actual
+5. Solo pregunta por lo que está en "INFORMACIÓN QUE FALTA"
+6. Si el usuario se queja de repetición, discúlpate brevemente y avanza con lo que falta
+7. Los campos obligatorios son: destino y días. El resto es opcional.
+8. Si destino Y días están confirmados, pon needs_clarification=False para proceder
+
+FLUJO DE PREGUNTAS (solo para campos faltantes):
+1. DESTINO (obligatorio): Si no está confirmado, pregunta qué lugar de Perú
+2. DÍAS (obligatorio): Si no está confirmado, pregunta cuántos días
+3. ESTILO (opcional): Pregunta qué tipo de experiencia busca
+4. PRESUPUESTO (opcional): Pregunta su presupuesto aproximado
 
 DESTINOS VÁLIDOS EN PERÚ:
-- Lima, Cusco, Arequipa, Puno, Iquitos, Trujillo, Chiclayo, Piura, Paracas, Nazca, Huaraz, Ayacucho, Cajamarca, Tarapoto, Puerto Maldonado
+Lima, Cusco, Arequipa, Puno, Iquitos, Trujillo, Chiclayo, Piura, Paracas, Nazca, Huaraz, Ayacucho, Cajamarca, Tarapoto, Puerto Maldonado, Machu Picchu
 
 {format_instructions}
 
-Conversación:
+Conversación completa:
 {conversation}
 """),
-        ("user", "Extrae las preferencias de esta conversación.")
+        ("user", "Extrae información nueva del último mensaje. Solo pregunta por lo que FALTA.")
     ])
     
     chain = prompt | llm | parser
     
     result = await chain.ainvoke({
         "conversation": conversation_context,
+        "confirmed_fields": confirmed_str,
+        "missing_fields": missing_str,
+        "accumulated_summary": accumulated or "Primera interacción",
         "format_instructions": parser.get_format_instructions()
     })
     

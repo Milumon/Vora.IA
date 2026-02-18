@@ -63,7 +63,7 @@ async def get_itinerary(
         )
 
 
-@router.post("/", response_model=ItineraryResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=ItineraryResponse, status_code=status.HTTP_201_CREATED)
 async def create_itinerary(
     itinerary: ItineraryCreate,
     current_user: dict = Depends(get_current_active_user),

@@ -59,6 +59,7 @@ INSTRUCCIONES IMPORTANTES:
 6. Sugiere restaurantes típicos para cada día
 7. Añade consejos prácticos específicos de Perú
 8. Considera el clima y la altitud (especialmente en Cusco, Puno, Arequipa)
+9. IMPORTANTE: Usa el place_id EXACTO de la lista de lugares disponibles para cada lugar que incluyas. Copia el ID tal cual aparece en "ID: ...".
 
 FORMATO DE RESPUESTA (JSON):
 {{
@@ -113,6 +114,10 @@ Responde SOLO con el JSON, sin texto adicional.
             "places_json": places_json
         })
         
+        # Enriquecer lugares del itinerario con fotos y datos reales de searched_places
+        searched_places_by_id = {p.get("place_id"): p for p in state.get("searched_places", []) if p.get("place_id")}
+        result = _enrich_itinerary_with_place_data(result, searched_places_by_id)
+        
         # Construir mensaje de respuesta
         response_message = _build_response_message(result, state)
         
@@ -137,6 +142,49 @@ Responde SOLO con el JSON, sin texto adicional.
         }
 
 
+def _normalize_name(name: str) -> str:
+    """Normaliza nombre para comparación (minúsculas, sin espacios extra)."""
+    if not name:
+        return ""
+    return " ".join((name or "").lower().strip().split())
+
+
+def _enrich_itinerary_with_place_data(itinerary: Dict, searched_places_by_id: Dict[str, Dict]) -> Dict:
+    """Enriquece los lugares del itinerario con fotos y datos reales de Google Places."""
+    day_plans = itinerary.get("day_plans", [])
+    searched_by_name = {_normalize_name(p.get("name", "")): p for p in searched_places_by_id.values()}
+    
+    for day in day_plans:
+        for slot in ("morning", "afternoon", "evening"):
+            places = day.get(slot, [])
+            for place in places:
+                place_id = place.get("place_id", "")
+                real_data = searched_places_by_id.get(place_id)
+                
+                if not real_data:
+                    name_key = _normalize_name(place.get("name", ""))
+                    real_data = searched_by_name.get(name_key)
+                    if not real_data and name_key:
+                        for search_name, search_place in searched_by_name.items():
+                            if name_key in search_name or search_name in name_key:
+                                real_data = search_place
+                                break
+                
+                if real_data:
+                    place["photos"] = real_data.get("photos", [])
+                    place["location"] = real_data.get("location", place.get("location", {"lat": 0, "lng": 0}))
+                    if real_data.get("address"):
+                        place["address"] = real_data["address"]
+                    if real_data.get("rating") is not None:
+                        place["rating"] = real_data["rating"]
+                    if real_data.get("price_level") is not None:
+                        place["price_level"] = real_data["price_level"]
+                    if real_data.get("types"):
+                        place["types"] = real_data["types"]
+    
+    return itinerary
+
+
 def _format_places_for_llm(places: List[Dict]) -> str:
     """Formatea lugares para el prompt del LLM."""
     if not places:
@@ -144,11 +192,18 @@ def _format_places_for_llm(places: List[Dict]) -> str:
     
     formatted = []
     for i, place in enumerate(places[:20], 1):  # Máximo 20 lugares
+        # Manejar price_level que puede ser None
+        price_level = place.get('price_level')
+        if price_level is not None and isinstance(price_level, int):
+            price_str = '$' * price_level
+        else:
+            price_str = 'N/A'
+        
         formatted.append(
             f"{i}. {place.get('name', 'Sin nombre')}\n"
             f"   - Dirección: {place.get('address', 'N/A')}\n"
             f"   - Rating: {place.get('rating', 'N/A')}/5\n"
-            f"   - Precio: {'$' * (place.get('price_level', 2))}\n"
+            f"   - Precio: {price_str}\n"
             f"   - Tipos: {', '.join(place.get('types', [])[:3])}\n"
             f"   - ID: {place.get('place_id', '')}"
         )
@@ -157,7 +212,7 @@ def _format_places_for_llm(places: List[Dict]) -> str:
 
 
 def _build_response_message(itinerary: Dict, state: TravelState) -> str:
-    """Construye un mensaje amigable con el itinerario."""
+    """Construye un mensaje amigable y CONCISO con el itinerario."""
     
     title = itinerary.get("title", "Tu Itinerario en Perú")
     description = itinerary.get("description", "")
@@ -165,44 +220,40 @@ def _build_response_message(itinerary: Dict, state: TravelState) -> str:
     tips = itinerary.get("tips", [])
     budget = itinerary.get("estimated_budget", "")
     
-    message = f"🎉 ¡He creado tu itinerario perfecto!\n\n"
+    # Mensaje CONCISO - solo resumen
+    message = f"🎉 ¡Listo! He creado tu itinerario perfecto.\n\n"
     message += f"**{title}**\n\n"
     message += f"{description}\n\n"
     
-    # Resumen por días
-    message += f"📅 **Resumen de {len(day_plans)} días:**\n\n"
+    # Resumen compacto por días (solo nombres de lugares principales)
+    message += f"📅 **{len(day_plans)} días de aventura:**\n\n"
     
-    for day in day_plans:
+    for day in day_plans[:3]:  # Solo mostrar primeros 3 días en el mensaje
         day_num = day.get("day_number", 0)
-        morning = day.get("morning", [])
-        afternoon = day.get("afternoon", [])
-        evening = day.get("evening", [])
+        all_places = day.get("morning", []) + day.get("afternoon", []) + day.get("evening", [])
         
-        message += f"**Día {day_num}:**\n"
-        
-        if morning:
-            message += f"  🌅 Mañana: {', '.join([p.get('name', '') for p in morning])}\n"
-        if afternoon:
-            message += f"  ☀️ Tarde: {', '.join([p.get('name', '') for p in afternoon])}\n"
-        if evening:
-            message += f"  🌙 Noche: {', '.join([p.get('name', '') for p in evening])}\n"
-        
-        if day.get("notes"):
-            message += f"  💡 {day['notes']}\n"
-        
-        message += "\n"
+        if all_places:
+            place_names = [p.get('name', '') for p in all_places[:2]]  # Solo 2 lugares principales
+            message += f"**Día {day_num}:** {', '.join(place_names)}"
+            if len(all_places) > 2:
+                message += f" y {len(all_places) - 2} más"
+            message += "\n"
     
-    # Tips generales
+    if len(day_plans) > 3:
+        message += f"\n_...y {len(day_plans) - 3} días más de aventura_\n"
+    
+    # Solo 2 tips principales
     if tips:
-        message += "💡 **Consejos importantes:**\n"
-        for tip in tips:
-            message += f"- {tip}\n"
-        message += "\n"
+        message += f"\n💡 **Tips clave:**\n"
+        for tip in tips[:2]:
+            message += f"• {tip}\n"
+        if len(tips) > 2:
+            message += f"_...y {len(tips) - 2} consejos más_\n"
     
-    # Presupuesto estimado
+    # Presupuesto
     if budget:
-        message += f"💰 **Presupuesto estimado:** {budget}\n\n"
+        message += f"\n💰 **Presupuesto:** {budget}\n"
     
-    message += "¿Te gustaría que ajuste algo del itinerario? Puedo modificar días específicos, cambiar lugares o ajustar el ritmo del viaje."
+    message += "\n✨ _Mira el mapa para ver todos los detalles del itinerario completo._"
     
     return message

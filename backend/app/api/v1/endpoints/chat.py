@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from datetime import datetime
@@ -14,10 +14,10 @@ limiter = Limiter(key_func=get_remote_address)
 logger = get_logger(__name__)
 
 
-@router.post("/", response_model=ChatResponse)
-@limiter.limit("10/minute")
+@router.post("", response_model=ChatResponse)
 async def chat(
-    request: ChatRequest,
+    request: Request,
+    chat_request: ChatRequest,
     current_user: dict = Depends(get_current_active_user),
     supabase = Depends(get_supabase_client)
 ):
@@ -35,21 +35,50 @@ async def chat(
         graph = create_travel_agent_graph()
         
         # Generar o usar thread_id existente
-        thread_id = request.thread_id or str(uuid.uuid4())
+        thread_id = chat_request.thread_id or str(uuid.uuid4())
         
-        # Preparar entrada
+        # Recuperar conversación previa si existe
+        previous_state = {}
+        conversation_raw = None
+        if chat_request.thread_id:
+            try:
+                conversation = supabase.table("conversations").select("*").eq("id", thread_id).single().execute()
+                if conversation.data:
+                    conversation_raw = conversation.data
+                    previous_state = conversation.data.get("state", {})
+                    logger.info(f"Conversación recuperada para thread_id: {thread_id} con {len(conversation.data.get('messages', []))} mensajes previos")
+            except Exception as e:
+                logger.warning(f"No se pudo recuperar conversación previa: {e}")
+        
+        # Restaurar mensajes previos completos de la conversación
+        previous_messages = []
+        if chat_request.thread_id and conversation_raw:
+            previous_messages = conversation_raw.get("messages", [])
+        
+        new_user_message = {
+            "role": "user",
+            "content": chat_request.message,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        # Construir resumen compacto del estado acumulado para el contexto del LLM
+        accumulated_summary = _build_state_summary(previous_state)
+        
         input_state = {
-            "messages": [{
-                "role": "user",
-                "content": request.message,
-                "timestamp": datetime.now().isoformat()
-            }],
+            "messages": previous_messages + [new_user_message],
             "max_iterations": 10,
-            "searched_places": [],
-            "day_plans": [],
+            "searched_places": previous_state.get("searched_places", []),
+            "day_plans": previous_state.get("day_plans", []),
             "needs_clarification": False,
             "clarification_questions": [],
-            "iteration_count": 0
+            "iteration_count": previous_state.get("iteration_count", 0),
+            "accumulated_summary": accumulated_summary,
+            "destination": previous_state.get("destination"),
+            "days": previous_state.get("days"),
+            "budget": previous_state.get("budget"),
+            "travel_style": previous_state.get("travel_style"),
+            "travelers": previous_state.get("travelers"),
+            "itinerary": previous_state.get("itinerary"),
         }
         
         # Ejecutar el grafo
@@ -64,8 +93,34 @@ async def chat(
         
         response_message = assistant_messages[-1]["content"] if assistant_messages else "Lo siento, no pude procesar tu mensaje."
         
-        # Guardar conversación en Supabase si es necesario
-        if request.save_conversation and result.get("itinerary"):
+        # Guardar estado de la conversación en Supabase
+        try:
+            conversation_data = {
+                "id": thread_id,
+                "user_id": current_user["id"],
+                "messages": result.get("messages", []),
+                "state": {
+                    "destination": result.get("destination"),
+                    "days": result.get("days"),
+                    "budget": result.get("budget"),
+                    "travel_style": result.get("travel_style"),
+                    "travelers": result.get("travelers"),
+                    "searched_places": result.get("searched_places", []),
+                    "day_plans": result.get("day_plans", []),
+                    "iteration_count": result.get("iteration_count", 0),
+                    "itinerary": result.get("itinerary"),
+                },
+                "updated_at": datetime.now().isoformat()
+            }
+            
+            # Upsert (insert o update)
+            supabase.table("conversations").upsert(conversation_data).execute()
+            logger.info(f"Estado de conversación guardado para thread_id: {thread_id}")
+        except Exception as e:
+            logger.error(f"Error guardando estado de conversación: {e}")
+        
+        # Guardar itinerario completo en Supabase si es necesario
+        if chat_request.save_conversation and result.get("itinerary"):
             await _save_conversation(
                 supabase,
                 current_user["id"],
@@ -121,3 +176,31 @@ async def _save_conversation(
         
     except Exception as e:
         logger.error(f"Error guardando conversación: {e}")
+
+
+def _build_state_summary(state: dict) -> str:
+    """Construye un resumen compacto del estado acumulado para inyectar en los prompts."""
+    if not state:
+        return ""
+    
+    parts = []
+    if state.get("destination"):
+        parts.append(f"Destino: {state['destination']}")
+    if state.get("days"):
+        parts.append(f"Días: {state['days']}")
+    if state.get("budget"):
+        parts.append(f"Presupuesto: {state['budget']}")
+    if state.get("travel_style"):
+        style = state["travel_style"]
+        if isinstance(style, list):
+            style = ", ".join(style)
+        parts.append(f"Estilo: {style}")
+    if state.get("travelers"):
+        parts.append(f"Viajeros: {state['travelers']}")
+    if state.get("itinerary"):
+        parts.append("Itinerario: Ya generado previamente")
+    
+    if not parts:
+        return ""
+    
+    return "ESTADO CONFIRMADO POR EL USUARIO: " + " | ".join(parts)

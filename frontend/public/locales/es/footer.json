@@ -1,0 +1,26 @@
+{
+  "about": {
+    "title": "Acerca de",
+    "description": "Vora es tu asistente de viajes con IA para descubrir lo mejor de Perú"
+  },
+  "links": {
+    "company": "Empresa",
+    "aboutUs": "Sobre Nosotros",
+    "contact": "Contacto",
+    "careers": "Carreras",
+    "support": "Soporte",
+    "help": "Centro de Ayuda",
+    "faq": "Preguntas Frecuentes",
+    "terms": "Términos de Servicio",
+    "privacy": "Política de Privacidad",
+    "legal": "Legal"
+  },
+  "social": {
+    "title": "Síguenos",
+    "facebook": "Facebook",
+    "twitter": "Twitter",
+    "instagram": "Instagram",
+    "linkedin": "LinkedIn"
+  },
+  "copyright": "© 2024 ViajesPeru.AI. Todos los derechos reservados."
+}

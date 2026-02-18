@@ -1,0 +1,48 @@
+{
+  "list": {
+    "title": "Mis Itinerarios",
+    "subtitle": "Administra tus planes de viaje",
+    "empty": "Aún no tienes itinerarios",
+    "emptyDescription": "Inicia una conversación en el chat para crear tu primer itinerario",
+    "createNew": "Crear Itinerario"
+  },
+  "card": {
+    "viewDetails": "Ver detalles",
+    "days": "días",
+    "travelers": "viajeros",
+    "createdAt": "Creado el"
+  },
+  "detail": {
+    "overview": "Resumen",
+    "itinerary": "Itinerario",
+    "map": "Mapa",
+    "budget": "Presupuesto",
+    "duration": "Duración",
+    "destination": "Destino",
+    "travelers": "Viajeros",
+    "status": "Estado",
+    "actions": {
+      "edit": "Editar",
+      "share": "Compartir",
+      "delete": "Eliminar",
+      "export": "Exportar PDF"
+    }
+  },
+  "budget": {
+    "low": "Económico",
+    "medium": "Medio",
+    "high": "Premium"
+  },
+  "status": {
+    "draft": "Borrador",
+    "published": "Publicado",
+    "archived": "Archivado"
+  },
+  "timeline": {
+    "day": "Día",
+    "morning": "Mañana",
+    "afternoon": "Tarde",
+    "evening": "Noche",
+    "night": "Noche"
+  }
+}

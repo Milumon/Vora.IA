@@ -1,21 +1,29 @@
 {
   "app": {
-    "name": "Vora",
+    "name": "ViajesPeru.AI",
     "description": "Your AI travel assistant to explore Peru"
   },
-  "nav": {
+  "navigation": {
     "home": "Home",
     "chat": "Chat",
-    "itineraries": "Itineraries",
+    "myTrips": "My Trips",
     "profile": "Profile"
   },
   "auth": {
-    "login": "Login",
-    "register": "Register",
-    "logout": "Logout",
+    "login": "Sign In",
+    "register": "Sign Up",
+    "signOut": "Sign Out",
+    "signInWithGoogle": "Continue with Google",
+    "signInWithEmail": "Continue with Email",
     "email": "Email",
     "password": "Password",
-    "fullName": "Full name"
+    "fullName": "Full name",
+    "confirmPassword": "Confirm password",
+    "forgotPassword": "Forgot password?",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "createAccount": "Create account",
+    "orContinueWith": "Or continue with"
   },
   "common": {
     "loading": "Loading...",
@@ -23,6 +31,9 @@
     "success": "Success",
     "cancel": "Cancel",
     "save": "Save",
-    "delete": "Delete"
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "back": "Back"
   }
 }
