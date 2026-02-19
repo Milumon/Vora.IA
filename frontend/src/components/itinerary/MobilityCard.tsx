@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { Plane, Bus, Car, Clock, MapPin, ChevronDown, ChevronUp, ArrowRight, Navigation } from 'lucide-react';
+import { Plane, Bus, Car, Clock, MapPin, ChevronDown, ChevronUp, ArrowRight, Navigation, ExternalLink } from 'lucide-react';
+import Image from 'next/image';
 import type { MobilitySegment, MobilityOption } from '@/store/chatStore';
 
 /* ─── Types ─────────────────────────────────────────────────── */
@@ -62,7 +63,7 @@ function formatPrice(price: number, currency: string): string {
         EUR: '€',
     };
     const sym = symbols[currency] || currency;
-    return `${sym} ${price.toFixed(2)}`;
+    return `${sym} ${price.toFixed(0)}`;
 }
 
 function getAvailableModes(segment: MobilitySegment): MobilityMode[] {
@@ -108,6 +109,15 @@ function getDistanceForMode(segment: MobilitySegment, mode: MobilityMode): strin
         default:
             return null;
     }
+}
+
+/** Google provides public airline logos by IATA code */
+function getAirlineLogo(opt: Record<string, unknown>): string | null {
+    const logo = opt.airline_logo as string | undefined;
+    if (logo) return logo;
+    const carrier = opt.carrier_code as string | undefined;
+    if (carrier) return `https://www.gstatic.com/flights/airline_logos/70px/${carrier}.png`;
+    return null;
 }
 
 /* ─── Sub-components ─────────────────────────────────────────── */
@@ -211,46 +221,101 @@ function RouteBar({
     );
 }
 
-/** Flight alternatives list */
+/** Flight alternative row with airline logo and booking link */
+function FlightOptionRow({ opt }: { opt: Record<string, unknown> }) {
+    const airlineName = String(opt.airline || opt.provider || '');
+    const price = Number(opt.price || 0);
+    const currency = String(opt.currency || 'USD');
+    const duration = String(opt.duration_text || '--');
+    const bookingUrl = String(opt.booking_url || '');
+    const logo = getAirlineLogo(opt);
+    const stops = Number(opt.stops || 0);
+
+    return (
+        <div className="flex items-center gap-2.5 py-2 px-1 rounded-lg hover:bg-gray-50 transition-colors">
+            {/* Airline logo */}
+            {logo ? (
+                <div className="w-7 h-7 rounded-md overflow-hidden bg-white border border-gray-100 flex-shrink-0 flex items-center justify-center">
+                    <Image
+                        src={logo}
+                        alt={airlineName}
+                        width={24}
+                        height={24}
+                        className="object-contain"
+                        unoptimized
+                    />
+                </div>
+            ) : (
+                <div className="w-7 h-7 rounded-md bg-sky-100 flex items-center justify-center flex-shrink-0">
+                    <Plane className="w-3.5 h-3.5 text-sky-500" />
+                </div>
+            )}
+
+            {/* Airline name + stops */}
+            <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-gray-800 truncate">
+                    {airlineName}
+                </p>
+                <p className="text-[10px] text-gray-400">
+                    {duration} · {stops === 0 ? 'Directo' : `${stops} escala(s)`}
+                </p>
+            </div>
+
+            {/* Price */}
+            <p className="text-sm font-bold text-gray-900 shrink-0">
+                {formatPrice(price, currency)}
+            </p>
+
+            {/* Booking CTA */}
+            {bookingUrl ? (
+                <a
+                    href={bookingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg
+                               bg-sky-500 hover:bg-sky-600 active:bg-sky-700
+                               text-white text-[10px] font-semibold transition-colors shrink-0"
+                >
+                    Reservar
+                    <ExternalLink className="w-3 h-3" />
+                </a>
+            ) : null}
+        </div>
+    );
+}
+
+/** Flight alternatives list — now with logos + per-airline booking links */
 function FlightAlternatives({ options }: { options: Record<string, unknown>[] }) {
     const [expanded, setExpanded] = useState(false);
-    const extras = options.slice(1, expanded ? undefined : 4);
+    const visibleOptions = expanded ? options : options.slice(0, 3);
 
-    if (options.length <= 1) return null;
+    if (options.length === 0) return null;
 
     return (
         <div className="mt-3 pt-3 border-t border-gray-100">
-            <button
-                onClick={(e) => {
-                    e.stopPropagation();
-                    setExpanded(!expanded);
-                }}
-                className="flex items-center gap-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-2 hover:text-gray-600"
-            >
-                Otras opciones ({options.length - 1})
-                {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-            </button>
-            <div className="space-y-1.5">
-                {extras.map((opt, i) => (
-                    <div
-                        key={i}
-                        className="flex items-center justify-between text-xs text-gray-500"
-                    >
-                        <span className="font-medium text-gray-700 truncate max-w-[110px]">
-                            {String(opt.airline || opt.provider || '')}
-                        </span>
-                        <span className="mx-2 text-gray-400">
-                            {String(opt.duration_text || '--')}
-                        </span>
-                        <span className="font-semibold text-gray-800 shrink-0">
-                            {formatPrice(
-                                Number(opt.price || 0),
-                                String(opt.currency || 'USD')
-                            )}
-                        </span>
-                    </div>
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                {options.length} opcion{options.length !== 1 ? 'es' : ''} de vuelo
+            </p>
+
+            <div className="space-y-0.5">
+                {visibleOptions.map((opt, i) => (
+                    <FlightOptionRow key={i} opt={opt} />
                 ))}
             </div>
+
+            {options.length > 3 && (
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setExpanded(!expanded);
+                    }}
+                    className="flex items-center gap-1 mt-2 text-[10px] font-semibold text-sky-500 hover:text-sky-700 transition-colors"
+                >
+                    {expanded ? 'Ver menos' : `Ver ${options.length - 3} más`}
+                    {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                </button>
+            )}
         </div>
     );
 }
@@ -277,9 +342,23 @@ export function MobilityCard({ segment }: MobilityCardProps) {
             <div className={`bg-gradient-to-r ${config.gradientFrom} ${config.gradientTo} px-5 py-3`}>
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <div className={`w-8 h-8 rounded-full ${config.bgColor} flex items-center justify-center`}>
-                            <Navigation className={`w-4 h-4 ${config.color}`} />
-                        </div>
+                        {/* Airline logo or mode icon */}
+                        {activeMode === 'flight' && option?.airline_logo ? (
+                            <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden">
+                                <Image
+                                    src={option.airline_logo}
+                                    alt={option.provider}
+                                    width={24}
+                                    height={24}
+                                    className="object-contain"
+                                    unoptimized
+                                />
+                            </div>
+                        ) : (
+                            <div className={`w-8 h-8 rounded-full ${config.bgColor} flex items-center justify-center`}>
+                                <Navigation className={`w-4 h-4 ${config.color}`} />
+                            </div>
+                        )}
                         <div>
                             <p className={`text-xs font-semibold ${config.color} uppercase tracking-wide`}>
                                 Traslado
@@ -290,7 +369,7 @@ export function MobilityCard({ segment }: MobilityCardProps) {
                         </div>
                     </div>
 
-                    {/* Price badge (for flights) */}
+                    {/* Price badge */}
                     {option && option.price > 0 ? (
                         <div className="text-right">
                             <p className="text-[10px] text-gray-400 leading-none mb-0.5">Desde</p>
@@ -340,31 +419,25 @@ export function MobilityCard({ segment }: MobilityCardProps) {
                             {distance}
                         </span>
                     ) : null}
-                    {activeMode === 'flight' && segment.flight_options.length > 0 ? (
-                        <span className="flex items-center gap-1 text-gray-400">
-                            <Plane className="w-3.5 h-3.5" />
-                            {segment.flight_options.length} opcion{segment.flight_options.length !== 1 ? 'es' : ''}
-                        </span>
-                    ) : null}
                 </div>
 
-                {/* Flight alternatives */}
-                {activeMode === 'flight' ? (
+                {/* Flight options with logos + per-airline booking */}
+                {activeMode === 'flight' && segment.flight_options.length > 0 ? (
                     <FlightAlternatives options={segment.flight_options} />
                 ) : null}
 
-                {/* CTA for flights */}
+                {/* CTA for best flight */}
                 {activeMode === 'flight' && option?.booking_url ? (
                     <a
                         href={option.booking_url}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="mt-1 flex items-center justify-center gap-2 w-full py-2.5 rounded-xl
+                        className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl
                                    bg-sky-500 hover:bg-sky-600 active:bg-sky-700
                                    text-white text-sm font-semibold transition-colors"
                     >
-                        Reservar vuelo
+                        Reservar mejor opción — {option.provider}
                         <ArrowRight className="w-4 h-4" />
                     </a>
                 ) : null}

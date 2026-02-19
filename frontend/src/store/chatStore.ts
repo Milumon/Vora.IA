@@ -13,6 +13,8 @@ interface MobilityOption {
   stops: number;
   booking_url: string;
   distance_km?: number;
+  airline_logo?: string;
+  carrier_code?: string;
 }
 
 interface MobilitySegment {
