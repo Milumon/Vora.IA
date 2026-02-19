@@ -42,7 +42,7 @@ export function CompactMapPreview({ itinerary, onOpenFullMap }: CompactMapPrevie
 
   useEffect(() => {
     const places: Array<PlaceInfo & { dayNumber: number }> = [];
-    
+
     itinerary.day_plans.forEach((day) => {
       [...day.morning, ...day.afternoon, ...day.evening].forEach((place) => {
         places.push({ ...place, dayNumber: day.day_number });
@@ -84,7 +84,7 @@ export function CompactMapPreview({ itinerary, onOpenFullMap }: CompactMapPrevie
 
   const getRoutePaths = () => {
     const paths: google.maps.LatLngLiteral[][] = [];
-    
+
     itinerary.day_plans.forEach((day) => {
       const dayPlaces = [...day.morning, ...day.afternoon, ...day.evening];
       if (dayPlaces.length > 1) {
@@ -116,7 +116,7 @@ export function CompactMapPreview({ itinerary, onOpenFullMap }: CompactMapPrevie
   }
 
   return (
-    <div className="relative h-full">
+    <div className="relative h-full rounded-lg border-2 border-gray-200">
       <GoogleMap
         mapContainerStyle={mapContainerStyle}
         center={defaultCenter}

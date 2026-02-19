@@ -119,9 +119,9 @@ Responde SOLO con el JSON, sin texto adicional.
         searched_places_by_id = {p.get("place_id"): p for p in state.get("searched_places", []) if p.get("place_id")}
         result = _enrich_itinerary_with_place_data(result, searched_places_by_id)
         
-        # Enriquecer itinerario con datos de bus (si existen)
-        bus_transfers = state.get("bus_transfers", [])
-        result = _embed_bus_transfers(result, bus_transfers)
+        # Enriquecer itinerario con datos de movilidad (vuelos, bus, auto)
+        mobility_options = state.get("mobility_options", [])
+        result = _embed_mobility(result, mobility_options)
         
         # Construir mensaje de respuesta
         response_message = _build_response_message(result, state)
@@ -190,25 +190,25 @@ def _enrich_itinerary_with_place_data(itinerary: Dict, searched_places_by_id: Di
     return itinerary
 
 
-def _embed_bus_transfers(itinerary: Dict, bus_transfers: List[Dict]) -> Dict:
+def _embed_mobility(itinerary: Dict, mobility_options: List[Dict]) -> Dict:
     """
-    Adjunta la información de transporte en bus al primer día del itinerario.
-    El frontend puede leer day_plan.bus_transfer para renderizar BusTransferCard.
+    Adjunta la información de movilidad (vuelos, bus, auto) al primer día del itinerario.
+    El frontend puede leer day_plan.mobility para renderizar MobilityCard.
     """
-    if not bus_transfers:
+    if not mobility_options:
         return itinerary
 
     day_plans = itinerary.get("day_plans", [])
     if not day_plans:
         return itinerary
 
-    # Adjuntar el primer transfer al primer día (tramo de llegada)
-    day_plans[0]["bus_transfer"] = bus_transfers[0]
+    # Adjuntar el primer segmento de movilidad al primer día (tramo de llegada)
+    day_plans[0]["mobility"] = mobility_options[0]
 
-    # Si hay más tramos (multi-destino), los adjuntamos a días subsiguientes
-    for i, transfer in enumerate(bus_transfers[1:], 1):
+    # Si hay más segmentos (multi-destino), los adjuntamos a días subsiguientes
+    for i, segment in enumerate(mobility_options[1:], 1):
         if i < len(day_plans):
-            day_plans[i]["bus_transfer"] = transfer
+            day_plans[i]["mobility"] = segment
 
     return itinerary
 

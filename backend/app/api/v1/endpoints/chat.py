@@ -79,6 +79,7 @@ async def chat(
             "travel_style": previous_state.get("travel_style"),
             "travelers": previous_state.get("travelers"),
             "itinerary": previous_state.get("itinerary"),
+            "mobility_options": previous_state.get("mobility_options", []),
         }
         
         # Ejecutar el grafo
@@ -109,6 +110,7 @@ async def chat(
                     "day_plans": result.get("day_plans", []),
                     "iteration_count": result.get("iteration_count", 0),
                     "itinerary": result.get("itinerary"),
+                    "mobility_options": result.get("mobility_options", []),
                 },
                 "updated_at": datetime.now().isoformat()
             }

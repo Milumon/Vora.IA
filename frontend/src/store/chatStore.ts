@@ -1,5 +1,40 @@
 import { create } from 'zustand';
 
+/* ─── Mobility types (unified transport model) ─────────────── */
+
+interface MobilityOption {
+  provider: string;
+  departure_time: string;
+  arrival_time: string;
+  duration_text: string;
+  price: number;
+  currency: string;
+  service_type: string;
+  stops: number;
+  booking_url: string;
+  distance_km?: number;
+}
+
+interface MobilitySegment {
+  origin: string;
+  destination: string;
+  departure_date: string;
+  best_flight: MobilityOption | null;
+  best_transit: MobilityOption | null;
+  best_drive: MobilityOption | null;
+  drive_distance_km: number | null;
+  drive_duration_text: string | null;
+  drive_duration_seconds: number | null;
+  transit_distance_km: number | null;
+  transit_duration_text: string | null;
+  transit_duration_seconds: number | null;
+  flight_options: Record<string, unknown>[];
+  transit_options: Record<string, unknown>[];
+  recommended_mode: 'flight' | 'bus' | 'drive';
+}
+
+/* ─── Place types ───────────────────────────────────────────── */
+
 interface PlaceInfo {
   place_id: string;
   name: string;
@@ -13,6 +48,8 @@ interface PlaceInfo {
   why_visit?: string;
 }
 
+/* ─── Day / Itinerary types ─────────────────────────────────── */
+
 interface DayPlan {
   day_number: number;
   date?: string | null;
@@ -20,6 +57,11 @@ interface DayPlan {
   afternoon: PlaceInfo[];
   evening: PlaceInfo[];
   notes: string;
+  day_summary?: string;
+  /** Unified mobility data (replaces old bus_transfer) */
+  mobility?: MobilitySegment;
+  /** @deprecated — backward compat for old itineraries */
+  bus_transfer?: Record<string, unknown>;
 }
 
 interface Itinerary {
@@ -29,6 +71,8 @@ interface Itinerary {
   tips: string[];
   estimated_budget: string;
 }
+
+/* ─── Message types ─────────────────────────────────────────── */
 
 interface Message {
   role: 'user' | 'assistant';
@@ -45,6 +89,8 @@ interface Message {
     }>;
   };
 }
+
+/* ─── Store ──────────────────────────────────────────────────── */
 
 interface ChatState {
   messages: Message[];
@@ -103,4 +149,4 @@ export const useChatStore = create<ChatState>((set) => ({
     }),
 }));
 
-export type { Itinerary, DayPlan, PlaceInfo };
+export type { Itinerary, DayPlan, PlaceInfo, MobilitySegment, MobilityOption };

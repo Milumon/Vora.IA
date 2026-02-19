@@ -4,8 +4,7 @@ import { useState } from 'react';
 import { ChatSidebar } from '@/components/chat/ChatSidebar';
 import { ItineraryHeader } from '@/components/itinerary/ItineraryHeader';
 import { CompactMapPreview } from '@/components/map/CompactMapPreview';
-import { DayTimelineHorizontal } from '@/components/itinerary/DayTimelineHorizontal';
-import { DayContent } from '@/components/itinerary/DayContent';
+import { DayTimelineVertical } from '@/components/itinerary/DayTimelineVertical';
 import { FullMapModal } from '@/components/map/FullMapModal';
 import { useChatStore } from '@/store/chatStore';
 import { Save, Share2, Download } from 'lucide-react';
@@ -19,7 +18,7 @@ export default function ChatPage() {
   const router = useRouter();
   const locale = useLocale();
   const { user } = useAuth();
-  const [selectedDay, setSelectedDay] = useState(1);
+  const [, setSelectedDay] = useState(1);
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
 
   const handleSaveItinerary = async () => {
@@ -41,8 +40,8 @@ export default function ChatPage() {
           .split('T')[0],
         days: generatedItinerary.day_plans.length,
         budget: (generatedItinerary as any).budget || 'medium',
-        travel_style: Array.isArray((generatedItinerary as any).travel_style) 
-          ? (generatedItinerary as any).travel_style?.join(', ') 
+        travel_style: Array.isArray((generatedItinerary as any).travel_style)
+          ? (generatedItinerary as any).travel_style?.join(', ')
           : (generatedItinerary as any).travel_style,
         travelers: (generatedItinerary as any).travelers || 1,
         data: generatedItinerary,
@@ -78,7 +77,7 @@ export default function ChatPage() {
     );
   }
 
-  const currentDay = generatedItinerary.day_plans.find(d => d.day_number === selectedDay);
+
 
   return (
     <div className="flex h-[calc(100vh-4rem)] bg-white">
@@ -93,27 +92,19 @@ export default function ChatPage() {
         <ItineraryHeader itinerary={generatedItinerary} />
 
         {/* Mapa compacto */}
-        <div className="h-64 border-y border-gray-200">
+        <div className="h-96 border-ld  rounded-lg p-10">
           <CompactMapPreview
             itinerary={generatedItinerary}
             onOpenFullMap={() => setIsMapModalOpen(true)}
           />
         </div>
 
-        {/* Timeline horizontal */}
-        <DayTimelineHorizontal
+        {/* Vertical day timeline */}
+        <DayTimelineVertical
           itinerary={generatedItinerary}
-          selectedDay={selectedDay}
           onDaySelect={setSelectedDay}
+          onPlaceClick={setSelectedPlace}
         />
-
-        {/* Contenido del día seleccionado */}
-        {currentDay && (
-          <DayContent
-            day={currentDay}
-            onPlaceClick={setSelectedPlace}
-          />
-        )}
 
         {/* Action buttons */}
         <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex gap-3">

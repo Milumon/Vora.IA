@@ -25,8 +25,10 @@ CREATE TABLE IF NOT EXISTS public.itineraries (
     days INTEGER NOT NULL,
     budget TEXT, -- 'low', 'medium', 'high'
     travel_style TEXT, -- 'adventure', 'relaxed', 'cultural', etc.
+    travelers INTEGER DEFAULT 1,
     status TEXT DEFAULT 'draft', -- 'draft', 'published', 'archived'
-    data JSONB NOT NULL, -- Estructura completa del itinerario
+    data JSONB NOT NULL, -- Estructura completa del itinerario (day_plans, tips, etc.)
+    thread_id UUID, -- ID de la conversación que generó el itinerario
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

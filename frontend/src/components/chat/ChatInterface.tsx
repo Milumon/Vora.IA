@@ -27,13 +27,13 @@ export function ChatInterface() {
   const router = useRouter();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
-  const { 
-    messages, 
-    isLoading, 
-    currentProgress, 
+  const {
+    messages,
+    isLoading,
+    currentProgress,
     generatedItinerary,
-    sendMessage, 
-    setSelectedPlace 
+    sendMessage,
+    setSelectedPlace
   } = useChat();
   const [showSuggestions, setShowSuggestions] = useState(messages.length === 0);
   const userName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || '';
@@ -80,8 +80,8 @@ export function ChatInterface() {
           .split('T')[0],
         days: generatedItinerary.day_plans.length,
         budget: (generatedItinerary as any).budget || 'medium',
-        travel_style: Array.isArray((generatedItinerary as any).travel_style) 
-          ? (generatedItinerary as any).travel_style?.join(', ') 
+        travel_style: Array.isArray((generatedItinerary as any).travel_style)
+          ? (generatedItinerary as any).travel_style?.join(', ')
           : (generatedItinerary as any).travel_style,
         travelers: (generatedItinerary as any).travelers || 1,
         data: generatedItinerary,
@@ -121,7 +121,7 @@ export function ChatInterface() {
   const clarificationQuestions = lastAssistantMessage?.metadata?.clarificationQuestions || [];
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col w-auto h-full">
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto">
         <div className="container mx-auto max-w-3xl px-4 py-6">
@@ -175,9 +175,9 @@ export function ChatInterface() {
                   <MessageBubble message={message} />
                 </div>
               ))}
-              
+
               {isLoading && <TypingIndicator />}
-              
+
               {/* Mostrar resumen del itinerario si está disponible */}
               {generatedItinerary && !isLoading && (
                 <div className="mt-6">
@@ -189,14 +189,14 @@ export function ChatInterface() {
                   />
                 </div>
               )}
-              
+
               {/* Mostrar progreso SOLO cuando está generando itinerario (sin preguntas pendientes) */}
               {showProgress && !isLoading && !generatedItinerary && !clarificationQuestions.length && (
                 <div className="mb-4">
                   <ItineraryProgress steps={currentProgress} />
                 </div>
               )}
-              
+
               <div ref={messagesEndRef} />
             </>
           )}

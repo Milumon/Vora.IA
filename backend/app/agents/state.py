@@ -23,6 +23,52 @@ class PlaceInfo(TypedDict):
     location: Dict[str, float]  # {lat, lng}
 
 
+# ── Mobility types (unified transport model) ────────────────────────────────
+
+class MobilityOption(TypedDict):
+    """A single transport alternative (one flight offer, one bus service, etc.)."""
+    provider: str            # airline name, bus company, or "Google Maps"
+    departure_time: str      # ISO datetime or HH:MM
+    arrival_time: str        # ISO datetime or HH:MM
+    duration_text: str       # e.g. "2h 30m"
+    price: float             # 0 if unknown
+    currency: str            # "PEN", "USD", "EUR"
+    service_type: str        # "Directo", "1 escala", "Bus Cama", etc.
+    stops: int               # 0 = direct
+    booking_url: str         # deep link to buy/book
+
+
+class MobilitySegment(TypedDict):
+    """
+    A complete transport segment between two cities.
+    Contains the best option + all alternatives for each mode.
+    Replaces the old BusTransfer type.
+    """
+    origin: str
+    destination: str
+    departure_date: str
+
+    # Best option per mode
+    best_flight: Optional[Dict]     # MobilityOption or None
+    best_transit: Optional[Dict]    # MobilityOption or None
+    best_drive: Optional[Dict]      # drive info dict or None
+
+    # Route metadata
+    drive_distance_km: Optional[float]
+    drive_duration_text: Optional[str]
+    drive_duration_seconds: Optional[int]
+    transit_distance_km: Optional[float]
+    transit_duration_text: Optional[str]
+    transit_duration_seconds: Optional[int]
+
+    # All alternatives
+    flight_options: List[Dict]      # List[MobilityOption]
+    transit_options: List[Dict]     # List of transit step details
+    
+    # Recommended mode
+    recommended_mode: Literal["flight", "bus", "drive"]
+
+
 class DayPlan(TypedDict):
     """Plan para un día específico del itinerario."""
     day_number: int
@@ -31,34 +77,6 @@ class DayPlan(TypedDict):
     afternoon: List[PlaceInfo]
     evening: List[PlaceInfo]
     notes: str
-
-
-class BusOption(TypedDict):
-    """Opción individual de bus encontrada en redbus.pe."""
-    empresa: str
-    hora_salida: str
-    hora_llegada: str
-    duracion: str
-    precio: float
-    tipo_servicio: str
-    asientos_disponibles: int
-    url_reserva: str
-
-
-class BusTransfer(TypedDict):
-    """Tramo de bus interprovincial (Lima → Destino)."""
-    origen: str
-    destino: str
-    fecha: str
-    mejor_precio: float
-    empresa: str
-    hora_salida: str
-    hora_llegada: str
-    duracion: str
-    tipo_servicio: str
-    url_busqueda: str
-    total_opciones: int
-    todas_opciones: List[BusOption]
 
 
 class TravelState(TypedDict):
@@ -82,8 +100,8 @@ class TravelState(TypedDict):
     # Datos de lugares
     searched_places: List[PlaceInfo]
     
-    # Datos de transporte (buses)
-    bus_transfers: List[BusTransfer]
+    # Datos de transporte (mobility — replaces bus_transfers)
+    mobility_options: List[MobilitySegment]
     
     # Itinerario generado
     itinerary: Optional[Dict]

@@ -36,6 +36,10 @@ class Settings(BaseSettings):
     GOOGLE_PLACES_API_KEY: str
     GOOGLE_MAPS_API_KEY: str = ""
     
+    # Amadeus (flight search — sandbox)
+    AMADEUS_CLIENT_ID: str = ""
+    AMADEUS_CLIENT_SECRET: str = ""
+    
     # Rate Limiting
     RATE_LIMIT_PER_MINUTE: int = 60
     

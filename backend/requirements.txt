@@ -22,16 +22,11 @@ black==24.1.1
 ruff==0.1.14
 mypy==1.8.0
 
-# Agente redbus.pe — Dependencias
-# Navegador headless para scraping dinámico (JavaScript)
-playwright>=1.40.0
+# Amadeus flight search SDK (sandbox gratuito)
+amadeus>=9.0.0
 
 # Parser de fechas en español e inglés
 python-dateparser>=1.2.0
 
 # SDK de Anthropic (para integración con tu agente Claude)
 anthropic>=0.34.0
-
-# Opcional: para caché de resultados y evitar re-scraping innecesario
-# redis>=5.0.0
-# cachetools>=5.3.0
