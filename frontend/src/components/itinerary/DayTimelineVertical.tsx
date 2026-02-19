@@ -1,11 +1,12 @@
 'use client';
 
 import { useRef, useCallback } from 'react';
-import { Calendar, ChevronRight, ArrowRight, Plane, Bus, Car } from 'lucide-react';
-import type { Itinerary, DayPlan, PlaceInfo, MobilitySegment } from '@/store/chatStore';
+import { Calendar, ChevronRight, ArrowRight, Plane, Bus, Car, Building2 } from 'lucide-react';
+import type { Itinerary, DayPlan, PlaceInfo, MobilitySegment, AccommodationOption } from '@/store/chatStore';
 import Image from 'next/image';
 import { getPlaceThumbnail } from '@/lib/utils/google-places';
 import { MobilityCard } from './MobilityCard';
+import { AccommodationCard } from './AccommodationCard';
 
 /* ─── Types ─────────────────────────────────────────────────────── */
 
@@ -189,8 +190,7 @@ function DayCard({
     );
 }
 
-/** Mobility timeline node — replaces the old BusTimelineNode.
- *  Renders a MobilityCard for the appropriate transport mode. */
+/** Mobility timeline node — renders a MobilityCard for the appropriate transport mode. */
 function MobilityTimelineNode({
     segment,
     isLast,
@@ -236,6 +236,47 @@ function MobilityTimelineNode({
     );
 }
 
+/** Accommodation timeline node — renders AccommodationCard with hotel info. */
+function AccommodationTimelineNode({
+    options,
+    isLast,
+}: {
+    options: AccommodationOption[];
+    isLast: boolean;
+}) {
+    return (
+        <div className="flex gap-6">
+            {/* ── Left column: accommodation node ── */}
+            <div className="flex flex-col items-center w-[120px] flex-shrink-0">
+                {/* Node circle */}
+                <div className="w-10 h-10 rounded-full bg-white border-[3px] border-purple-400 flex items-center justify-center flex-shrink-0 z-10">
+                    <Building2 className="w-4 h-4 text-purple-500" />
+                </div>
+
+                {/* Node label */}
+                <div className="mt-2 text-center">
+                    <p className="text-sm font-semibold text-[#2D2840] leading-tight">
+                        Hospedaje
+                    </p>
+                    <p className="text-xs font-semibold text-purple-500">
+                        Hotel
+                    </p>
+                </div>
+
+                {/* Vertical connector */}
+                {!isLast && (
+                    <div className="flex-1 w-0.5 bg-gray-200 mt-3" />
+                )}
+            </div>
+
+            {/* ── Right column: AccommodationCard ── */}
+            <div className="flex-1 pb-8">
+                <AccommodationCard options={options} />
+            </div>
+        </div>
+    );
+}
+
 /* ─── Main component ────────────────────────────────────────────── */
 
 export function DayTimelineVertical({
@@ -249,14 +290,23 @@ export function DayTimelineVertical({
             {itinerary.day_plans.map((day, index) => {
                 const isLast = index === totalDays - 1;
                 const mobilitySegment = day.mobility;
+                const accommodationOptions = day.accommodation;
 
                 return (
                     <div key={day.day_number}>
-                        {/* ── Mobility node (for days that have transport segments) ── */}
+                        {/* ── Mobility node (transport segments) ── */}
                         {mobilitySegment && (
                             <MobilityTimelineNode
                                 segment={mobilitySegment}
-                                isLast={false}   /* always has the day card after it */
+                                isLast={false}
+                            />
+                        )}
+
+                        {/* ── Accommodation node (hotel options) ── */}
+                        {accommodationOptions && accommodationOptions.length > 0 && (
+                            <AccommodationTimelineNode
+                                options={accommodationOptions}
+                                isLast={false}
                             />
                         )}
 

@@ -36,11 +36,7 @@ class Settings(BaseSettings):
     GOOGLE_PLACES_API_KEY: str
     GOOGLE_MAPS_API_KEY: str = ""
     
-    # Amadeus (flight search — sandbox)
-    AMADEUS_CLIENT_ID: str = ""
-    AMADEUS_CLIENT_SECRET: str = ""
-    
-    # SerpApi (Google Flights — captures low-cost carriers)
+    # SerpApi (Google Flights + Hotels)
     SERPAPI_API_KEY: str = ""
     
     # Rate Limiting

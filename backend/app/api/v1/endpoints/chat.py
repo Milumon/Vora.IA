@@ -111,6 +111,7 @@ async def chat(
                     "iteration_count": result.get("iteration_count", 0),
                     "itinerary": result.get("itinerary"),
                     "mobility_options": result.get("mobility_options", []),
+                    "accommodation_options": result.get("accommodation_options", []),
                 },
                 "updated_at": datetime.now().isoformat()
             }

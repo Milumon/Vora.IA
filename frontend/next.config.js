@@ -25,6 +25,11 @@ const nextConfig = {
         hostname: 'www.gstatic.com',
         pathname: '/flights/airline_logos/**',
       },
+      {
+        protocol: 'https',
+        hostname: '*.googleusercontent.com',
+        pathname: '/**',
+      },
     ],
   },
 };

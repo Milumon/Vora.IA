@@ -35,6 +35,28 @@ interface MobilitySegment {
   recommended_mode: 'flight' | 'bus' | 'drive';
 }
 
+/* ─── Accommodation types ───────────────────────────────────── */
+
+interface AccommodationOption {
+  name: string;
+  type: string;
+  price_per_night: number;
+  total_price: number;
+  currency: string;
+  rating: number;
+  reviews_count: number;
+  stars: number;
+  images: string[];
+  amenities: string[];
+  booking_url: string;
+  address: string;
+  description: string;
+  check_in: string;
+  check_out: string;
+  check_in_time: string;
+  check_out_time: string;
+}
+
 /* ─── Place types ───────────────────────────────────────────── */
 
 interface PlaceInfo {
@@ -62,6 +84,8 @@ interface DayPlan {
   day_summary?: string;
   /** Unified mobility data (replaces old bus_transfer) */
   mobility?: MobilitySegment;
+  /** Accommodation options for this day */
+  accommodation?: AccommodationOption[];
   /** @deprecated — backward compat for old itineraries */
   bus_transfer?: Record<string, unknown>;
 }
@@ -151,4 +175,4 @@ export const useChatStore = create<ChatState>((set) => ({
     }),
 }));
 
-export type { Itinerary, DayPlan, PlaceInfo, MobilitySegment, MobilityOption };
+export type { Itinerary, DayPlan, PlaceInfo, MobilitySegment, MobilityOption, AccommodationOption };

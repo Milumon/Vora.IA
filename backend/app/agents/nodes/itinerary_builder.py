@@ -123,6 +123,10 @@ Responde SOLO con el JSON, sin texto adicional.
         mobility_options = state.get("mobility_options", [])
         result = _embed_mobility(result, mobility_options)
         
+        # Enriquecer itinerario con datos de alojamiento
+        accommodation_options = state.get("accommodation_options", [])
+        result = _embed_accommodation(result, accommodation_options)
+        
         # Construir mensaje de respuesta
         response_message = _build_response_message(result, state)
         
@@ -209,6 +213,25 @@ def _embed_mobility(itinerary: Dict, mobility_options: List[Dict]) -> Dict:
     for i, segment in enumerate(mobility_options[1:], 1):
         if i < len(day_plans):
             day_plans[i]["mobility"] = segment
+
+    return itinerary
+
+
+def _embed_accommodation(itinerary: Dict, accommodation_options: List[Dict]) -> Dict:
+    """
+    Adjunta las opciones de alojamiento al itinerario.
+    El frontend puede leer day_plan.accommodation para renderizar AccommodationCard.
+    Se asigna al primer día del itinerario para que el timeline lo muestre.
+    """
+    if not accommodation_options:
+        return itinerary
+
+    day_plans = itinerary.get("day_plans", [])
+    if not day_plans:
+        return itinerary
+
+    # Adjuntar todas las opciones de alojamiento al primer día
+    day_plans[0]["accommodation"] = accommodation_options
 
     return itinerary
 

@@ -22,9 +22,6 @@ black==24.1.1
 ruff==0.1.14
 mypy==1.8.0
 
-# Amadeus flight search SDK (sandbox gratuito)
-amadeus>=9.0.0
-
 # Parser de fechas en español e inglés
 python-dateparser>=1.2.0
 

@@ -10,7 +10,7 @@ from typing import Optional, List
 from datetime import date
 
 from app.core.dependencies import get_current_active_user
-from app.services.amadeus_client import search_flights
+from app.services.serpapi_client import search_google_flights
 from app.services.routes_client import compute_route
 from app.config.logging import get_logger
 
@@ -76,7 +76,7 @@ async def search_mobility_routes(
         departure = request.departure_date or date.today().strftime("%Y-%m-%d")
 
         # Run all searches in parallel
-        flight_task = search_flights(
+        flight_task = search_google_flights(
             origin_city=request.origin,
             destination_city=request.destination,
             departure_date=departure,

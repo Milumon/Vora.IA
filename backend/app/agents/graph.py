@@ -7,6 +7,7 @@ from app.agents.nodes.preference_extractor import extract_preferences
 from app.agents.nodes.conversation_manager import generate_response
 from app.agents.nodes.place_searcher import search_places
 from app.agents.nodes.mobility_searcher import search_mobility
+from app.agents.nodes.accommodation_searcher import search_accommodation
 from app.agents.nodes.itinerary_builder import build_itinerary
 from app.agents.nodes.refinement_handler import handle_refinement
 from app.config.logging import get_logger
@@ -25,6 +26,7 @@ def create_travel_agent_graph():
     workflow.add_node("generate_response", generate_response)
     workflow.add_node("search_places", search_places)
     workflow.add_node("search_mobility", search_mobility)
+    workflow.add_node("search_accommodation", search_accommodation)
     workflow.add_node("build_itinerary", build_itinerary)
     workflow.add_node("handle_refinement", handle_refinement)
     
@@ -54,8 +56,10 @@ def create_travel_agent_graph():
     )
     
     workflow.add_edge("generate_response", END)
-    workflow.add_edge("search_places", "search_mobility")     # mobility después de places
-    workflow.add_edge("search_mobility", "build_itinerary")   # itinerario después de mobility
+    # Pipeline: places → mobility → accommodation → build_itinerary
+    workflow.add_edge("search_places", "search_mobility")
+    workflow.add_edge("search_mobility", "search_accommodation")
+    workflow.add_edge("search_accommodation", "build_itinerary")
     workflow.add_edge("build_itinerary", END)
     workflow.add_edge("handle_refinement", END)
     
