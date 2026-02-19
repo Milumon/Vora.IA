@@ -74,12 +74,18 @@ async def chat(
             "iteration_count": previous_state.get("iteration_count", 0),
             "accumulated_summary": accumulated_summary,
             "destination": previous_state.get("destination"),
+            "destinations": previous_state.get("destinations"),
             "days": previous_state.get("days"),
             "budget": previous_state.get("budget"),
             "travel_style": previous_state.get("travel_style"),
             "travelers": previous_state.get("travelers"),
+            "start_date": previous_state.get("start_date"),
+            "end_date": previous_state.get("end_date"),
             "itinerary": previous_state.get("itinerary"),
             "mobility_options": previous_state.get("mobility_options", []),
+            "accommodation_options": previous_state.get("accommodation_options", []),
+            "refinement_scope": None,
+            "previous_itinerary": None,
         }
         
         # Ejecutar el grafo
@@ -102,10 +108,13 @@ async def chat(
                 "messages": result.get("messages", []),
                 "state": {
                     "destination": result.get("destination"),
+                    "destinations": result.get("destinations"),
                     "days": result.get("days"),
                     "budget": result.get("budget"),
                     "travel_style": result.get("travel_style"),
                     "travelers": result.get("travelers"),
+                    "start_date": str(result.get("start_date", "")) if result.get("start_date") else None,
+                    "end_date": str(result.get("end_date", "")) if result.get("end_date") else None,
                     "searched_places": result.get("searched_places", []),
                     "day_plans": result.get("day_plans", []),
                     "iteration_count": result.get("iteration_count", 0),
@@ -226,8 +235,19 @@ def _build_state_summary(state: dict) -> str:
         parts.append(f"Estilo: {style}")
     if state.get("travelers"):
         parts.append(f"Viajeros: {state['travelers']}")
+    if state.get("start_date"):
+        parts.append(f"Fecha inicio: {state['start_date']}")
+    if state.get("end_date"):
+        parts.append(f"Fecha fin: {state['end_date']}")
     if state.get("itinerary"):
-        parts.append("Itinerario: Ya generado previamente")
+        itinerary = state["itinerary"]
+        title = itinerary.get("title", "Sin título") if isinstance(itinerary, dict) else "Generado"
+        num_days = len(itinerary.get("day_plans", [])) if isinstance(itinerary, dict) else "?"
+        parts.append(f"Itinerario: {title} ({num_days} días)")
+    if state.get("accommodation_options"):
+        parts.append(f"Hoteles encontrados: {len(state['accommodation_options'])}")
+    if state.get("mobility_options"):
+        parts.append(f"Opciones de transporte: {len(state['mobility_options'])} segmentos")
     
     if not parts:
         return ""

@@ -1,6 +1,6 @@
 'use client';
 
-import { Calendar, MapPin, Star, Hotel, Car } from 'lucide-react';
+import { Calendar, MapPin, Star, Building2, Plane } from 'lucide-react';
 import type { Itinerary } from '@/store/chatStore';
 import Image from 'next/image';
 import { getPlaceThumbnail } from '@/lib/utils/google-places';
@@ -17,7 +17,7 @@ export function ItineraryHeader({ itinerary }: ItineraryHeaderProps) {
 
   const headerImage = firstPlace ? getPlaceThumbnail(firstPlace.photos) : '/placeholder-place.jpg';
 
-  // Contar estadísticas
+  // ── Stats dinámicos ────────────────────────────────────────────────
   const totalPlaces = itinerary.day_plans.reduce((acc, day) =>
     acc + day.morning.length + day.afternoon.length + day.evening.length, 0
   );
@@ -27,6 +27,17 @@ export function ItineraryHeader({ itinerary }: ItineraryHeaderProps) {
       [...day.morning, ...day.afternoon, ...day.evening].map(p => p.address?.split(',')[0])
     )
   ).size;
+
+  // Contar hoteles reales desde accommodation en day_plans
+  const totalHotels = itinerary.day_plans.reduce((acc, day) => {
+    const accommodation = (day as any).accommodation;
+    return acc + (Array.isArray(accommodation) ? accommodation.length : 0);
+  }, 0);
+
+  // Contar segmentos de transporte reales desde mobility en day_plans
+  const totalTransports = itinerary.day_plans.filter((day) => {
+    return !!(day as any).mobility;
+  }).length;
 
   return (
     <div className="bg-white p-6 flex gap-8 items-start z-0">
@@ -70,20 +81,26 @@ export function ItineraryHeader({ itinerary }: ItineraryHeaderProps) {
             <span className="text-base font-medium">{totalPlaces} experiencias</span>
           </div>
 
-          {itinerary.estimated_budget && (
+          {totalHotels > 0 && (
             <div className="flex items-center gap-2.5">
-              <Hotel className="w-5 h-5 stroke-[1.5]" />
-              <span className="text-base font-medium">1 hoteles</span>
+              <Building2 className="w-5 h-5 stroke-[1.5]" />
+              <span className="text-base font-medium">
+                {totalHotels} {totalHotels === 1 ? 'hotel' : 'hoteles'}
+              </span>
             </div>
           )}
 
-          <div className="flex items-center gap-2.5">
-            <Car className="w-5 h-5 stroke-[1.5]" />
-            <span className="text-base font-medium">2 transportes</span>
-          </div>
+          {totalTransports > 0 && (
+            <div className="flex items-center gap-2.5">
+              <Plane className="w-5 h-5 stroke-[1.5]" />
+              <span className="text-base font-medium">
+                {totalTransports} {totalTransports === 1 ? 'transporte' : 'transportes'}
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Description (Optional, keeping it if it fits the design, usually good) */}
+        {/* Description */}
         {itinerary.description && (
           <p className="mt-6 text-gray-600 leading-relaxed max-w-2xl">
             {itinerary.description}

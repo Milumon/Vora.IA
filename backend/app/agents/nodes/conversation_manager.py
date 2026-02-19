@@ -55,7 +55,7 @@ async def generate_response(state: TravelState) -> dict:
     
     if needs_clarification and clarification_questions:
         prompt = ChatPromptTemplate.from_messages([
-            ("system", """Eres Layla, una experta en viajes por Perú con personalidad amigable y entusiasta.
+            ("system", """Eres Vora, una experta en viajes por Perú con personalidad amigable y entusiasta.
 
 === ESTADO ACUMULADO (lo que YA SABES, NO repitas estas preguntas) ===
 {accumulated_summary}
@@ -103,7 +103,7 @@ Conversación previa:
     
     else:
         prompt = ChatPromptTemplate.from_messages([
-            ("system", """Eres Layla, una experta en viajes por Perú.
+            ("system", """Eres Vora, una experta en viajes por Perú.
 
 El usuario ha proporcionado toda la información necesaria. Genera un resumen BREVE y entusiasta 
 y pide confirmación final antes de generar el itinerario.

@@ -80,7 +80,7 @@ async def extract_preferences(state: TravelState) -> dict:
     missing_str = "\n".join(missing_fields) if missing_fields else "Ninguno"
     
     prompt = ChatPromptTemplate.from_messages([
-        ("system", """Eres Layla, una experta en viajes por Perú con un estilo conversacional amigable y entusiasta.
+        ("system", """Eres Vora, una experta en viajes por Perú con un estilo conversacional amigable y entusiasta.
 
 Tu objetivo es extraer información NUEVA del último mensaje del usuario y determinar qué falta.
 

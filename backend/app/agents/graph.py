@@ -9,6 +9,7 @@ from app.agents.nodes.place_searcher import search_places
 from app.agents.nodes.mobility_searcher import search_mobility
 from app.agents.nodes.accommodation_searcher import search_accommodation
 from app.agents.nodes.itinerary_builder import build_itinerary
+from app.agents.nodes.refinement_delta import extract_refinement_delta
 from app.agents.nodes.refinement_handler import handle_refinement
 from app.config.logging import get_logger
 
@@ -20,7 +21,7 @@ def create_travel_agent_graph():
     
     workflow = StateGraph(TravelState)
     
-    # Agregar nodos
+    # ── Nodos ─────────────────────────────────────────────────────────────
     workflow.add_node("classify_intent", classify_intent)
     workflow.add_node("extract_preferences", extract_preferences)
     workflow.add_node("generate_response", generate_response)
@@ -28,24 +29,27 @@ def create_travel_agent_graph():
     workflow.add_node("search_mobility", search_mobility)
     workflow.add_node("search_accommodation", search_accommodation)
     workflow.add_node("build_itinerary", build_itinerary)
+    
+    # Refinement pipeline
+    workflow.add_node("extract_refinement_delta", extract_refinement_delta)
     workflow.add_node("handle_refinement", handle_refinement)
     
-    # Definir flujo
+    # ── Entry point ───────────────────────────────────────────────────────
     workflow.set_entry_point("classify_intent")
     
-    # Edges condicionales basados en intent
+    # ── Routing desde classify_intent ─────────────────────────────────────
     workflow.add_conditional_edges(
         "classify_intent",
         route_by_intent,
         {
             "new_trip": "extract_preferences",
-            "refine": "handle_refinement",
+            "refine": "extract_refinement_delta",
             "question": "generate_response",
             "clarify": "extract_preferences"
         }
     )
     
-    # Edge condicional después de extraer preferencias
+    # ── New trip pipeline ─────────────────────────────────────────────────
     workflow.add_conditional_edges(
         "extract_preferences",
         check_if_ready,
@@ -56,16 +60,31 @@ def create_travel_agent_graph():
     )
     
     workflow.add_edge("generate_response", END)
-    # Pipeline: places → mobility → accommodation → build_itinerary
     workflow.add_edge("search_places", "search_mobility")
     workflow.add_edge("search_mobility", "search_accommodation")
     workflow.add_edge("search_accommodation", "build_itinerary")
     workflow.add_edge("build_itinerary", END)
-    workflow.add_edge("handle_refinement", END)
     
-    # Compilar el grafo
+    # ── Refinement pipeline ───────────────────────────────────────────────
+    # extract_refinement_delta → handle_refinement → route_refinement
+    workflow.add_edge("extract_refinement_delta", "handle_refinement")
+    
+    workflow.add_conditional_edges(
+        "handle_refinement",
+        route_refinement,
+        {
+            "destination_changed": "search_places",
+            "style_changed": "search_places",
+            "dates_changed": "search_mobility",
+            "metadata_only": "build_itinerary",
+        }
+    )
+    
+    # ── Compilar ──────────────────────────────────────────────────────────
     return workflow.compile()
 
+
+# ── Routing functions ────────────────────────────────────────────────────────
 
 def route_by_intent(state: TravelState) -> Literal["new_trip", "refine", "question", "clarify"]:
     """Rutea según la intención clasificada."""
@@ -86,11 +105,9 @@ def route_by_intent(state: TravelState) -> Literal["new_trip", "refine", "questi
 def check_if_ready(state: TravelState) -> Literal["ready", "needs_clarification"]:
     """Verifica si tenemos suficiente información para buscar lugares."""
     
-    # Si explícitamente necesita clarificación
     if state.get("needs_clarification", False):
         return "needs_clarification"
     
-    # Verificar información mínima necesaria
     has_destination = bool(state.get("destination"))
     has_days = bool(state.get("days"))
     
@@ -98,3 +115,19 @@ def check_if_ready(state: TravelState) -> Literal["ready", "needs_clarification"
         return "ready"
     
     return "needs_clarification"
+
+
+def route_refinement(state: TravelState) -> Literal[
+    "destination_changed", "style_changed", "dates_changed", "metadata_only"
+]:
+    """
+    Decide qué nodos del pipeline re-ejecutar basado en refinement_scope.
+    
+    - destination_changed → search_places (full pipeline)
+    - style_changed       → search_places (new places, reuse transport/hotel)
+    - dates_changed       → search_mobility (new flights+hotels, reuse places)
+    - metadata_only       → build_itinerary (just rebuild with new params)
+    """
+    scope = state.get("refinement_scope", "metadata_only")
+    logger.info(f"route_refinement: {scope}")
+    return scope

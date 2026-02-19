@@ -1,97 +1,66 @@
-"""Nodo para manejar refinamientos de itinerarios existentes."""
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import JsonOutputParser
-from typing import Dict
+"""
+refinement_handler.py
+---------------------
+Nodo que aplica el delta extraído al estado existente y prepara el itinerario
+para rebuild.  Ya NO genera JSON con LLM — preserva datos reales de
+Google Places, SerpApi, etc.
+"""
+from typing import Dict, List
 from app.agents.state import TravelState
-from app.config.settings import get_settings
 from app.config.logging import get_logger
 
-settings = get_settings()
 logger = get_logger(__name__)
 
 
 async def handle_refinement(state: TravelState) -> dict:
-    """Maneja refinamientos del itinerario existente."""
+    """
+    Aplica el refinamiento al estado existente.
     
-    current_itinerary = state.get("itinerary")
+    Este nodo se ejecuta DESPUÉS de extract_refinement_delta, que ya actualizó
+    el estado con los nuevos valores (days, budget, etc.) y determinó el scope.
     
-    if not current_itinerary:
-        logger.warning("No hay itinerario para refinar")
-        return {
-            "messages": [{
-                "role": "assistant",
-                "content": "No tengo un itinerario previo para modificar. ¿Quieres que cree uno nuevo?",
-                "timestamp": ""
-            }]
-        }
+    Lo que hace:
+    1. Si scope es 'metadata_only': limpia el itinerario viejo para forzar rebuild
+       pero preserva searched_places, mobility_options, accommodation_options
+    2. Si scope es 'dates_changed': limpia mobility + accommodation (se re-buscarán)
+    3. Si scope es 'destination_changed': limpia todo (se re-buscará)
+    4. Si scope es 'style_changed': limpia places (se re-buscarán)
+    """
+    scope = state.get("refinement_scope", "metadata_only")
+    previous = state.get("previous_itinerary")
     
-    llm = ChatOpenAI(
-        model=settings.OPENAI_MODEL,
-        temperature=0.7,
-        api_key=settings.OPENAI_API_KEY
-    )
-    
-    parser = JsonOutputParser()
-    
-    # Obtener el último mensaje del usuario (la solicitud de cambio)
-    last_message = state["messages"][-1]["content"]
-    
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", """Eres un experto en ajustar itinerarios de viaje en Perú.
+    logger.info(f"handle_refinement: scope={scope}")
 
-ITINERARIO ACTUAL:
-{current_itinerary}
+    update: dict = {
+        # Siempre limpiar el itinerario anterior para forzar rebuild
+        "itinerary": None,
+        "day_plans": [],
+    }
 
-SOLICITUD DEL USUARIO:
-{user_request}
+    if scope == "destination_changed":
+        # Destino cambió → limpiar todo para re-buscar
+        update["searched_places"] = []
+        update["mobility_options"] = []
+        update["accommodation_options"] = []
+        logger.info("handle_refinement: limpiando todo — destino cambió")
 
-INSTRUCCIONES:
-1. Analiza qué quiere cambiar el usuario
-2. Modifica SOLO lo necesario del itinerario
-3. Mantén la coherencia del resto del plan
-4. Si el cambio afecta otros días, ajústalos también
-5. Explica brevemente qué cambiaste y por qué
+    elif scope == "style_changed":
+        # Estilo cambió → re-buscar lugares pero mantener transporte/hotel
+        update["searched_places"] = []
+        # mobility_options y accommodation_options se preservan
+        logger.info("handle_refinement: limpiando lugares — estilo cambió")
 
-Responde con el itinerario modificado en el mismo formato JSON que el original.
-Incluye un campo adicional "changes_made" con la lista de cambios realizados.
-"""),
-        ("user", "Modifica el itinerario según mi solicitud.")
-    ])
-    
-    chain = prompt | llm | parser
-    
-    try:
-        result = await chain.ainvoke({
-            "current_itinerary": str(current_itinerary),
-            "user_request": last_message
-        })
-        
-        changes = result.get("changes_made", [])
-        changes_text = "\n".join([f"- {change}" for change in changes])
-        
-        response_message = (
-            f"✅ He actualizado tu itinerario:\n\n"
-            f"{changes_text}\n\n"
-            f"¿Hay algo más que quieras ajustar?"
-        )
-        
-        return {
-            "itinerary": result,
-            "day_plans": result.get("day_plans", []),
-            "messages": [{
-                "role": "assistant",
-                "content": response_message,
-                "timestamp": ""
-            }]
-        }
-        
-    except Exception as e:
-        logger.error(f"Error refinando itinerario: {e}")
-        return {
-            "messages": [{
-                "role": "assistant",
-                "content": f"Hubo un error al modificar el itinerario. ¿Podrías ser más específico sobre qué quieres cambiar?",
-                "timestamp": ""
-            }]
-        }
+    elif scope == "dates_changed":
+        # Fechas cambiaron → re-buscar vuelos y hoteles
+        update["mobility_options"] = []
+        update["accommodation_options"] = []
+        # searched_places se preservan
+        logger.info("handle_refinement: limpiando mobility+accommodation — fechas cambiaron")
+
+    elif scope == "metadata_only":
+        # Solo metadatos (days, budget, travelers) → preservar todo
+        # El itinerary_builder recibirá los mismos places, flights, hotels
+        # pero reconstruirá el plan con los nuevos parámetros
+        logger.info("handle_refinement: preservando todo — solo metadata cambió")
+
+    return update

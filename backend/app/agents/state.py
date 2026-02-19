@@ -131,6 +131,15 @@ class TravelState(TypedDict):
     # Contexto acumulado
     accumulated_summary: Optional[str]
 
+    # Control de refinamiento
+    refinement_scope: Optional[Literal[
+        "metadata_only",       # days/budget/travelers → rebuild itinerary only
+        "dates_changed",       # start/end dates → re-run mobility + accommodation + build
+        "destination_changed", # destination → re-run entire pipeline
+        "style_changed",       # travel_style → re-run places + build
+    ]]
+    previous_itinerary: Optional[Dict]   # snapshot before refinement
+
     # Control de flujo
     needs_clarification: bool
     clarification_questions: List[str]

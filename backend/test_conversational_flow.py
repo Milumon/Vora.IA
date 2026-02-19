@@ -11,7 +11,7 @@ async def test_conversational_flow():
     """Prueba el flujo conversacional completo."""
     
     print("=" * 80)
-    print("PRUEBA DE FLUJO CONVERSACIONAL - AGENTE LAYLA")
+    print("PRUEBA DE FLUJO CONVERSACIONAL - AGENTE VORA")
     print("=" * 80)
     print()
     
@@ -69,7 +69,7 @@ async def test_conversational_flow():
             
             if assistant_messages:
                 last_response = assistant_messages[-1]["content"]
-                print(f"🤖 LAYLA: {last_response}")
+                print(f"🤖 VORA: {last_response}")
                 print()
             
             # Mostrar información de estado
@@ -136,7 +136,7 @@ async def test_single_message():
         ]
         
         if assistant_messages:
-            print(f"🤖 LAYLA: {assistant_messages[-1]['content']}\n")
+            print(f"🤖 VORA: {assistant_messages[-1]['content']}\n")
         
         print("📊 INFORMACIÓN EXTRAÍDA:")
         print(f"   - Destino: {result.get('destination', 'No especificado')}")
