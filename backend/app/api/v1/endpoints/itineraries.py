@@ -1,4 +1,5 @@
 from typing import List
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from supabase import Client
 
@@ -11,7 +12,7 @@ router = APIRouter()
 logger = get_logger(__name__)
 
 
-@router.get("/", response_model=List[ItineraryResponse])
+@router.get("", response_model=List[ItineraryResponse])
 async def list_itineraries(
     current_user: dict = Depends(get_current_active_user),
     supabase: Client = Depends(get_supabase)
@@ -71,14 +72,33 @@ async def create_itinerary(
 ):
     """Create a new itinerary."""
     try:
+        # Asegurar que el perfil exista
+        try:
+            supabase.table("profiles").upsert({
+                "id": current_user["id"],
+                "email": current_user.get("email", "user@example.com"),
+                "updated_at": datetime.now().isoformat()
+            }, on_conflict="id").execute()
+        except Exception:
+            pass
+        
+        payload = itinerary.model_dump()
         data = {
             "user_id": current_user["id"],
-            **itinerary.model_dump()
+            "title": payload["title"],
+            "description": payload.get("description"),
+            "destination": payload["destination"],
+            "start_date": payload.get("start_date"),
+            "end_date": payload.get("end_date"),
+            "days": payload["days"],
+            "budget": payload.get("budget"),
+            "travel_style": payload.get("travel_style"),
+            "travelers": payload.get("travelers", 1),
+            "data": payload["data"],
+            "status": "draft"
         }
         
-        response = supabase.table("itineraries")\
-            .insert(data)\
-            .execute()
+        response = supabase.table("itineraries").insert(data).execute()
         
         return response.data[0]
     except Exception as e:

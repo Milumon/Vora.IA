@@ -85,7 +85,8 @@ FORMATO DE RESPUESTA (JSON):
       ],
       "afternoon": [...],
       "evening": [...],
-      "notes": "Consejos específicos para este día"
+      "notes": "Consejos específicos para este día",
+      "day_summary": "Resumen breve y atractivo del día (ej: Llegada a Cusco y exploración del Centro Histórico)"
     }}
   ],
   "tips": [
@@ -109,7 +110,7 @@ Responde SOLO con el JSON, sin texto adicional.
             "destination": state["destination"],
             "days": state["days"],
             "budget": state.get("budget", "medium"),
-            "travel_style": ", ".join(state.get("travel_style", ["variado"])),
+            "travel_style": ", ".join(state.get("travel_style") or ["variado"]),
             "travelers": state.get("travelers", 1),
             "places_json": places_json
         })
@@ -117,6 +118,10 @@ Responde SOLO con el JSON, sin texto adicional.
         # Enriquecer lugares del itinerario con fotos y datos reales de searched_places
         searched_places_by_id = {p.get("place_id"): p for p in state.get("searched_places", []) if p.get("place_id")}
         result = _enrich_itinerary_with_place_data(result, searched_places_by_id)
+        
+        # Enriquecer itinerario con datos de bus (si existen)
+        bus_transfers = state.get("bus_transfers", [])
+        result = _embed_bus_transfers(result, bus_transfers)
         
         # Construir mensaje de respuesta
         response_message = _build_response_message(result, state)
@@ -182,6 +187,29 @@ def _enrich_itinerary_with_place_data(itinerary: Dict, searched_places_by_id: Di
                     if real_data.get("types"):
                         place["types"] = real_data["types"]
     
+    return itinerary
+
+
+def _embed_bus_transfers(itinerary: Dict, bus_transfers: List[Dict]) -> Dict:
+    """
+    Adjunta la información de transporte en bus al primer día del itinerario.
+    El frontend puede leer day_plan.bus_transfer para renderizar BusTransferCard.
+    """
+    if not bus_transfers:
+        return itinerary
+
+    day_plans = itinerary.get("day_plans", [])
+    if not day_plans:
+        return itinerary
+
+    # Adjuntar el primer transfer al primer día (tramo de llegada)
+    day_plans[0]["bus_transfer"] = bus_transfers[0]
+
+    # Si hay más tramos (multi-destino), los adjuntamos a días subsiguientes
+    for i, transfer in enumerate(bus_transfers[1:], 1):
+        if i < len(day_plans):
+            day_plans[i]["bus_transfer"] = transfer
+
     return itinerary
 
 

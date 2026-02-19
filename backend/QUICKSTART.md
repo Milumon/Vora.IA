@@ -36,7 +36,7 @@ SECRET_KEY=tu-secret-key-aqui
 ```bash
 # Activar entorno virtual
 # Windows:
-.\venv\Scripts\Activate.ps1
+.\.venv\Scripts\Activate.ps1
 # Linux/Mac:
 source venv/bin/activate
 

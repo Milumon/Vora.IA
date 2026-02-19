@@ -124,14 +124,27 @@ async def chat(
             await _save_conversation(
                 supabase,
                 current_user["id"],
+                current_user.get("email", ""),
                 result,
                 thread_id
             )
         
+        # Enriquecer itinerario con destino y metadatos del estado
+        itinerary_response = result.get("itinerary")
+        if itinerary_response:
+            itinerary_response = {
+                **itinerary_response,
+                "destination": result.get("destination") or itinerary_response.get("destination", "Perú"),
+                "days": result.get("days") or len(itinerary_response.get("day_plans", [])),
+                "budget": result.get("budget"),
+                "travel_style": result.get("travel_style"),
+                "travelers": result.get("travelers", 1),
+            }
+        
         return ChatResponse(
             message=response_message,
             thread_id=thread_id,
-            itinerary=result.get("itinerary"),
+            itinerary=itinerary_response,
             needs_clarification=result.get("needs_clarification", False),
             clarification_questions=result.get("clarification_questions", [])
         )
@@ -147,6 +160,7 @@ async def chat(
 async def _save_conversation(
     supabase,
     user_id: str,
+    user_email: str,
     result: dict,
     thread_id: str
 ):
@@ -156,17 +170,29 @@ async def _save_conversation(
         if not itinerary:
             return
         
+        # Asegurar que el perfil exista (para usuarios que no tienen trigger)
+        try:
+            supabase.table("profiles").upsert({
+                "id": user_id,
+                "email": user_email or "user@example.com",
+                "updated_at": datetime.now().isoformat()
+            }, on_conflict="id").execute()
+        except Exception:
+            pass  # El perfil puede ya existir
+        
         # Guardar itinerario
         itinerary_data = {
             "user_id": user_id,
             "title": itinerary.get("title", "Mi Viaje a Perú"),
-            "destination": result.get("destination"),
+            "description": itinerary.get("description"),
+            "destination": result.get("destination") or "Perú",
             "start_date": result.get("start_date"),
             "end_date": result.get("end_date"),
             "days": result.get("days"),
             "budget": result.get("budget"),
+            "travel_style": ", ".join(result.get("travel_style", [])) if isinstance(result.get("travel_style"), list) else result.get("travel_style"),
             "travelers": result.get("travelers", 1),
-            "itinerary_data": itinerary,
+            "data": itinerary,
             "thread_id": thread_id,
             "status": "draft"
         }

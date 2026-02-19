@@ -12,6 +12,7 @@ class ItineraryCreate(BaseModel):
     days: int
     budget: Optional[str] = None
     travel_style: Optional[str] = None
+    travelers: Optional[int] = 1
     data: Dict[str, Any]
 
 

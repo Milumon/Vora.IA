@@ -18,7 +18,7 @@ async def search_places(state: TravelState) -> dict:
     
     # Definir categorías según travel_style
     search_queries = _build_search_queries(
-        state.get("travel_style", []),
+        state.get("travel_style") or [],
         state.get("budget", "medium")
     )
     
@@ -58,7 +58,8 @@ def _build_search_queries(travel_style: List[str], budget: str) -> List[str]:
     }
     
     # Agregar queries según estilo
-    for style in travel_style:
+    # Agregar queries según estilo
+    for style in (travel_style or []):
         if style in base_queries:
             queries.extend(base_queries[style])
     
@@ -102,7 +103,7 @@ def _rank_places(places: List[Dict], state: TravelState) -> List[Dict]:
     - Relevancia al travel_style (peso: 0.3)
     """
     budget = state.get("budget", "medium")
-    travel_style = state.get("travel_style", [])
+    travel_style = state.get("travel_style") or []
     
     def calculate_score(place: Dict) -> float:
         score = 0.0

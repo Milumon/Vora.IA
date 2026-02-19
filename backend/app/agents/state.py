@@ -33,6 +33,34 @@ class DayPlan(TypedDict):
     notes: str
 
 
+class BusOption(TypedDict):
+    """Opción individual de bus encontrada en redbus.pe."""
+    empresa: str
+    hora_salida: str
+    hora_llegada: str
+    duracion: str
+    precio: float
+    tipo_servicio: str
+    asientos_disponibles: int
+    url_reserva: str
+
+
+class BusTransfer(TypedDict):
+    """Tramo de bus interprovincial (Lima → Destino)."""
+    origen: str
+    destino: str
+    fecha: str
+    mejor_precio: float
+    empresa: str
+    hora_salida: str
+    hora_llegada: str
+    duracion: str
+    tipo_servicio: str
+    url_busqueda: str
+    total_opciones: int
+    todas_opciones: List[BusOption]
+
+
 class TravelState(TypedDict):
     """Estado completo del agente de viajes."""
     # Conversación
@@ -53,6 +81,9 @@ class TravelState(TypedDict):
     
     # Datos de lugares
     searched_places: List[PlaceInfo]
+    
+    # Datos de transporte (buses)
+    bus_transfers: List[BusTransfer]
     
     # Itinerario generado
     itinerary: Optional[Dict]
