@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ItineraryCard } from '@/components/itinerary/ItineraryCard';
+import { ItineraryCard } from '@/components/itinerary/cards/ItineraryCard';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { Plus, FolderHeart } from 'lucide-react';

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { DayTimeline } from './DayTimeline';
-import { GoogleMapView } from '@/components/map/GoogleMapView';
+import { GoogleMapView } from '@/components/map/views/GoogleMapView';
 import { CalendarDays, DollarSign, Users, MapPin, Lightbulb } from 'lucide-react';
 
 interface ItineraryDetailProps {

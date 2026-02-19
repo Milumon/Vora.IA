@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { PlaceCard } from './PlaceCard';
+import { PlaceCard } from './cards/PlaceCard';
 import { Sunrise, Sun, Moon } from 'lucide-react';
 
 interface DayTimelineProps {

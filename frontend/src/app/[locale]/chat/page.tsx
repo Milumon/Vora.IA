@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import { ChatSidebar } from '@/components/chat/ChatSidebar';
 import { ItineraryHeader } from '@/components/itinerary/ItineraryHeader';
-import { CompactMapPreview } from '@/components/map/CompactMapPreview';
+import { CompactMapPreview } from '@/components/map/views/CompactMapPreview';
 import { DayTimelineVertical } from '@/components/itinerary/DayTimelineVertical';
-import { FullMapModal } from '@/components/map/FullMapModal';
+import { FullMapModal } from '@/components/map/views/FullMapModal';
 import { useChatStore } from '@/store/chatStore';
 import { Save, Share2, Download } from 'lucide-react';
 import { useRouter } from 'next/navigation';
