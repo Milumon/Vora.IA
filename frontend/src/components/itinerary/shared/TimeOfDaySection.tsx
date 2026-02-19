@@ -1,7 +1,7 @@
 'use client';
 
 import { Badge } from '@/components/ui/badge';
-import { PlaceCard } from '../cards/PlaceCard';
+import { PlaceCard } from '@/components/itinerary/cards/PlaceCard';
 import { Sunrise, Sun, Moon } from 'lucide-react';
 
 export type TimeOfDay = 'morning' | 'afternoon' | 'evening';

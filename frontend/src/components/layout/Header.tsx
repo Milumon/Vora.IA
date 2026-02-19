@@ -35,7 +35,7 @@ export function Header() {
             height={32}
             className="transition-transform group-hover:scale-110"
           />
-          <span className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+          <span className="text-xl font-bold bg-gradient-to-r from-primary to-secondary">
             Vora
           </span>
         </Link>

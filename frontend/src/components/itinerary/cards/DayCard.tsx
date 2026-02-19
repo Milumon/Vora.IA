@@ -62,28 +62,40 @@ export function formatDateRange(startDay: DayPlan, endDay: DayPlan): string | nu
 /* ─── Image Carousel ──────────────────────────────────────────── */
 
 /**
- * Horizontal scrollable carousel that shows **2 photos per place**
- * (at least the first two from each place's photo array).
+ * Horizontal scrollable carousel that shows **2 photos per place**.
+ * Only 4 photos visible at once, with scroll button to see more.
  */
 function DayImageCarousel({ places }: { places: PlaceInfo[] }) {
     const scrollRef = useRef<HTMLDivElement>(null);
 
     const scrollRight = useCallback(() => {
-        scrollRef.current?.scrollBy({ left: 220, behavior: 'smooth' });
+        // Scroll by width of 2 images + gap (112px * 2 + 8px gap)
+        scrollRef.current?.scrollBy({ left: 232, behavior: 'smooth' });
     }, []);
 
-    // Build list of { url, placeName } — at least 2 per place
+    // Build list of { url, placeName } — 2 different photos per place
     const photoItems: { url: string; placeName: string }[] = [];
     places.forEach((place) => {
-        const urls = getPlacePhotos(place.photos, 2, 600);
-        // Ensure at least 2 slots per place; pad with same url if only 1 available
-        const first = urls[0] || '/placeholder-place.jpg';
-        const second = urls[1] || first;
-        photoItems.push({ url: first, placeName: place.name });
-        photoItems.push({ url: second, placeName: place.name });
+        const urls = getPlacePhotos(place.photos, 8, 600); // Get up to 8 photos
+        
+        if (urls.length === 0) {
+            // No photos available, use placeholder twice
+            photoItems.push({ url: '/placeholder-place.jpg', placeName: place.name });
+            photoItems.push({ url: '/placeholder-place.jpg', placeName: place.name });
+        } else if (urls.length === 1) {
+            // Only 1 photo, use it twice (same photo)
+            photoItems.push({ url: urls[0], placeName: place.name });
+            photoItems.push({ url: urls[0], placeName: place.name });
+        } else {
+            // 2 or more photos, use first 2 different ones
+            photoItems.push({ url: urls[0], placeName: place.name });
+            photoItems.push({ url: urls[1], placeName: place.name });
+        }
     });
 
     if (photoItems.length === 0) return null;
+
+    const hasMoreThan4 = photoItems.length > 4;
 
     return (
         <div className="relative group/carousel">
@@ -99,7 +111,7 @@ function DayImageCarousel({ places }: { places: PlaceInfo[] }) {
                     >
                         <Image
                             src={item.url}
-                            alt={`${item.placeName} — foto ${idx + 1}`}
+                            alt={`${item.placeName} — foto ${Math.floor(idx / 2) + 1}`}
                             fill
                             className="object-cover"
                             sizes="112px"
@@ -108,9 +120,13 @@ function DayImageCarousel({ places }: { places: PlaceInfo[] }) {
                 ))}
             </div>
 
-            {photoItems.length > 4 && (
+            {/* Show scroll button only if more than 4 photos */}
+            {hasMoreThan4 && (
                 <button
-                    onClick={scrollRight}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        scrollRight();
+                    }}
                     aria-label="Ver más imágenes"
                     className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full
                      bg-white/90 shadow-md flex items-center justify-center

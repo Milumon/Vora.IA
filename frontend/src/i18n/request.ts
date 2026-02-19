@@ -5,7 +5,7 @@ const locales = ['es', 'en'];
 
 export default getRequestConfig(async ({ locale }) => {
   // Validate that the incoming `locale` parameter is valid
-  if (!locales.includes(locale as any)) notFound();
+  if (!locale || !locales.includes(locale)) notFound();
 
   // Load all translation files
   const [common, home, auth, chat, itineraries, footer] = await Promise.all([
@@ -18,6 +18,7 @@ export default getRequestConfig(async ({ locale }) => {
   ]);
 
   return {
+    locale,
     messages: {
       common: common.default,
       home: home.default,

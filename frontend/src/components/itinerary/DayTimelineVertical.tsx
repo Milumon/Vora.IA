@@ -51,7 +51,7 @@ function MobilityTimelineNode({
     return (
         <div className="flex gap-6">
             <div className="flex flex-col items-center w-[120px] flex-shrink-0">
-                <div className={`w-10 h-10 rounded-full bg-white border-[3px] flex items-center justify-center flex-shrink-0 z-10 ${colorClasses}`}>
+                <div className={`w-10 h-10 rounded-full bg-white border-[3px] flex items-center justify-center flex-shrink-0 z-0 ${colorClasses}`}>
                     <Icon className="w-4 h-4" />
                 </div>
                 <div className="mt-2 text-center">
@@ -95,7 +95,7 @@ function AccommodationTimelineNode({
     return (
         <div className="flex gap-6">
             <div className="flex flex-col items-center w-[120px] flex-shrink-0">
-                <div className="w-10 h-10 rounded-full bg-white border-[3px] border-purple-400 flex items-center justify-center flex-shrink-0 z-10">
+                <div className="w-10 h-10 rounded-full bg-white border-[3px] border-purple-400 flex items-center justify-center flex-shrink-0 z-0">
                     <Building2 className="w-4 h-4 text-purple-500" />
                 </div>
                 <div className="mt-2 text-center">
@@ -163,7 +163,7 @@ export function DayTimelineVertical({
                         <div className="flex gap-6">
                             {/* Left column: node + connector */}
                             <div className="flex flex-col items-center w-[120px] flex-shrink-0">
-                                <div className="w-10 h-10 rounded-full bg-white border-[3px] border-[#6B3FA0] flex items-center justify-center flex-shrink-0 z-10">
+                                <div className="w-10 h-10 rounded-full bg-white border-[3px] border-[#6B3FA0] flex items-center justify-center flex-shrink-0 z-0">
                                     <Calendar className="w-4 h-4 text-[#6B3FA0]" />
                                 </div>
 

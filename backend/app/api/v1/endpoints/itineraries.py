@@ -1,5 +1,4 @@
 from typing import List
-from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from supabase import Client
 
@@ -70,42 +69,46 @@ async def create_itinerary(
     current_user: dict = Depends(get_current_active_user),
     supabase: Client = Depends(get_supabase)
 ):
-    """Create a new itinerary."""
+    """Create a new itinerary.
+    
+    Note: user_id references auth.users(id) directly — no profiles dependency.
+    """
     try:
-        # Asegurar que el perfil exista
-        try:
-            supabase.table("profiles").upsert({
-                "id": current_user["id"],
-                "email": current_user.get("email", "user@example.com"),
-                "updated_at": datetime.now().isoformat()
-            }, on_conflict="id").execute()
-        except Exception:
-            pass
-        
         payload = itinerary.model_dump()
+
+        # Serialize date objects to ISO strings for Supabase
+        start_date = payload.get("start_date")
+        end_date = payload.get("end_date")
+
         data = {
             "user_id": current_user["id"],
             "title": payload["title"],
             "description": payload.get("description"),
             "destination": payload["destination"],
-            "start_date": payload.get("start_date"),
-            "end_date": payload.get("end_date"),
+            "start_date": start_date.isoformat() if start_date else None,
+            "end_date": end_date.isoformat() if end_date else None,
             "days": payload["days"],
             "budget": payload.get("budget"),
             "travel_style": payload.get("travel_style"),
             "travelers": payload.get("travelers", 1),
             "data": payload["data"],
-            "status": "draft"
+            "status": "draft",
         }
-        
+
         response = supabase.table("itineraries").insert(data).execute()
-        
+
+        if not response.data:
+            raise ValueError("Supabase insert returned no data")
+
         return response.data[0]
+
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error creating itinerary: {str(e)}")
+        logger.error(f"Error creating itinerary: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create itinerary"
+            detail=f"Failed to create itinerary: {str(e)}",
         )
 
 

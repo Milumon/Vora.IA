@@ -2,7 +2,8 @@
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
-from typing import List, Dict
+from typing import List, Dict, Optional
+from datetime import date, timedelta
 import json
 from app.agents.state import TravelState, DayPlan
 from app.config.settings import get_settings
@@ -118,7 +119,10 @@ Responde SOLO con el JSON, sin texto adicional.
         # Enriquecer lugares del itinerario con fotos y datos reales de searched_places
         searched_places_by_id = {p.get("place_id"): p for p in state.get("searched_places", []) if p.get("place_id")}
         result = _enrich_itinerary_with_place_data(result, searched_places_by_id)
-        
+
+        # Inyectar fechas de calendario en cada day_plan (si el usuario especificó start_date)
+        result = _inject_dates(result, state.get("start_date"))
+
         # Enriquecer itinerario con datos de movilidad (vuelos, bus, auto)
         mobility_options = state.get("mobility_options", [])
         result = _embed_mobility(result, mobility_options)
@@ -150,6 +154,36 @@ Responde SOLO con el JSON, sin texto adicional.
             }]
         }
 
+
+# ── Date injection ────────────────────────────────────────────────────────────
+
+def _inject_dates(itinerary: Dict, start_date: Optional[date]) -> Dict:
+    """
+    Stamp each day_plan with its real calendar date.
+
+    Strategy:
+      day_plan["date"] = start_date + (day_number - 1) days
+
+    If start_date is absent the field is left as null (the frontend already
+    handles this gracefully with a "Día N" fallback).
+    """
+    if not start_date:
+        return itinerary
+
+    for day in itinerary.get("day_plans", []):
+        day_number = day.get("day_number", 1)
+        computed: date = start_date + timedelta(days=day_number - 1)
+        day["date"] = computed.isoformat()  # "YYYY-MM-DD"
+
+    logger.debug(
+        "Injected dates: day 1 = %s, last day = %s",
+        start_date.isoformat(),
+        (start_date + timedelta(days=len(itinerary.get("day_plans", [])) - 1)).isoformat(),
+    )
+    return itinerary
+
+
+# ── Helpers ────────────────────────────────────────────────────────────────────
 
 def _normalize_name(name: str) -> str:
     """Normaliza nombre para comparación (minúsculas, sin espacios extra)."""

@@ -3,8 +3,8 @@ import { notFound } from 'next/navigation';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { QueryProvider } from '@/components/providers/QueryProvider';
 import { AuthProvider } from '@/components/providers/AuthProvider';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
 import { Inter } from 'next/font/google';
 import '@/app/globals.css';
 import type { Metadata } from 'next';
@@ -69,11 +69,12 @@ export default async function RootLayout({
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <QueryProvider>
               <AuthProvider>
-                <div className="flex min-h-screen flex-col">
-                  <Header />
-                  <main className="flex-1">{children}</main>
-                  {/* <Footer /> */}
-                </div>
+                <TooltipProvider>
+                  <div className="flex min-h-screen flex-col">
+                    <Header />
+                    <main className="flex-1">{children}</main>
+                  </div>
+                </TooltipProvider>
               </AuthProvider>
             </QueryProvider>
           </ThemeProvider>
