@@ -40,6 +40,9 @@ class Settings(BaseSettings):
     AMADEUS_CLIENT_ID: str = ""
     AMADEUS_CLIENT_SECRET: str = ""
     
+    # SerpApi (Google Flights — captures low-cost carriers)
+    SERPAPI_API_KEY: str = ""
+    
     # Rate Limiting
     RATE_LIMIT_PER_MINUTE: int = 60
     
