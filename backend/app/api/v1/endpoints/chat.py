@@ -3,10 +3,11 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from datetime import datetime
 import uuid
+from supabase import Client
 from app.core.dependencies import get_current_active_user
 from app.api.v1.schemas.chat import ChatRequest, ChatResponse
 from app.agents.graph import create_travel_agent_graph
-from app.services.supabase_client import get_supabase_client
+from app.services.supabase_client import get_supabase, get_supabase_client
 from app.config.logging import get_logger
 
 router = APIRouter()
@@ -19,7 +20,8 @@ async def chat(
     request: Request,
     chat_request: ChatRequest,
     current_user: dict = Depends(get_current_active_user),
-    supabase = Depends(get_supabase_client)
+    supabase: Client = Depends(get_supabase),
+    supabase_client = Depends(get_supabase_client)
 ):
     """
     Process chat message with LangGraph travel agent.
@@ -29,36 +31,48 @@ async def chat(
     - Refine existing itineraries
     - Answer questions about destinations
     - Handle clarifications
+    
+    Automatically saves messages to conversations table for persistence.
     """
     try:
         # Crear el grafo del agente
         graph = create_travel_agent_graph()
         
-        # Generar o usar thread_id existente
-        thread_id = chat_request.thread_id or str(uuid.uuid4())
+        # Generar o usar thread_id existente (conversation_id)
+        conversation_id = chat_request.thread_id or str(uuid.uuid4())
         
         # Recuperar conversación previa si existe
         previous_state = {}
         conversation_raw = None
+        conversation_exists = False
+        
         if chat_request.thread_id:
             try:
-                conversation = supabase.table("conversations").select("*").eq("id", thread_id).single().execute()
+                conversation = supabase.table("conversations")\
+                    .select("*")\
+                    .eq("id", conversation_id)\
+                    .eq("user_id", current_user["id"])\
+                    .single()\
+                    .execute()
+                    
                 if conversation.data:
                     conversation_raw = conversation.data
                     previous_state = conversation.data.get("state", {})
-                    logger.info(f"Conversación recuperada para thread_id: {thread_id} con {len(conversation.data.get('messages', []))} mensajes previos")
+                    conversation_exists = True
+                    logger.info(f"Conversación recuperada para conversation_id: {conversation_id}")
             except Exception as e:
                 logger.warning(f"No se pudo recuperar conversación previa: {e}")
         
         # Restaurar mensajes previos completos de la conversación
         previous_messages = []
-        if chat_request.thread_id and conversation_raw:
+        if conversation_exists and conversation_raw:
             previous_messages = conversation_raw.get("messages", [])
         
+        # Crear nuevo mensaje del usuario
         new_user_message = {
             "role": "user",
             "content": chat_request.message,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.utcnow().isoformat()
         }
         
         # Construir resumen compacto del estado acumulado para el contexto del LLM
@@ -89,7 +103,7 @@ async def chat(
         }
         
         # Ejecutar el grafo
-        logger.info(f"Ejecutando grafo para thread_id: {thread_id}")
+        logger.info(f"Ejecutando grafo para conversation_id: {conversation_id}")
         result = await graph.ainvoke(input_state)
         
         # Extraer respuesta
@@ -100,10 +114,21 @@ async def chat(
         
         response_message = assistant_messages[-1]["content"] if assistant_messages else "Lo siento, no pude procesar tu mensaje."
         
-        # Guardar estado de la conversación en Supabase
+        # Crear mensaje del asistente
+        new_assistant_message = {
+            "role": "assistant",
+            "content": response_message,
+            "timestamp": datetime.utcnow().isoformat(),
+            "metadata": {
+                "needs_clarification": result.get("needs_clarification", False),
+                "clarification_questions": result.get("clarification_questions", []),
+            }
+        }
+        
+        # Guardar o actualizar conversación en Supabase
         try:
             conversation_data = {
-                "id": thread_id,
+                "id": conversation_id,
                 "user_id": current_user["id"],
                 "messages": result.get("messages", []),
                 "state": {
@@ -122,23 +147,35 @@ async def chat(
                     "mobility_options": result.get("mobility_options", []),
                     "accommodation_options": result.get("accommodation_options", []),
                 },
-                "updated_at": datetime.now().isoformat()
+                "is_active": True,
+                "last_message_at": datetime.utcnow().isoformat(),
+                "updated_at": datetime.utcnow().isoformat()
             }
+            
+            # Si es nueva conversación, deactivar otras primero
+            if not conversation_exists:
+                supabase.table("conversations")\
+                    .update({"is_active": False})\
+                    .eq("user_id", current_user["id"])\
+                    .eq("is_active", True)\
+                    .execute()
             
             # Upsert (insert o update)
             supabase.table("conversations").upsert(conversation_data).execute()
-            logger.info(f"Estado de conversación guardado para thread_id: {thread_id}")
+            logger.info(f"Conversación guardada para conversation_id: {conversation_id}")
+        except Exception as e:
+            logger.error(f"Error guardando conversación: {e}", exc_info=True)
         except Exception as e:
             logger.error(f"Error guardando estado de conversación: {e}")
         
         # Guardar itinerario completo en Supabase si es necesario
         if chat_request.save_conversation and result.get("itinerary"):
-            await _save_conversation(
+            await _save_itinerary(
                 supabase,
                 current_user["id"],
                 current_user.get("email", ""),
                 result,
-                thread_id
+                conversation_id
             )
         
         # Enriquecer itinerario con destino y metadatos del estado
@@ -155,7 +192,7 @@ async def chat(
         
         return ChatResponse(
             message=response_message,
-            thread_id=thread_id,
+            thread_id=conversation_id,
             itinerary=itinerary_response,
             needs_clarification=result.get("needs_clarification", False),
             clarification_questions=result.get("clarification_questions", [])
@@ -169,14 +206,14 @@ async def chat(
         )
 
 
-async def _save_conversation(
-    supabase,
+async def _save_itinerary(
+    supabase: Client,
     user_id: str,
     user_email: str,
     result: dict,
-    thread_id: str
+    conversation_id: str
 ):
-    """Guarda la conversación y el itinerario en Supabase."""
+    """Guarda el itinerario en Supabase vinculado a la conversación."""
     try:
         itinerary = result.get("itinerary")
         if not itinerary:
@@ -187,14 +224,15 @@ async def _save_conversation(
             supabase.table("profiles").upsert({
                 "id": user_id,
                 "email": user_email or "user@example.com",
-                "updated_at": datetime.now().isoformat()
+                "updated_at": datetime.utcnow().isoformat()
             }, on_conflict="id").execute()
         except Exception:
             pass  # El perfil puede ya existir
         
-        # Guardar itinerario
+        # Guardar itinerario vinculado a la conversación
         itinerary_data = {
             "user_id": user_id,
+            "conversation_id": conversation_id,  # Vinculado a conversación
             "title": itinerary.get("title", "Mi Viaje a Perú"),
             "description": itinerary.get("description"),
             "destination": result.get("destination") or "Perú",
@@ -205,15 +243,14 @@ async def _save_conversation(
             "travel_style": ", ".join(result.get("travel_style", [])) if isinstance(result.get("travel_style"), list) else result.get("travel_style"),
             "travelers": result.get("travelers", 1),
             "data": itinerary,
-            "thread_id": thread_id,
             "status": "draft"
         }
         
         response = supabase.table("itineraries").insert(itinerary_data).execute()
-        logger.info(f"Itinerario guardado para usuario {user_id}")
+        logger.info(f"Itinerario guardado para usuario {user_id} en conversación {conversation_id}")
         
     except Exception as e:
-        logger.error(f"Error guardando conversación: {e}")
+        logger.error(f"Error guardando itinerario: {e}", exc_info=True)
 
 
 def _build_state_summary(state: dict) -> str:
