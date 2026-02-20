@@ -44,16 +44,16 @@ export function ChatPanel({ messages, isLoading, onSendMessage }: ChatPanelProps
 
                 {/* Header bar */}
                 <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100">
-                    <div className="w-9 h-9 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                    {/* <div className="w-9 h-9 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
                         <Image src="/images/Vora.webp" alt="Vora" width={36} height={36} className="object-cover" />
                     </div>
                     <div>
                         <p className="text-gray-900 font-semibold text-sm leading-tight">Vora</p>
                         <p className="text-gray-400 text-xs">Planificadora de viajes IA</p>
-                    </div>
+                    </div> */}
                     {isLoading && (
                         <span className="ml-auto flex items-center gap-1.5 text-gray-400 text-xs">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                             Pensando…
                         </span>
                     )}

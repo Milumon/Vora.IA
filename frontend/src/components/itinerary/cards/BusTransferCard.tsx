@@ -1,7 +1,28 @@
 'use client';
 
 import { Bus, Clock, ArrowRight, Ticket, Star } from 'lucide-react';
-import type { BusTransfer, BusOption } from '@/store/chatStore';
+
+export interface BusOption {
+    empresa: string;
+    hora_salida: string;
+    hora_llegada: string;
+    precio: number;
+    tipo_servicio: string;
+}
+
+export interface BusTransfer {
+    origen: string;
+    destino: string;
+    hora_salida: string;
+    hora_llegada: string;
+    duracion: string;
+    empresa: string;
+    tipo_servicio: string;
+    mejor_precio: number;
+    total_opciones: number;
+    url_busqueda: string;
+    todas_opciones: BusOption[];
+}
 
 interface BusTransferCardProps {
     transfer: BusTransfer;
@@ -74,7 +95,7 @@ export function BusTransferCard({ transfer }: BusTransferCardProps) {
     const badgeClass = getServiceBadgeColor(transfer.tipo_servicio);
 
     return (
-        <div className="w-full bg-white rounded-2xl shadow-sm border border-orange-100 overflow-hidden">
+        <div className="w-full bg-white rounded-2xl shadow-md border border-orange-100 overflow-hidden">
             {/* Header strip */}
             <div className="bg-gradient-to-r from-orange-50 to-amber-50 px-5 py-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">

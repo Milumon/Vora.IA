@@ -12,6 +12,9 @@ export async function GET(request: NextRequest) {
     await supabase.auth.exchangeCodeForSession(code);
   }
 
-  // URL to redirect to after sign in process completes
-  return NextResponse.redirect(new URL('/chat', request.url));
+  // Redirect to the root landing page so any pending message (saved in
+  // localStorage before the user was forced to login) is restored in the
+  // HeroSection input. The user can then confirm and press "Planifica mi viaje".
+  const locale = requestUrl.pathname.split('/')[1] || 'es';
+  return NextResponse.redirect(new URL(`/${locale}`, request.url));
 }

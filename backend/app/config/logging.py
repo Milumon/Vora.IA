@@ -23,6 +23,12 @@ def setup_logging() -> None:
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("httpcore").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
+    logging.getLogger("hpack").setLevel(logging.WARNING)
+    logging.getLogger("h2").setLevel(logging.WARNING)
+    logging.getLogger("httpcore.http2").setLevel(logging.WARNING)
+    
+    # Reduce uvicorn access logs (optional - comment out if you want to see requests)
+    logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
 
 
 def get_logger(name: str) -> logging.Logger:

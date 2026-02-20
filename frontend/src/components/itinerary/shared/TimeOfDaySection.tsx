@@ -57,8 +57,8 @@ export function TimeOfDaySection({ timeOfDay, places }: TimeOfDaySectionProps) {
 
             {/* Places */}
             <div className="ml-12 space-y-4">
-                {places.map((place, idx) => (
-                    <PlaceCard key={idx} place={place} />
+                {places.map((place) => (
+                    <PlaceCard key={place.place_id || place.name} place={place} />
                 ))}
             </div>
         </div>

@@ -49,12 +49,12 @@ function getAmenityIcon(amenity: string) {
 
 /* ─── Sub-components ──────────────────────────────────────────── */
 
-function HotelImageCarousel({ 
-    images, 
-    name, 
-    onImageClick 
-}: { 
-    images: string[]; 
+function HotelImageCarousel({
+    images,
+    name,
+    onImageClick
+}: {
+    images: string[];
     name: string;
     onImageClick: () => void;
 }) {
@@ -147,10 +147,10 @@ function AmenityChips({ amenities }: { amenities: string[] }) {
     );
 }
 
-function HotelOptionCard({ 
-    hotel, 
-    onImageClick 
-}: { 
+function HotelOptionCard({
+    hotel,
+    onImageClick
+}: {
     hotel: AccommodationOption;
     onImageClick: () => void;
 }) {
@@ -213,7 +213,7 @@ export function AccommodationCard({ options }: AccommodationCardProps) {
     const [expanded, setExpanded] = useState(false);
     const [selectedHotel, setSelectedHotel] = useState<AccommodationOption | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
-    
+
     const bestOption = useMemo(() => options[0] ?? null, [options]);
     const moreOptions = useMemo(() => options.slice(1), [options]);
     const visibleMore = expanded ? moreOptions : moreOptions.slice(0, 2);
@@ -227,7 +227,7 @@ export function AccommodationCard({ options }: AccommodationCardProps) {
 
     return (
         <>
-            <div className="bg-white rounded-2xl shadow-sm border border-purple-200 overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-md border border-purple-200 overflow-hidden">
                 {/* Header */}
                 <div className="bg-gradient-to-r from-purple-50 to-indigo-50 px-5 py-3">
                     <div className="flex items-center justify-between">

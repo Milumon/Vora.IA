@@ -1,14 +1,12 @@
 'use client';
 
 /**
- * chat/page.tsx — 3-phase state machine
+ * chat/page.tsx — 2-phase state machine
  *
- * Phase 1 — hero:      VoraHeroLanding   (no messages)
- * Phase 2 — chatting:  ChatPanel         (messages but no itinerary)
- * Phase 3 — itinerary: Split view        (itinerary ready)
+ * Phase 1 — chatting:  ChatPanel        (messages but no itinerary)
+ * Phase 2 — itinerary: Split view       (itinerary ready)
  *
  * Transitions:
- *   hero → chatting:   hero slides up & fades out, chat panel slides up from below
  *   chatting → itinerary: chat panel squishes/fades left, itinerary panel slides right in
  */
 
@@ -16,7 +14,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ChatSidebar } from '@/components/chat/ChatSidebar';
 import { ChatPanel } from '@/components/chat/ChatPanel';
-import { VoraHeroLanding } from '@/components/chat/VoraHeroLanding';
 import { ItineraryHeader } from '@/components/itinerary/ItineraryHeader';
 import { CompactMapPreview } from '@/components/map/views/CompactMapPreview';
 import { DayTimelineVertical } from '@/components/itinerary/DayTimelineVertical';
@@ -29,12 +26,12 @@ import { useLocale } from 'next-intl';
 import { itinerariesApi } from '@/lib/api/endpoints';
 import { useAuth } from '@/components/providers/AuthProvider';
 
-type Phase = 'hero' | 'chatting' | 'itinerary';
+type Phase = 'chatting' | 'itinerary';
 
 export default function ChatPage() {
   const searchParams = useSearchParams();
   const itineraryId = searchParams.get('itinerary');
-  
+
   const { generatedItinerary, selectedPlace, setSelectedPlace, messages, setGeneratedItinerary, setMessages, setConversationId } = useChatStore();
   const { sendMessage, isLoading } = useChat();
   const router = useRouter();
@@ -43,12 +40,59 @@ export default function ChatPage() {
   const [, setSelectedDay] = useState(1);
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const [loadingItinerary, setLoadingItinerary] = useState(false);
+  const [pendingMessage, setPendingMessage] = useState<string | null>(null);
 
   // ── Phase tracking ───────────────────────────────────────────────────────
-  const [phase, setPhase] = useState<Phase>('hero');
+  const [phase, setPhase] = useState<Phase>('chatting');
   // 'entering' = animating into the new phase
   const [animating, setAnimating] = useState(false);
-  const prevPhaseRef = useRef<Phase>('hero');
+  const prevPhaseRef = useRef<Phase>('chatting');
+  const pendingMessageSentRef = useRef(false);
+
+  // ── Load pending message from localStorage on mount ──────────────────────
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (pendingMessageSentRef.current) return;
+    
+    const pending = localStorage.getItem('vora_pending_message');
+    console.log('🔍 [Mount] Checking for pending message:', pending);
+    
+    if (pending) {
+      console.log('✅ [Mount] Found pending message, setting state');
+      setPendingMessage(pending);
+      localStorage.removeItem('vora_pending_message');
+    }
+  }, []);
+
+  // ── Send pending message when user is authenticated ──────────────────────
+  useEffect(() => {
+    if (!pendingMessage) {
+      console.log('⏭️ [Send] No pending message');
+      return;
+    }
+    
+    if (pendingMessageSentRef.current) {
+      console.log('⏭️ [Send] Already sent, skipping');
+      return;
+    }
+    
+    if (!user) {
+      console.log('⏳ [Send] Waiting for user authentication...');
+      return;
+    }
+    
+    console.log('🚀 [Send] All conditions met, sending message:', pendingMessage);
+    pendingMessageSentRef.current = true;
+    
+    // Small delay to ensure everything is mounted
+    const timer = setTimeout(() => {
+      console.log('📤 [Send] Executing sendMessage now...');
+      sendMessage(pendingMessage);
+      setPendingMessage(null);
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, [pendingMessage, user, sendMessage]);
 
   // Load itinerary if ID is provided in URL
   useEffect(() => {
@@ -58,14 +102,14 @@ export default function ChatPage() {
         .then(({ data }) => {
           // Load itinerary data
           setGeneratedItinerary(data.data);
-          
+
           // If there's a conversation_id, load the conversation
           if (data.conversation_id) {
             setConversationId(data.conversation_id);
             // TODO: Load conversation messages from backend
             // For now, we'll just show the itinerary
           }
-          
+
           setLoadingItinerary(false);
         })
         .catch((error) => {
@@ -73,14 +117,10 @@ export default function ChatPage() {
           setLoadingItinerary(false);
         });
     }
-  }, [itineraryId, loadingItinerary, setGeneratedItinerary, setConversationId]);
+  }, [itineraryId, setGeneratedItinerary, setConversationId]);
 
   useEffect(() => {
-    const target: Phase = generatedItinerary
-      ? 'itinerary'
-      : messages.length > 0
-        ? 'chatting'
-        : 'hero';
+    const target: Phase = generatedItinerary ? 'itinerary' : 'chatting';
 
     if (target !== phase) {
       setAnimating(true);
@@ -94,7 +134,7 @@ export default function ChatPage() {
       }, 50);
       return () => clearTimeout(t);
     }
-  }, [messages.length, generatedItinerary, phase]);
+  }, [generatedItinerary, phase]);
 
   // ── Save / Share ─────────────────────────────────────────────────────────
   const handleSaveItinerary = async () => {
@@ -156,30 +196,12 @@ export default function ChatPage() {
       className="relative w-full overflow-hidden bg-black"
       style={{ height: 'calc(100vh - 4rem)' }}
     >
-      {/* ── PHASE 1: Hero ─────────────────────────────────────────────── */}
-      <div
-        className="absolute inset-0 transition-all duration-500 ease-in-out"
-        style={{
-          opacity: phase === 'hero' ? 1 : 0,
-          transform: phase === 'hero' ? 'translateY(0)' : 'translateY(-40px)',
-          pointerEvents: phase === 'hero' ? 'auto' : 'none',
-          zIndex: phase === 'hero' ? 10 : 1,
-        }}
-      >
-        <VoraHeroLanding onSendMessage={sendMessage} isLoading={isLoading} />
-      </div>
-
-      {/* ── PHASE 2: Chat Panel ───────────────────────────────────────── */}
+      {/* ── PHASE 1: Chat Panel ───────────────────────────────────────── */}
       <div
         className="absolute inset-0 transition-all duration-500 ease-in-out"
         style={{
           opacity: phase === 'chatting' ? 1 : 0,
-          transform:
-            phase === 'chatting'
-              ? 'translateY(0)'
-              : prevPhaseRef.current === 'hero' || phase === 'hero'
-                ? 'translateY(30px)'
-                : 'translateX(-60px)',
+          transform: phase === 'chatting' ? 'translateX(0)' : 'translateX(-60px)',
           pointerEvents: phase === 'chatting' ? 'auto' : 'none',
           zIndex: phase === 'chatting' ? 10 : 1,
         }}
@@ -191,7 +213,7 @@ export default function ChatPage() {
         />
       </div>
 
-      {/* ── PHASE 3: Itinerary Split View ─────────────────────────────── */}
+      {/* ── PHASE 2: Itinerary Split View ─────────────────────────────── */}
       <div
         className="absolute inset-0 flex transition-all duration-600 ease-in-out"
         style={{

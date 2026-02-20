@@ -30,6 +30,12 @@ const nextConfig = {
         hostname: '*.googleusercontent.com',
         pathname: '/**',
       },
+      // Wildcard for Serper.dev place/hotel image results (third-party domains)
+      {
+        protocol: 'https',
+        hostname: '**',
+        pathname: '/**',
+      },
     ],
   },
 };

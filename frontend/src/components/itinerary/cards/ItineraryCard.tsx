@@ -33,7 +33,7 @@ export function ItineraryCard({ itinerary }: ItineraryCardProps) {
     const locale = useLocale();
 
     return (
-        <Card className="group hover:shadow-lg transition-all duration-200 hover:border-primary/50">
+        <Card className="group shadow-md hover:shadow-xl transition-all duration-200 hover:border-primary/50">
             <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">

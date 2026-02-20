@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useState, useEffect } from 'react';
 import { ChevronRight, ArrowRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -65,66 +65,83 @@ export function formatDateRange(startDay: DayPlan, endDay: DayPlan): string | nu
 /* ─── Image Carousel ──────────────────────────────────────────── */
 
 /**
- * Horizontal scrollable carousel that shows **2 photos per place**.
- * Only 4 photos visible at once, with scroll button to see more.
+ * Horizontal image strip — exactly **1 photo per place**.
+ * Images fill the card width (max 4 visible); wider aspect ratio.
+ * Scrolls horizontally when there are more than 4 places.
  */
 function DayImageCarousel({ places }: { places: PlaceInfo[] }) {
     const scrollRef = useRef<HTMLDivElement>(null);
+    const [canScroll, setCanScroll] = useState(false);
 
-    const scrollRight = useCallback(() => {
-        // Scroll by width of 2 images + gap (112px * 2 + 8px gap)
-        scrollRef.current?.scrollBy({ left: 232, behavior: 'smooth' });
+    const checkScroll = useCallback(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+        setCanScroll(el.scrollWidth > el.clientWidth + 4);
     }, []);
 
-    // Build list of { url, placeName } — 2 different photos per place
+    useEffect(() => {
+        checkScroll();
+        window.addEventListener('resize', checkScroll);
+        return () => window.removeEventListener('resize', checkScroll);
+    }, [checkScroll]);
+
+    // 1 photo per place — take the first valid photo from each place
     const photoItems: { url: string; placeName: string }[] = [];
     places.forEach((place) => {
-        const urls = getPlacePhotos(place.photos, 8, 600); // Get up to 8 photos
-        
-        if (urls.length === 0) {
-            // No photos available, use placeholder twice
-            photoItems.push({ url: '/placeholder-place.jpg', placeName: place.name });
-            photoItems.push({ url: '/placeholder-place.jpg', placeName: place.name });
-        } else if (urls.length === 1) {
-            // Only 1 photo, use it twice (same photo)
-            photoItems.push({ url: urls[0], placeName: place.name });
-            photoItems.push({ url: urls[0], placeName: place.name });
-        } else {
-            // 2 or more photos, use first 2 different ones
-            photoItems.push({ url: urls[0], placeName: place.name });
-            photoItems.push({ url: urls[1], placeName: place.name });
+        const urls = getPlacePhotos(place.photos, 1, 600);
+        const url = urls.find((u) => u && u !== '/placeholder-place.jpg') || urls[0];
+        if (url) {
+            photoItems.push({ url, placeName: place.name });
         }
     });
 
     if (photoItems.length === 0) return null;
 
-    const hasMoreThan4 = photoItems.length > 4;
+    const visibleCount = Math.min(photoItems.length, 4);
+
+    const scrollRight = useCallback(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+        const slotWidth = el.clientWidth / visibleCount;
+        el.scrollBy({ left: slotWidth, behavior: 'smooth' });
+    }, [visibleCount]);
 
     return (
         <div className="relative group/carousel">
             <div
                 ref={scrollRef}
-                className="flex gap-2 overflow-x-auto scrollbar-hide scroll-smooth"
+                className="flex gap-1 overflow-x-auto scrollbar-hide scroll-smooth"
+                onScroll={checkScroll}
             >
                 {photoItems.map((item, idx) => (
                     <div
-                        key={idx}
-                        className="relative flex-shrink-0 w-28 h-28 rounded-lg overflow-hidden bg-muted"
+                        key={`${item.placeName}-${idx}`}
+                        className="relative flex-shrink-0 rounded-lg overflow-hidden bg-muted"
+                        style={{
+                            width: `calc(${100 / visibleCount}% - ${((visibleCount - 1) * 4) / visibleCount
+                                }px)`,
+                            aspectRatio: '3 / 2',
+                        }}
                         title={item.placeName}
                     >
                         <Image
                             src={item.url}
-                            alt={`${item.placeName} — foto ${Math.floor(idx / 2) + 1}`}
+                            alt={item.placeName}
                             fill
                             className="object-cover"
-                            sizes="112px"
+                            sizes={`${Math.round(100 / visibleCount)}vw`}
                         />
                     </div>
                 ))}
             </div>
 
-            {/* Show scroll button only if more than 4 photos */}
-            {hasMoreThan4 && (
+            {/* Gradient fade on right edge when scrollable */}
+            {canScroll && (
+                <div className="absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-card/80 to-transparent pointer-events-none rounded-r-lg" />
+            )}
+
+            {/* Scroll-right button */}
+            {canScroll && (
                 <Button
                     onClick={(e) => {
                         e.stopPropagation();
@@ -132,7 +149,7 @@ function DayImageCarousel({ places }: { places: PlaceInfo[] }) {
                     }}
                     variant="secondary"
                     size="icon"
-                    className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full shadow-lg opacity-0 group-hover/carousel:opacity-100 transition-opacity"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 z-10 h-7 w-7 rounded-full shadow-lg opacity-0 group-hover/carousel:opacity-100 transition-opacity bg-black/40 hover:bg-black/60 border-0 text-white [&_svg]:text-white"
                     aria-label="Ver más imágenes"
                 >
                     <ChevronRight className="w-4 h-4" />
@@ -155,7 +172,7 @@ function DayTags({
 }) {
     return (
         <div className="flex items-center gap-2 text-sm flex-wrap">
-            <Badge variant="secondary">
+            <Badge className="bg-orange-500 hover:bg-orange-500 text-white font-semibold border-0">
                 Día {dayNumber}
             </Badge>
             <span className="text-muted-foreground">·</span>
@@ -194,7 +211,7 @@ export function DayCard({ day, onDaySelect }: DayCardProps) {
     return (
         <Card
             onClick={() => onDaySelect(day.day_number)}
-            className="cursor-pointer hover:shadow-lg transition-all group"
+            className="cursor-pointer shadow-md hover:shadow-xl transition-all group"
         >
             <CardContent className="p-5 space-y-4">
                 {/* Image carousel — 2 photos per place */}

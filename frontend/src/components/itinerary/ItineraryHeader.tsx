@@ -19,12 +19,12 @@ export function ItineraryHeader({ itinerary }: ItineraryHeaderProps) {
 
   // ── Stats dinámicos ────────────────────────────────────────────────
   const totalPlaces = itinerary.day_plans.reduce((acc, day) =>
-    acc + day.morning.length + day.afternoon.length + day.evening.length, 0
+    acc + (day.morning?.length || 0) + (day.afternoon?.length || 0) + (day.evening?.length || 0), 0
   );
 
   const cities = new Set(
     itinerary.day_plans.flatMap(day =>
-      [...day.morning, ...day.afternoon, ...day.evening].map(p => p.address?.split(',')[0])
+      [...(day.morning || []), ...(day.afternoon || []), ...(day.evening || [])].map(p => p.address?.split(',')[0])
     )
   ).size;
 

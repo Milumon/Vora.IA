@@ -140,10 +140,15 @@ async def search_google_flights(
         return []
 
 
-def _parse_price_from_text(text: str) -> float:
+def _parse_price_from_text(text) -> float:
     """Extract a numeric price from text like 'USD 53.90', '$99', 'S/ 320'."""
+    # Handle numeric input (Serper sometimes returns price as int/float)
+    if isinstance(text, (int, float)):
+        val = float(text)
+        return val if 0 < val <= 10000 else 0.0
     if not text:
         return 0.0
+    text = str(text)
     # USD explicit
     m = re.search(r"USD\s*([\d,]+\.?\d*)", text, re.IGNORECASE)
     if m:

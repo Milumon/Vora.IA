@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useTranslations } from 'next-intl';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Mail, Lock } from 'lucide-react';
@@ -17,18 +17,22 @@ export function LoginForm() {
   const tCommon = useTranslations('common');
   const { signIn, signInWithGoogle, error } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
 
+  // Get return URL from query params, default to /chat
+  const returnTo = searchParams.get('returnTo') || '/chat';
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
       await signIn(formData.email, formData.password);
-      router.push('/chat');
+      router.push(returnTo);
     } catch (err) {
       console.error('Login error:', err);
     } finally {
@@ -40,6 +44,8 @@ export function LoginForm() {
     setLoading(true);
     try {
       await signInWithGoogle();
+      // Note: Google sign in redirects automatically, so we can't control the redirect here
+      // The redirect will be handled by the auth callback
     } catch (err) {
       console.error('Google sign in error:', err);
       setLoading(false);
@@ -142,7 +148,10 @@ export function LoginForm() {
       <CardFooter className="flex flex-col space-y-2">
         <div className="text-sm text-center text-muted-foreground">
           {t('noAccount')}{' '}
-          <Link href="/auth/register" className="text-primary hover:underline">
+          <Link 
+            href={`/auth/register${returnTo !== '/chat' ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`} 
+            className="text-primary hover:underline"
+          >
             {t('signUp')}
           </Link>
         </div>
