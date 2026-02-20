@@ -93,7 +93,7 @@ export function ItineraryCard({ itinerary }: ItineraryCardProps) {
                         })}
                     </span>
                     <Button asChild size="sm" variant="ghost" className="gap-2">
-                        <Link href={`/${locale}/itineraries/${itinerary.id}`}>
+                        <Link href={`/${locale}/chat?itinerary=${itinerary.id}`}>
                             <Eye className="h-4 w-4" />
                             {t('card.viewDetails')}
                         </Link>

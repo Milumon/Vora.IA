@@ -4,10 +4,8 @@ import { useState, useRef, useEffect } from 'react';
 import { useChat } from '@/hooks/useChat';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { MessageBubble } from './MessageBubble';
-import { MessageInput } from './MessageInput';
 import { TypingIndicator } from './TypingIndicator';
-import { Send, Sparkles } from 'lucide-react';
-import Image from 'next/image';
+import { Sparkles, Send } from 'lucide-react';
 
 const SUGGESTED_PROMPTS = [
   'Quiero ir a Cusco 5 días con presupuesto medio',
@@ -19,11 +17,12 @@ const SUGGESTED_PROMPTS = [
 export function ChatSidebar() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
-  const { 
-    messages, 
-    isLoading, 
-    sendMessage, 
+  const {
+    messages,
+    isLoading,
+    sendMessage,
   } = useChat();
+  const [input, setInput] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(messages.length === 0);
   const userName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || '';
 
@@ -40,43 +39,55 @@ export function ChatSidebar() {
     sendMessage(prompt);
   };
 
-  const handleSendMessage = (message: string) => {
-    sendMessage(message);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (input.trim() && !isLoading) {
+      sendMessage(input);
+      setInput('');
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
   };
 
   return (
     <div className="flex flex-col h-full bg-white border-r border-gray-200">
-
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto px-6 py-4">
+      <div className="flex-1 overflow-y-auto px-6 py-6">
         {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full">
+          <div className="flex flex-col items-center justify-center h-full max-w-2xl mx-auto">
             {/* Welcome Message */}
-            <div className="text-center mb-8 space-y-3">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
-                <Sparkles className="w-8 h-8 text-gray-700" />
+            <div className="text-center mb-12 space-y-4">
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-blue-50 to-indigo-50 mb-6">
+                <Sparkles className="w-10 h-10 text-blue-600" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900">
-                {userName ? `Hola, ${userName}` : 'Bienvenido'}
-              </h3>
-              <p className="text-sm text-gray-600 max-w-xs mx-auto">
+              <h2 className="text-2xl font-bold text-gray-900">
+                {userName ? `Hola, ${userName}` : 'Bienvenido a Vora'}
+              </h2>
+              <p className="text-base text-gray-600 max-w-md mx-auto leading-relaxed">
                 Cuéntame sobre tu próximo viaje y crearé un itinerario personalizado para ti
               </p>
             </div>
 
-            {/* Suggested Prompts */}
+            {/* Suggested Prompts - Estilo similar a la imagen */}
             {showSuggestions && (
-              <div className="w-full space-y-2">
-                <p className="text-xs text-gray-500 mb-3">Sugerencias:</p>
-                {SUGGESTED_PROMPTS.map((prompt, idx) => (
-                  <button
-                    key={idx}
-                    className="w-full text-left p-3 text-sm text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200"
-                    onClick={() => handleSuggestionClick(prompt)}
-                  >
-                    {prompt}
-                  </button>
-                ))}
+              <div className="w-full space-y-3">
+                <p className="text-sm font-medium text-gray-700 mb-4">Prueba con estas ideas:</p>
+                <div className="grid gap-3">
+                  {SUGGESTED_PROMPTS.map((prompt, idx) => (
+                    <button
+                      key={idx}
+                      className="w-full text-left px-4 py-4 text-sm text-gray-800 bg-white hover:bg-gray-50 rounded-xl transition-all border border-gray-200 hover:border-gray-300 hover:shadow-sm"
+                      onClick={() => handleSuggestionClick(prompt)}
+                    >
+                      <span className="block">{prompt}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -87,21 +98,61 @@ export function ChatSidebar() {
                 <MessageBubble message={message} />
               </div>
             ))}
-            
+
             {isLoading && <TypingIndicator />}
-            
+
             <div ref={messagesEndRef} />
           </>
         )}
       </div>
 
-      {/* Input Area */}
+      {/* Input Area - Estilo minimalista similar a la imagen */}
       <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 bg-white">
-        <MessageInput
-          onSendMessage={handleSendMessage}
-          disabled={isLoading}
-          placeholder="Escribe tu mensaje..."
-        />
+        <form onSubmit={handleSubmit} className="relative">
+          <div className="relative flex items-end gap-2 bg-white border border-gray-300 rounded-2xl px-4 py-3 focus-within:border-gray-400 transition-colors">
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Pregunta cualquier cosa..."
+              disabled={isLoading}
+              rows={1}
+              className="flex-1 resize-none bg-transparent text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none max-h-40 overflow-y-auto"
+              style={{
+                minHeight: '24px',
+                maxHeight: '128px',
+              }}
+            />
+
+            {/* Botones de acción comentados - Archivo y Calendario */}
+            {/* 
+            <button
+              type="button"
+              className="flex-shrink-0 p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label="Adjuntar archivo"
+            >
+              <Paperclip className="w-5 h-5" />
+            </button>
+            
+            <button
+              type="button"
+              className="flex-shrink-0 p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label="Seleccionar fecha"
+            >
+              <Calendar className="w-5 h-5" />
+            </button>
+            */}
+
+            <button
+              type="submit"
+              disabled={!input.trim() || isLoading}
+              className="flex-shrink-0 p-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              aria-label="Enviar mensaje"
+            >
+              <Send className="w-5 h-5" />
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

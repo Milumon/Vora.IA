@@ -13,6 +13,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { ChatSidebar } from '@/components/chat/ChatSidebar';
 import { ChatPanel } from '@/components/chat/ChatPanel';
 import { VoraHeroLanding } from '@/components/chat/VoraHeroLanding';
@@ -31,19 +32,48 @@ import { useAuth } from '@/components/providers/AuthProvider';
 type Phase = 'hero' | 'chatting' | 'itinerary';
 
 export default function ChatPage() {
-  const { generatedItinerary, selectedPlace, setSelectedPlace, messages } = useChatStore();
+  const searchParams = useSearchParams();
+  const itineraryId = searchParams.get('itinerary');
+  
+  const { generatedItinerary, selectedPlace, setSelectedPlace, messages, setGeneratedItinerary, setMessages, setConversationId } = useChatStore();
   const { sendMessage, isLoading } = useChat();
   const router = useRouter();
   const locale = useLocale();
   const { user } = useAuth();
   const [, setSelectedDay] = useState(1);
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+  const [loadingItinerary, setLoadingItinerary] = useState(false);
 
   // ── Phase tracking ───────────────────────────────────────────────────────
   const [phase, setPhase] = useState<Phase>('hero');
   // 'entering' = animating into the new phase
   const [animating, setAnimating] = useState(false);
   const prevPhaseRef = useRef<Phase>('hero');
+
+  // Load itinerary if ID is provided in URL
+  useEffect(() => {
+    if (itineraryId && !loadingItinerary) {
+      setLoadingItinerary(true);
+      itinerariesApi.get(itineraryId)
+        .then(({ data }) => {
+          // Load itinerary data
+          setGeneratedItinerary(data.data);
+          
+          // If there's a conversation_id, load the conversation
+          if (data.conversation_id) {
+            setConversationId(data.conversation_id);
+            // TODO: Load conversation messages from backend
+            // For now, we'll just show the itinerary
+          }
+          
+          setLoadingItinerary(false);
+        })
+        .catch((error) => {
+          console.error('Error loading itinerary:', error);
+          setLoadingItinerary(false);
+        });
+    }
+  }, [itineraryId, loadingItinerary, setGeneratedItinerary, setConversationId]);
 
   useEffect(() => {
     const target: Phase = generatedItinerary
@@ -64,7 +94,7 @@ export default function ChatPage() {
       }, 50);
       return () => clearTimeout(t);
     }
-  }, [messages.length, generatedItinerary]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [messages.length, generatedItinerary, phase]);
 
   // ── Save / Share ─────────────────────────────────────────────────────────
   const handleSaveItinerary = async () => {

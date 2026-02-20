@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { useChatStore } from '@/store/chatStore';
 import { chatApi } from '@/lib/api/endpoints';
+import { useActiveConversation, useSaveMessage, useCreateConversation } from './useConversation';
 
 export function useChat() {
   const { 
@@ -11,6 +13,7 @@ export function useChat() {
     showMapView,
     selectedPlace,
     addMessage, 
+    setMessages,
     setConversationId, 
     setIsLoading,
     setCurrentProgress,
@@ -18,16 +21,54 @@ export function useChat() {
     setSelectedPlace,
   } = useChatStore();
 
+  // Fetch active conversation on mount
+  const { data: activeConversation } = useActiveConversation();
+  const { mutate: saveMessage } = useSaveMessage();
+  const { mutate: createConversation } = useCreateConversation();
+
+  // Hydrate Zustand from React Query when conversation loads
+  useEffect(() => {
+    if (activeConversation && !conversationId) {
+      setMessages(activeConversation.messages);
+      setConversationId(activeConversation.id);
+      
+      // If there's a latest itinerary, restore it
+      if (activeConversation.latest_itinerary) {
+        setGeneratedItinerary(activeConversation.latest_itinerary);
+      }
+    }
+  }, [activeConversation, conversationId, setMessages, setConversationId, setGeneratedItinerary]);
+
   const sendMessage = async (content: string) => {
     setIsLoading(true);
 
-    // Add user message
+    // Add user message optimistically
     const userMessage = {
       role: 'user' as const,
       content,
       timestamp: new Date().toISOString(),
     };
     addMessage(userMessage);
+
+    // If no conversation exists, create one first
+    if (!conversationId) {
+      createConversation(undefined, {
+        onSuccess: (newConv) => {
+          setConversationId(newConv.id);
+          // Save user message to new conversation
+          saveMessage({
+            conversationId: newConv.id,
+            message: userMessage,
+          });
+        },
+      });
+    } else {
+      // Save user message to existing conversation
+      saveMessage({
+        conversationId,
+        message: userMessage,
+      });
+    }
 
     try {
       const response = await chatApi.sendMessage(content, conversationId || undefined);
@@ -60,8 +101,17 @@ export function useChat() {
       };
       addMessage(assistantMessage);
 
-      if (thread_id) {
-        setConversationId(thread_id);
+      // Save assistant message to conversation
+      const currentConvId = thread_id || conversationId;
+      if (currentConvId) {
+        if (thread_id && thread_id !== conversationId) {
+          setConversationId(thread_id);
+        }
+        
+        saveMessage({
+          conversationId: currentConvId,
+          message: assistantMessage,
+        });
       }
 
       if (progressSteps) {
