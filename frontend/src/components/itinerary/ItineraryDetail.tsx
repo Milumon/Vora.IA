@@ -34,7 +34,7 @@ export function ItineraryDetail({ itinerary }: ItineraryDetailProps) {
     <div className="container mx-auto py-8 px-4 space-y-6 max-w-6xl">
       {/* Header */}
       <div className="space-y-3">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+        <h1 className="text-4xl font-bold">
           {itinerary.title}
         </h1>
         <p className="text-muted-foreground text-lg">{itinerary.description}</p>

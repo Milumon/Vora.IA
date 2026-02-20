@@ -49,7 +49,7 @@ export function PlaceCard({ place }: PlaceCardProps) {
     return (
         <>
             <Card
-                className="overflow-hidden hover:shadow-md transition-all cursor-pointer group"
+                className="overflow-hidden hover:shadow-lg transition-all cursor-pointer group"
                 onClick={() => setModalOpen(true)}
             >
                 <div className="flex flex-col sm:flex-row">
@@ -63,10 +63,13 @@ export function PlaceCard({ place }: PlaceCardProps) {
                             sizes="(max-width: 640px) 100vw, 192px"
                         />
                         {photoCount > 1 && (
-                            <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                                <ImageIcon className="h-3 w-3" />
+                            <Badge 
+                                variant="secondary" 
+                                className="absolute bottom-2 right-2 bg-background/80 backdrop-blur-sm shadow-sm"
+                            >
+                                <ImageIcon className="h-3 w-3 mr-1" />
                                 {photoCount}
-                            </div>
+                            </Badge>
                         )}
                     </div>
 
@@ -78,10 +81,10 @@ export function PlaceCard({ place }: PlaceCardProps) {
                                     {place.name}
                                 </h4>
                                 {place.rating && (
-                                    <div className="flex items-center gap-1 shrink-0">
-                                        <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                                    <Badge variant="secondary" className="shrink-0 gap-1">
+                                        <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
                                         <span className="text-sm font-medium">{place.rating}</span>
-                                    </div>
+                                    </Badge>
                                 )}
                             </div>
 
@@ -112,7 +115,7 @@ export function PlaceCard({ place }: PlaceCardProps) {
                                     </Badge>
                                 )}
                                 {place.types && place.types.length > 0 && (
-                                    <Badge variant="secondary" className="text-xs">
+                                    <Badge variant="secondary">
                                         {place.types[0].replace(/_/g, ' ')}
                                     </Badge>
                                 )}

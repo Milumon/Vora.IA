@@ -23,9 +23,9 @@ interface ItineraryCardProps {
 }
 
 const BUDGET_COLORS: Record<string, string> = {
-    low: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-    medium: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-    high: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
+    low: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400',
+    medium: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+    high: 'bg-stone-200 text-stone-800 dark:bg-stone-800/30 dark:text-stone-400',
 };
 
 export function ItineraryCard({ itinerary }: ItineraryCardProps) {
@@ -33,7 +33,7 @@ export function ItineraryCard({ itinerary }: ItineraryCardProps) {
     const locale = useLocale();
 
     return (
-        <Card className="group hover:shadow-layered transition-all duration-200 hover:border-primary/50">
+        <Card className="group hover:shadow-lg transition-all duration-200 hover:border-primary/50">
             <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
@@ -83,7 +83,7 @@ export function ItineraryCard({ itinerary }: ItineraryCardProps) {
                 </div>
             </CardContent>
 
-            <CardFooter className="pt-3 border-t border-border-subtle">
+            <CardFooter className="pt-3 border-t">
                 <div className="flex items-center justify-between w-full">
                     <span className="text-xs text-muted-foreground">
                         {new Date(itinerary.created_at).toLocaleDateString('es-PE', {

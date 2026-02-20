@@ -21,17 +21,17 @@ const timeOfDayConfig = {
   morning: {
     label: 'Mañana',
     icon: Sunrise,
-    color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+    color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200',
   },
   afternoon: {
     label: 'Tarde',
     icon: Sun,
-    color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
+    color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border-orange-200',
   },
   evening: {
     label: 'Noche',
     icon: Moon,
-    color: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400',
+    color: 'bg-stone-200 text-stone-700 dark:bg-stone-800/30 dark:text-stone-400 border-stone-300',
   },
 };
 
@@ -39,7 +39,7 @@ export function DayTimeline({ day, dayNumber }: DayTimelineProps) {
   return (
     <Card className="overflow-hidden">
       {/* Day Header */}
-      <div className="bg-gradient-to-r from-primary/10 to-secondary/10 px-6 py-4 border-b border-border">
+      <div className="bg-gradient-to-r from-primary/5 to-secondary/5 px-6 py-4 border-b">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-2xl font-bold">Día {dayNumber}</h3>
@@ -87,9 +87,11 @@ export function DayTimeline({ day, dayNumber }: DayTimelineProps) {
 
           {/* Notes */}
           {day.notes && (
-            <div className="mt-6 p-4 bg-muted/50 rounded-lg border border-border-subtle">
-              <p className="text-sm text-muted-foreground italic">{day.notes}</p>
-            </div>
+            <Card className="bg-muted/50">
+              <CardContent className="p-4">
+                <p className="text-sm text-muted-foreground italic">{day.notes}</p>
+              </CardContent>
+            </Card>
           )}
         </div>
       </CardContent>
@@ -111,7 +113,7 @@ function TimeSection({
   return (
     <div className="relative">
       {/* Timeline Line */}
-      <div className="absolute left-4 top-8 bottom-0 w-0.5 bg-border-subtle" />
+      <div className="absolute left-4 top-8 bottom-0 w-0.5 bg-border" />
 
       {/* Time Badge */}
       <div className="flex items-center gap-3 mb-4">

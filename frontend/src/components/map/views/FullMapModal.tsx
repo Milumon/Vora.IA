@@ -4,6 +4,10 @@ import { useEffect, useState, useCallback } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow, Polyline } from '@react-google-maps/api';
 import type { Itinerary, PlaceInfo } from '@/store/chatStore';
 import { X, Star } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import { getPlaceThumbnail } from '@/lib/utils/google-places';
 import { PlaceDetailModal } from '../overlays/PlaceDetailModal';
 import {
@@ -133,20 +137,25 @@ export function FullMapModal({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm">
-            <div className="absolute inset-4 bg-white rounded-lg shadow-2xl overflow-hidden flex flex-col">
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
+            <Card className="absolute inset-4 shadow-2xl overflow-hidden flex flex-col">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white">
+                <CardContent className="flex items-center justify-between px-6 py-4 border-b">
                     <div>
-                        <h2 className="text-lg font-semibold text-gray-900">{itinerary.title}</h2>
-                        <p className="text-sm text-gray-600 mt-0.5">
+                        <h2 className="text-lg font-semibold">{itinerary.title}</h2>
+                        <p className="text-sm text-muted-foreground mt-0.5">
                             {allPlaces.length} lugares en {itinerary.day_plans.length} días
                         </p>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                        <X className="w-5 h-5 text-gray-600" />
-                    </button>
-                </div>
+                    <Button 
+                        onClick={onClose} 
+                        variant="ghost" 
+                        size="icon"
+                        className="rounded-full"
+                    >
+                        <X className="w-5 h-5" />
+                    </Button>
+                </CardContent>
 
                 {/* Map */}
                 <div className="flex-1 relative">
@@ -214,22 +223,24 @@ export function FullMapModal({
                     )}
 
                     {/* Day legend */}
-                    <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm p-3 rounded-lg shadow-lg border border-gray-200">
-                        <p className="text-xs font-medium mb-2 text-gray-900">Días del viaje:</p>
-                        <div className="flex flex-wrap gap-2">
-                            {itinerary.day_plans.map((day) => (
-                                <div key={day.day_number} className="flex items-center gap-1.5">
-                                    <div
-                                        className="w-3 h-3 rounded-full"
-                                        style={{ backgroundColor: getDayColor(day.day_number) }}
-                                    />
-                                    <span className="text-xs text-gray-700">Día {day.day_number}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                    <Card className="absolute bottom-4 left-4 shadow-lg">
+                        <CardContent className="p-3">
+                            <p className="text-xs font-medium mb-2">Días del viaje:</p>
+                            <div className="flex flex-wrap gap-2">
+                                {itinerary.day_plans.map((day) => (
+                                    <Badge key={day.day_number} variant="outline" className="gap-1.5">
+                                        <div
+                                            className="w-3 h-3 rounded-full"
+                                            style={{ backgroundColor: getDayColor(day.day_number) }}
+                                        />
+                                        Día {day.day_number}
+                                    </Badge>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
-            </div>
+            </Card>
 
             <PlaceDetailModal place={modalPlace} open={modalOpen} onOpenChange={setModalOpen} />
         </div>

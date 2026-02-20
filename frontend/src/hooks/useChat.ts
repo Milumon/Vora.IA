@@ -4,17 +4,17 @@ import { chatApi } from '@/lib/api/endpoints';
 import { useActiveConversation, useSaveMessage, useCreateConversation } from './useConversation';
 
 export function useChat() {
-  const { 
-    messages, 
-    conversationId, 
-    isLoading, 
+  const {
+    messages,
+    conversationId,
+    isLoading,
     currentProgress,
     generatedItinerary,
     showMapView,
     selectedPlace,
-    addMessage, 
+    addMessage,
     setMessages,
-    setConversationId, 
+    setConversationId,
     setIsLoading,
     setCurrentProgress,
     setGeneratedItinerary,
@@ -31,7 +31,7 @@ export function useChat() {
     if (activeConversation && !conversationId) {
       setMessages(activeConversation.messages);
       setConversationId(activeConversation.id);
-      
+
       // If there's a latest itinerary, restore it
       if (activeConversation.latest_itinerary) {
         setGeneratedItinerary(activeConversation.latest_itinerary);
@@ -42,6 +42,9 @@ export function useChat() {
   const sendMessage = async (content: string) => {
     setIsLoading(true);
 
+    // Capture the current conversationId at call time to avoid stale state
+    const currentConvId = useChatStore.getState().conversationId;
+
     // Add user message optimistically
     const userMessage = {
       role: 'user' as const,
@@ -51,7 +54,7 @@ export function useChat() {
     addMessage(userMessage);
 
     // If no conversation exists, create one first
-    if (!conversationId) {
+    if (!currentConvId) {
       createConversation(undefined, {
         onSuccess: (newConv) => {
           setConversationId(newConv.id);
@@ -65,14 +68,20 @@ export function useChat() {
     } else {
       // Save user message to existing conversation
       saveMessage({
-        conversationId,
+        conversationId: currentConvId,
         message: userMessage,
       });
     }
 
     try {
-      const response = await chatApi.sendMessage(content, conversationId || undefined);
+      // Send to the chat API with the current thread_id
+      const response = await chatApi.sendMessage(content, currentConvId || undefined);
       const { message, thread_id, needs_clarification, clarification_questions, itinerary } = response.data;
+
+      // Always update conversationId from the backend response
+      if (thread_id && thread_id !== currentConvId) {
+        setConversationId(thread_id);
+      }
 
       // Determinar pasos de progreso basados en la respuesta
       // SOLO mostrar progreso cuando NO hay preguntas de clarificación (está generando itinerario)
@@ -102,14 +111,10 @@ export function useChat() {
       addMessage(assistantMessage);
 
       // Save assistant message to conversation
-      const currentConvId = thread_id || conversationId;
-      if (currentConvId) {
-        if (thread_id && thread_id !== conversationId) {
-          setConversationId(thread_id);
-        }
-        
+      const resolvedConvId = thread_id || currentConvId;
+      if (resolvedConvId) {
         saveMessage({
-          conversationId: currentConvId,
+          conversationId: resolvedConvId,
           message: assistantMessage,
         });
       }
@@ -132,7 +137,7 @@ export function useChat() {
         timestamp: new Date().toISOString(),
       };
       addMessage(errorMessage);
-      
+
       return { success: false, error: error.response?.data?.detail || 'Failed to send message' };
     } finally {
       setIsLoading(false);

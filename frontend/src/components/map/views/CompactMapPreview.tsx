@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, Polyline } from '@react-google-maps/api';
 import type { Itinerary, PlaceInfo } from '@/store/chatStore';
 import { Maximize2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
     DAY_COLORS,
     DEFAULT_MAP_CENTER,
@@ -71,7 +72,7 @@ export function CompactMapPreview({ itinerary, onOpenFullMap }: CompactMapPrevie
     if (!isLoaded) return <MapLoadingState />;
 
     return (
-        <div className="relative h-full rounded-lg border-2 border-gray-200">
+        <div className="relative h-full rounded-lg border border-border overflow-hidden shadow-subtle">
             <GoogleMap
                 mapContainerStyle={MAP_CONTAINER_STYLE}
                 center={DEFAULT_MAP_CENTER}
@@ -107,13 +108,15 @@ export function CompactMapPreview({ itinerary, onOpenFullMap }: CompactMapPrevie
                 ))}
             </GoogleMap>
 
-            <button
+            <Button
                 onClick={onOpenFullMap}
-                className="absolute bottom-4 right-4 flex items-center gap-2 px-4 py-2 bg-white text-gray-900 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors shadow-lg border border-gray-200"
+                variant="secondary"
+                size="sm"
+                className="absolute bottom-4 right-4 gap-2 shadow-lg backdrop-blur-sm bg-background/90 hover:bg-background"
             >
                 <Maximize2 className="w-4 h-4" />
                 Ver mapa completo
-            </button>
+            </Button>
         </div>
     );
 }

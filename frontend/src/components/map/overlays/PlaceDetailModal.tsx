@@ -11,6 +11,8 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import {
     Star,
     MapPin,
@@ -21,7 +23,7 @@ import {
     ExternalLink,
     ImageIcon,
 } from 'lucide-react';
-import { getPlacePhotos, getPlaceThumbnail } from '@/lib/utils/google-places';
+import { getPlacePhotos } from '@/lib/utils/google-places';
 import type { PlaceInfo } from '@/store/chatStore';
 
 interface PlaceDetailModalProps {
@@ -69,15 +71,15 @@ export function PlaceDetailModal({ place, open, onOpenChange }: PlaceDetailModal
                 onOpenChange(isOpen);
             }}
         >
-            <DialogContent className="max-w-lg w-[95vw] max-h-[90vh] overflow-hidden p-0 flex flex-col rounded-2xl">
-                {/* Photo gallery — flexible height */}
-                <div className="relative w-full h-[300px] sm:h-[350px] shrink-0 bg-muted rounded-t-2xl overflow-hidden">
+            <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-hidden p-0 flex flex-col">
+                {/* Photo gallery */}
+                <div className="relative w-full h-[300px] sm:h-[400px] shrink-0 bg-muted overflow-hidden">
                     <Image
                         src={displayPhoto}
                         alt={`${place.name} - Foto ${currentPhotoIndex + 1}`}
                         fill
                         className="object-cover"
-                        sizes="(max-width: 768px) 100vw, 768px"
+                        sizes="(max-width: 768px) 100vw, 896px"
                         priority
                         onError={() => setImageError(true)}
                     />
@@ -88,33 +90,36 @@ export function PlaceDetailModal({ place, open, onOpenChange }: PlaceDetailModal
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full h-10 w-10"
+                                className="absolute left-3 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background/90 backdrop-blur-sm h-10 w-10 rounded-full shadow-lg"
                                 onClick={goToPrevPhoto}
                             >
-                                <ChevronLeft className="h-6 w-6" />
+                                <ChevronLeft className="h-5 w-5" />
                             </Button>
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full h-10 w-10"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background/90 backdrop-blur-sm h-10 w-10 rounded-full shadow-lg"
                                 onClick={goToNextPhoto}
                             >
-                                <ChevronRight className="h-6 w-6" />
+                                <ChevronRight className="h-5 w-5" />
                             </Button>
                         </>
                     )}
 
                     {/* Photo counter */}
                     {hasMultiplePhotos && (
-                        <div className="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5">
-                            <ImageIcon className="h-3 w-3" />
+                        <Badge 
+                            variant="secondary" 
+                            className="absolute bottom-4 right-4 bg-background/80 backdrop-blur-sm shadow-lg"
+                        >
+                            <ImageIcon className="h-3 w-3 mr-1.5" />
                             {currentPhotoIndex + 1} / {totalPhotos}
-                        </div>
+                        </Badge>
                     )}
 
                     {/* Thumbnail strip */}
                     {hasMultiplePhotos && (
-                        <div className="absolute bottom-3 left-3 flex gap-1.5">
+                        <div className="absolute bottom-4 left-4 flex gap-2">
                             {photos.slice(0, 5).map((photo, idx) => (
                                 <button
                                     key={idx}
@@ -122,16 +127,17 @@ export function PlaceDetailModal({ place, open, onOpenChange }: PlaceDetailModal
                                         setImageError(false);
                                         setCurrentPhotoIndex(idx);
                                     }}
-                                    className={`relative w-12 h-12 rounded-md overflow-hidden border-2 transition-all ${idx === currentPhotoIndex
-                                            ? 'border-white shadow-lg scale-110'
-                                            : 'border-white/40 hover:border-white/70'
-                                        }`}
+                                    className={`relative w-14 h-14 rounded-md overflow-hidden border-2 transition-all ${
+                                        idx === currentPhotoIndex
+                                            ? 'border-primary shadow-lg scale-110'
+                                            : 'border-background/60 hover:border-background/80'
+                                    }`}
                                 >
-                                    <Image src={photo} alt={`Thumbnail ${idx + 1}`} fill className="object-cover" sizes="48px" />
+                                    <Image src={photo} alt={`Thumbnail ${idx + 1}`} fill className="object-cover" sizes="56px" />
                                 </button>
                             ))}
                             {totalPhotos > 5 && (
-                                <div className="w-12 h-12 rounded-md bg-black/50 border-2 border-white/40 flex items-center justify-center text-white text-xs font-medium">
+                                <div className="w-14 h-14 rounded-md bg-background/60 backdrop-blur-sm border-2 border-background/60 flex items-center justify-center text-foreground text-xs font-medium">
                                     +{totalPhotos - 5}
                                 </div>
                             )}
@@ -139,65 +145,69 @@ export function PlaceDetailModal({ place, open, onOpenChange }: PlaceDetailModal
                     )}
                 </div>
 
-                {/* Content — auto height */}
-                <div className="overflow-y-auto flex flex-col p-4 sm:p-6 rounded-b-2xl max-h-[calc(90vh-300px)] sm:max-h-[calc(90vh-350px)]">
-                    <div className="space-y-3 overflow-hidden">
+                {/* Content */}
+                <div className="overflow-y-auto flex flex-col p-6 max-h-[calc(90vh-300px)] sm:max-h-[calc(90vh-400px)]">
+                    <div className="space-y-4">
                         <DialogHeader>
-                            <DialogTitle className="text-xl sm:text-2xl">{place.name}</DialogTitle>
+                            <DialogTitle className="text-2xl">{place.name}</DialogTitle>
                             {place.address && (
-                                <DialogDescription className="flex items-start gap-2 text-xs sm:text-sm">
-                                    <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 mt-0.5 shrink-0" />
+                                <DialogDescription className="flex items-start gap-2 text-sm">
+                                    <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
                                     <span className="line-clamp-2">{place.address}</span>
                                 </DialogDescription>
                             )}
                         </DialogHeader>
 
+                        <Separator />
+
                         {/* Rating & price */}
                         <div className="flex flex-wrap items-center gap-2">
                             {place.rating && (
-                                <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-950/30 px-2.5 py-1 rounded-full">
-                                    <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                                    <span className="font-semibold text-xs">{place.rating}</span>
-                                    <span className="text-[10px] text-muted-foreground">/ 5</span>
-                                </div>
+                                <Badge variant="secondary" className="gap-1.5">
+                                    <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
+                                    <span className="font-semibold">{place.rating}</span>
+                                    <span className="text-muted-foreground">/ 5</span>
+                                </Badge>
                             )}
                             {place.price_level && (
-                                <div className="flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/30 px-2.5 py-1 rounded-full">
-                                    <DollarSign className="h-3.5 w-3.5 text-emerald-600" />
-                                    <span className="text-xs font-medium">{'$'.repeat(place.price_level)}</span>
-                                    <span className="text-[10px] text-muted-foreground">
+                                <Badge variant="secondary" className="gap-1.5">
+                                    <DollarSign className="h-3.5 w-3.5" />
+                                    <span>{'$'.repeat(place.price_level)}</span>
+                                    <span className="text-muted-foreground">
                                         {PRICE_LEVEL_LABELS[place.price_level - 1] || ''}
                                     </span>
-                                </div>
+                                </Badge>
                             )}
                             {place.visit_duration && (
-                                <div className="flex items-center gap-1 bg-blue-50 dark:bg-blue-950/30 px-2.5 py-1 rounded-full">
-                                    <Clock className="h-3.5 w-3.5 text-blue-600" />
-                                    <span className="text-xs">{place.visit_duration}</span>
-                                </div>
+                                <Badge variant="secondary" className="gap-1.5">
+                                    <Clock className="h-3.5 w-3.5" />
+                                    <span>{place.visit_duration}</span>
+                                </Badge>
                             )}
                         </div>
 
                         {/* Why visit */}
                         {place.why_visit && (
-                            <div className="bg-muted/50 rounded-lg p-3 border border-border min-w-0">
-                                <h4 className="font-semibold text-xs sm:text-sm mb-1">Por qué visitar</h4>
-                                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed line-clamp-4">
-                                    {place.why_visit}
-                                </p>
-                            </div>
+                            <Card>
+                                <CardContent className="p-4">
+                                    <h4 className="font-semibold text-sm mb-2">Por qué visitar</h4>
+                                    <p className="text-sm text-muted-foreground leading-relaxed">
+                                        {place.why_visit}
+                                    </p>
+                                </CardContent>
+                            </Card>
                         )}
 
                         {/* Type tags */}
                         {place.types && place.types.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5">
+                            <div className="flex flex-wrap gap-2">
                                 {place.types.slice(0, 4).map((type, idx) => (
-                                    <Badge key={idx} variant="secondary" className="text-[10px]">
+                                    <Badge key={idx} variant="outline">
                                         {type.replace(/_/g, ' ')}
                                     </Badge>
                                 ))}
                                 {place.types.length > 4 && (
-                                    <Badge variant="secondary" className="text-[10px]">
+                                    <Badge variant="outline">
                                         +{place.types.length - 4}
                                     </Badge>
                                 )}
@@ -205,8 +215,13 @@ export function PlaceDetailModal({ place, open, onOpenChange }: PlaceDetailModal
                         )}
 
                         {/* Google Maps CTA */}
-                        <Button variant="outline" className="w-full gap-2 shrink-0 text-sm" onClick={openInGoogleMaps}>
-                            <ExternalLink className="h-3.5 w-3.5" />
+                        <Button 
+                            variant="outline" 
+                            className="w-full gap-2" 
+                            size="lg"
+                            onClick={openInGoogleMaps}
+                        >
+                            <ExternalLink className="h-4 w-4" />
                             Ver en Google Maps
                         </Button>
                     </div>

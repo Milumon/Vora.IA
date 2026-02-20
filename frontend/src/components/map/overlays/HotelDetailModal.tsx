@@ -9,6 +9,9 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import {
     Star,
     MapPin,
@@ -63,10 +66,10 @@ function ratingLabel(r: number) {
 }
 
 function ratingColor(r: number) {
-    if (r >= 4.5) return 'bg-emerald-500';
-    if (r >= 4.0) return 'bg-emerald-400';
-    if (r >= 3.5) return 'bg-yellow-400';
-    return 'bg-orange-400';
+    if (r >= 4.5) return 'bg-emerald-600 dark:bg-emerald-500';
+    if (r >= 4.0) return 'bg-emerald-500 dark:bg-emerald-400';
+    if (r >= 3.5) return 'bg-amber-500 dark:bg-amber-400';
+    return 'bg-orange-500 dark:bg-orange-400';
 }
 
 export function HotelDetailModal({ hotel, open, onOpenChange }: HotelDetailModalProps) {
@@ -109,15 +112,15 @@ export function HotelDetailModal({ hotel, open, onOpenChange }: HotelDetailModal
                 onOpenChange(isOpen);
             }}
         >
-            <DialogContent className="max-w-lg w-[95vw] max-h-[90vh] overflow-hidden p-0 flex flex-col rounded-2xl">
-                {/* Photo gallery — flexible height */}
-                <div className="relative w-full h-[300px] sm:h-[350px] shrink-0 bg-muted rounded-t-2xl overflow-hidden">
+            <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-hidden p-0 flex flex-col">
+                {/* Photo gallery */}
+                <div className="relative w-full h-[300px] sm:h-[400px] shrink-0 bg-muted overflow-hidden">
                     <Image
                         src={displayPhoto}
                         alt={`${hotel.name} - Foto ${currentPhotoIndex + 1}`}
                         fill
                         className="object-cover"
-                        sizes="(max-width: 768px) 100vw, 768px"
+                        sizes="(max-width: 768px) 100vw, 896px"
                         priority
                         onError={() => setImageError(true)}
                         unoptimized
@@ -129,33 +132,36 @@ export function HotelDetailModal({ hotel, open, onOpenChange }: HotelDetailModal
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full h-10 w-10"
+                                className="absolute left-3 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background/90 backdrop-blur-sm h-10 w-10 rounded-full shadow-lg"
                                 onClick={goToPrevPhoto}
                             >
-                                <ChevronLeft className="h-6 w-6" />
+                                <ChevronLeft className="h-5 w-5" />
                             </Button>
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full h-10 w-10"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background/90 backdrop-blur-sm h-10 w-10 rounded-full shadow-lg"
                                 onClick={goToNextPhoto}
                             >
-                                <ChevronRight className="h-6 w-6" />
+                                <ChevronRight className="h-5 w-5" />
                             </Button>
                         </>
                     )}
 
                     {/* Photo counter */}
                     {hasMultiplePhotos && (
-                        <div className="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5">
-                            <ImageIcon className="h-3 w-3" />
+                        <Badge 
+                            variant="secondary" 
+                            className="absolute bottom-4 right-4 bg-background/80 backdrop-blur-sm shadow-lg"
+                        >
+                            <ImageIcon className="h-3 w-3 mr-1.5" />
                             {currentPhotoIndex + 1} / {totalPhotos}
-                        </div>
+                        </Badge>
                     )}
 
                     {/* Thumbnail strip */}
                     {hasMultiplePhotos && (
-                        <div className="absolute bottom-3 left-3 flex gap-1.5 overflow-x-auto max-w-[calc(100%-120px)] scrollbar-hide">
+                        <div className="absolute bottom-4 left-4 flex gap-2 overflow-x-auto max-w-[calc(100%-140px)] scrollbar-hide">
                             {photos.slice(0, 8).map((photo, idx) => (
                                 <button
                                     key={idx}
@@ -163,10 +169,10 @@ export function HotelDetailModal({ hotel, open, onOpenChange }: HotelDetailModal
                                         setImageError(false);
                                         setCurrentPhotoIndex(idx);
                                     }}
-                                    className={`relative w-12 h-12 rounded-md overflow-hidden border-2 transition-all flex-shrink-0 ${
+                                    className={`relative w-14 h-14 rounded-md overflow-hidden border-2 transition-all flex-shrink-0 ${
                                         idx === currentPhotoIndex
-                                            ? 'border-white shadow-lg scale-110'
-                                            : 'border-white/40 hover:border-white/70'
+                                            ? 'border-primary shadow-lg scale-110'
+                                            : 'border-background/60 hover:border-background/80'
                                     }`}
                                 >
                                     <Image 
@@ -174,13 +180,13 @@ export function HotelDetailModal({ hotel, open, onOpenChange }: HotelDetailModal
                                         alt={`Thumbnail ${idx + 1}`} 
                                         fill 
                                         className="object-cover" 
-                                        sizes="48px"
+                                        sizes="56px"
                                         unoptimized
                                     />
                                 </button>
                             ))}
                             {totalPhotos > 8 && (
-                                <div className="w-12 h-12 rounded-md bg-black/50 border-2 border-white/40 flex items-center justify-center text-white text-xs font-medium flex-shrink-0">
+                                <div className="w-14 h-14 rounded-md bg-background/60 backdrop-blur-sm border-2 border-background/60 flex items-center justify-center text-foreground text-xs font-medium flex-shrink-0">
                                     +{totalPhotos - 8}
                                 </div>
                             )}
@@ -188,75 +194,83 @@ export function HotelDetailModal({ hotel, open, onOpenChange }: HotelDetailModal
                     )}
                 </div>
 
-                {/* Content — auto height */}
-                <div className="overflow-y-auto flex flex-col p-4 sm:p-6 rounded-b-2xl max-h-[calc(90vh-300px)] sm:max-h-[calc(90vh-350px)]">
-                    <div className="space-y-3">
+                {/* Content */}
+                <div className="overflow-y-auto flex flex-col p-6 max-h-[calc(90vh-300px)] sm:max-h-[calc(90vh-400px)]">
+                    <div className="space-y-4">
                         <DialogHeader>
-                            <div className="flex items-start justify-between gap-3">
-                                <div className="flex-1 min-w-0">
-                                    <DialogTitle className="text-xl sm:text-2xl mb-1.5">{hotel.name}</DialogTitle>
+                            <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1 min-w-0 space-y-2">
+                                    <DialogTitle className="text-2xl">{hotel.name}</DialogTitle>
+                                    
                                     {/* Hotel stars */}
                                     {hotel.stars > 0 && (
-                                        <div className="flex items-center gap-0.5 mb-1.5">
+                                        <div className="flex items-center gap-0.5">
                                             {Array.from({ length: hotel.stars }).map((_, i) => (
-                                                <Star key={i} className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
+                                                <Star key={i} className="w-4 h-4 text-amber-500 fill-amber-500" />
                                             ))}
                                         </div>
                                     )}
+                                    
                                     {/* Hotel type */}
                                     {hotel.type && (
-                                        <span className="inline-flex px-2 py-0.5 rounded-full bg-purple-50 text-purple-600 text-[10px] font-semibold uppercase tracking-wide">
+                                        <Badge variant="secondary">
                                             {hotel.type}
-                                        </span>
+                                        </Badge>
                                     )}
                                 </div>
+                                
                                 {/* Price */}
-                                <div className="text-right shrink-0">
-                                    <p className="text-xl sm:text-2xl font-black text-purple-600 leading-none">
-                                        {formatPrice(hotel.price_per_night, hotel.currency)}
-                                    </p>
-                                    <p className="text-[10px] text-gray-400 mt-0.5">por noche</p>
-                                    {hotel.total_price > 0 && hotel.total_price !== hotel.price_per_night && (
-                                        <p className="text-[10px] text-gray-500 mt-0.5">
-                                            Total: {formatPrice(hotel.total_price, hotel.currency)}
+                                <Card className="shrink-0">
+                                    <CardContent className="p-3 text-right">
+                                        <p className="text-2xl font-bold text-primary leading-none">
+                                            {formatPrice(hotel.price_per_night, hotel.currency)}
                                         </p>
-                                    )}
-                                </div>
+                                        <p className="text-xs text-muted-foreground mt-1">por noche</p>
+                                        {hotel.total_price > 0 && hotel.total_price !== hotel.price_per_night && (
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                                Total: {formatPrice(hotel.total_price, hotel.currency)}
+                                            </p>
+                                        )}
+                                    </CardContent>
+                                </Card>
                             </div>
                         </DialogHeader>
 
+                        <Separator />
+
                         {/* Address */}
                         {hotel.address && (
-                            <div className="flex items-start gap-2 text-xs sm:text-sm text-muted-foreground">
-                                <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 mt-0.5 shrink-0" />
+                            <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                                <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
                                 <span className="line-clamp-2">{hotel.address}</span>
                             </div>
                         )}
 
                         {/* Check-in / Check-out */}
-                        <div className="flex items-center gap-3 text-xs sm:text-sm">
+                        <div className="flex items-center gap-4 text-sm">
                             <div>
-                                <span className="text-gray-500">Check-in:</span>
-                                <span className="ml-1.5 font-semibold">{hotel.check_in}</span>
+                                <span className="text-muted-foreground">Check-in:</span>
+                                <span className="ml-2 font-semibold">{hotel.check_in}</span>
                             </div>
+                            <Separator orientation="vertical" className="h-4" />
                             <div>
-                                <span className="text-gray-500">Check-out:</span>
-                                <span className="ml-1.5 font-semibold">{hotel.check_out}</span>
+                                <span className="text-muted-foreground">Check-out:</span>
+                                <span className="ml-2 font-semibold">{hotel.check_out}</span>
                             </div>
                         </div>
 
                         {/* Rating */}
                         {hotel.rating > 0 && (
                             <div className="flex items-center gap-2 flex-wrap">
-                                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-white text-xs font-bold ${ratingColor(hotel.rating)}`}>
-                                    <Star className="w-3.5 h-3.5 fill-white" />
+                                <Badge className={`${ratingColor(hotel.rating)} text-white border-0`}>
+                                    <Star className="w-3.5 h-3.5 fill-current mr-1" />
                                     {hotel.rating.toFixed(1)}
-                                </span>
-                                <span className="text-xs font-semibold text-gray-600">
+                                </Badge>
+                                <span className="text-sm font-semibold">
                                     {ratingLabel(hotel.rating)}
                                 </span>
                                 {hotel.reviews_count > 0 && (
-                                    <span className="text-[10px] text-gray-400">
+                                    <span className="text-xs text-muted-foreground">
                                         ({hotel.reviews_count.toLocaleString()} reseñas)
                                     </span>
                                 )}
@@ -265,38 +279,38 @@ export function HotelDetailModal({ hotel, open, onOpenChange }: HotelDetailModal
 
                         {/* Amenities */}
                         {hotel.amenities && hotel.amenities.length > 0 && (
-                            <div className="bg-muted/50 rounded-lg p-3 border border-border">
-                                <h4 className="font-semibold text-xs sm:text-sm mb-2">Servicios</h4>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {hotel.amenities.slice(0, 8).map((amenity, i) => {
-                                        const Icon = getAmenityIcon(amenity);
-                                        return (
-                                            <span
-                                                key={i}
-                                                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white border border-gray-200 text-[10px] font-medium text-gray-700"
-                                            >
-                                                {Icon && <Icon className="w-3 h-3" />}
-                                                {amenity}
-                                            </span>
-                                        );
-                                    })}
-                                    {hotel.amenities.length > 8 && (
-                                        <span className="inline-flex items-center px-2 py-1 rounded-lg bg-gray-100 text-[10px] font-medium text-gray-500">
-                                            +{hotel.amenities.length - 8} más
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
+                            <Card>
+                                <CardContent className="p-4">
+                                    <h4 className="font-semibold text-sm mb-3">Servicios</h4>
+                                    <div className="flex flex-wrap gap-2">
+                                        {hotel.amenities.slice(0, 8).map((amenity, i) => {
+                                            const Icon = getAmenityIcon(amenity);
+                                            return (
+                                                <Badge key={i} variant="outline">
+                                                    {Icon && <Icon className="w-3 h-3 mr-1" />}
+                                                    {amenity}
+                                                </Badge>
+                                            );
+                                        })}
+                                        {hotel.amenities.length > 8 && (
+                                            <Badge variant="secondary">
+                                                +{hotel.amenities.length - 8} más
+                                            </Badge>
+                                        )}
+                                    </div>
+                                </CardContent>
+                            </Card>
                         )}
 
                         {/* Booking CTA */}
                         {hotel.booking_url && (
                             <Button 
-                                className="w-full gap-2 bg-purple-500 hover:bg-purple-600 text-white text-sm" 
+                                className="w-full gap-2" 
+                                size="lg"
                                 onClick={openBookingUrl}
                             >
                                 Ver disponibilidad y reservar
-                                <ExternalLink className="h-3.5 w-3.5" />
+                                <ExternalLink className="h-4 w-4" />
                             </Button>
                         )}
                     </div>

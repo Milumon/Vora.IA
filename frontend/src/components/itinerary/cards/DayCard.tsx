@@ -2,6 +2,9 @@
 
 import { useRef, useCallback } from 'react';
 import { ChevronRight, ArrowRight } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import type { DayPlan, PlaceInfo } from '@/store/chatStore';
 import Image from 'next/image';
 import { getPlacePhotos } from '@/lib/utils/google-places';
@@ -106,7 +109,7 @@ function DayImageCarousel({ places }: { places: PlaceInfo[] }) {
                 {photoItems.map((item, idx) => (
                     <div
                         key={idx}
-                        className="relative flex-shrink-0 w-28 h-28 rounded-xl overflow-hidden bg-gray-100"
+                        className="relative flex-shrink-0 w-28 h-28 rounded-lg overflow-hidden bg-muted"
                         title={item.placeName}
                     >
                         <Image
@@ -122,18 +125,18 @@ function DayImageCarousel({ places }: { places: PlaceInfo[] }) {
 
             {/* Show scroll button only if more than 4 photos */}
             {hasMoreThan4 && (
-                <button
+                <Button
                     onClick={(e) => {
                         e.stopPropagation();
                         scrollRight();
                     }}
+                    variant="secondary"
+                    size="icon"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full shadow-lg opacity-0 group-hover/carousel:opacity-100 transition-opacity"
                     aria-label="Ver más imágenes"
-                    className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full
-                     bg-white/90 shadow-md flex items-center justify-center
-                     opacity-0 group-hover/carousel:opacity-100 transition-opacity"
                 >
-                    <ChevronRight className="w-4 h-4 text-gray-700" />
-                </button>
+                    <ChevronRight className="w-4 h-4" />
+                </Button>
             )}
         </div>
     );
@@ -152,15 +155,15 @@ function DayTags({
 }) {
     return (
         <div className="flex items-center gap-2 text-sm flex-wrap">
-            <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#F3EEFF] text-[#6B3FA0] font-semibold text-xs">
+            <Badge variant="secondary">
                 Día {dayNumber}
-            </span>
-            <span className="text-gray-500">·</span>
-            <span className="text-gray-600 font-medium">
+            </Badge>
+            <span className="text-muted-foreground">·</span>
+            <span className="text-muted-foreground font-medium">
                 {experienceCount} {experienceCount === 1 ? 'Experiencia' : 'Experiencias'}
             </span>
-            <span className="text-gray-500">·</span>
-            <span className="text-gray-500">{dateLabel}</span>
+            <span className="text-muted-foreground">·</span>
+            <span className="text-muted-foreground text-sm">{dateLabel}</span>
         </div>
     );
 }
@@ -189,33 +192,34 @@ export function DayCard({ day, onDaySelect }: DayCardProps) {
     const summary = day.day_summary || day.notes || `Explora lo mejor del Día ${day.day_number}`;
 
     return (
-        <button
+        <Card
             onClick={() => onDaySelect(day.day_number)}
-            className="w-full text-left bg-white rounded-2xl shadow-sm border border-gray-100
-                 hover:shadow-md transition-shadow p-5 space-y-4 group cursor-pointer"
+            className="cursor-pointer hover:shadow-lg transition-all group"
         >
-            {/* Image carousel — 2 photos per place */}
-            <DayImageCarousel places={places} />
+            <CardContent className="p-5 space-y-4">
+                {/* Image carousel — 2 photos per place */}
+                <DayImageCarousel places={places} />
 
-            {/* Tags */}
-            <DayTags
-                dayNumber={day.day_number}
-                experienceCount={experienceCount}
-                dateLabel={dateLabel}
-            />
+                {/* Tags */}
+                <DayTags
+                    dayNumber={day.day_number}
+                    experienceCount={experienceCount}
+                    dateLabel={dateLabel}
+                />
 
-            {/* Route chain */}
-            {routeChain && (
-                <p className="text-xs text-gray-400 truncate">{routeChain}</p>
-            )}
+                {/* Route chain */}
+                {routeChain && (
+                    <p className="text-xs text-muted-foreground truncate">{routeChain}</p>
+                )}
 
-            {/* Day summary + arrow */}
-            <div className="flex items-center justify-between gap-3">
-                <h3 className="text-base font-bold text-[#2D2840] leading-snug line-clamp-2">
-                    {summary}
-                </h3>
-                <ArrowRight className="w-5 h-5 flex-shrink-0 text-gray-400 group-hover:text-[#6B3FA0] transition-colors" />
-            </div>
-        </button>
+                {/* Day summary + arrow */}
+                <div className="flex items-center justify-between gap-3">
+                    <h3 className="text-base font-semibold leading-snug line-clamp-2">
+                        {summary}
+                    </h3>
+                    <ArrowRight className="w-5 h-5 flex-shrink-0 text-muted-foreground group-hover:text-primary transition-colors" />
+                </div>
+            </CardContent>
+        </Card>
     );
 }

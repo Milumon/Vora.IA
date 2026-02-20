@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 CREATE TABLE IF NOT EXISTS public.itineraries (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+    conversation_id UUID REFERENCES public.conversations(id) ON DELETE SET NULL,
     title TEXT NOT NULL,
     description TEXT,
     destination TEXT NOT NULL,
@@ -28,7 +29,6 @@ CREATE TABLE IF NOT EXISTS public.itineraries (
     travelers INTEGER DEFAULT 1,
     status TEXT DEFAULT 'draft', -- 'draft', 'published', 'archived'
     data JSONB NOT NULL, -- Estructura completa del itinerario (day_plans, tips, etc.)
-    thread_id UUID, -- ID de la conversación que generó el itinerario
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -37,9 +37,10 @@ CREATE TABLE IF NOT EXISTS public.itineraries (
 CREATE TABLE IF NOT EXISTS public.conversations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
-    itinerary_id UUID REFERENCES public.itineraries(id) ON DELETE CASCADE,
     messages JSONB NOT NULL DEFAULT '[]',
     state JSONB, -- Estado del LangGraph
+    is_active BOOLEAN DEFAULT true,
+    last_message_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -57,8 +58,9 @@ CREATE TABLE IF NOT EXISTS public.favorite_places (
 -- Índices
 CREATE INDEX IF NOT EXISTS idx_itineraries_user_id ON public.itineraries(user_id);
 CREATE INDEX IF NOT EXISTS idx_itineraries_created_at ON public.itineraries(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_itineraries_conversation_id ON public.itineraries(conversation_id);
 CREATE INDEX IF NOT EXISTS idx_conversations_user_id ON public.conversations(user_id);
-CREATE INDEX IF NOT EXISTS idx_conversations_itinerary_id ON public.conversations(itinerary_id);
+CREATE INDEX IF NOT EXISTS idx_conversations_active ON public.conversations(user_id, is_active, last_message_at DESC);
 
 -- RLS Policies
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
