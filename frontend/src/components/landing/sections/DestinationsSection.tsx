@@ -29,18 +29,15 @@ export function DestinationsSection() {
     return (
         <section
             id="destinations"
-            className="w-full py-24 px-6 relative overflow-hidden"
-            style={{
-                background: 'linear-gradient(180deg, #FFFFFF 0%, #F8F6FF 100%)',
-            }}
+            className="w-full py-24 px-6 relative overflow-hidden bg-gradient-to-b from-white to-orange-50/30 dark:from-gray-900 dark:to-gray-800/30"
             aria-label="Destinos que Vora conoce"
         >
             {/* Dot-grid map texture */}
             <div
-                className="absolute inset-0 opacity-[0.06]"
+                className="absolute inset-0 opacity-[0.04] dark:opacity-[0.02]"
                 aria-hidden="true"
                 style={{
-                    backgroundImage: 'radial-gradient(circle, #6B3FA0 1px, transparent 1px)',
+                    backgroundImage: 'radial-gradient(circle, hsl(var(--brand-orange)) 1px, transparent 1px)',
                     backgroundSize: '28px 28px',
                 }}
             />
@@ -51,15 +48,15 @@ export function DestinationsSection() {
                 <div className="text-center space-y-3 max-w-xl mx-auto">
                     <Badge
                         variant="outline"
-                        className="text-[#6B3FA0] border-violet-200 bg-violet-50 font-medium"
+                        className="text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20 font-medium"
                     >
                         Destinos
                     </Badge>
-                    <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
+                    <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">
                         Latinoamérica<br />
-                        <span className="text-[#6B3FA0]">en la palma de tu mano.</span>
+                        <span className="text-orange-600 dark:text-orange-400">en la palma de tu mano.</span>
                     </h2>
-                    <p className="text-gray-500 text-base leading-relaxed">
+                    <p className="text-gray-600 dark:text-gray-300 text-base leading-relaxed">
                         Vora conoce cada rincón de los destinos más vibrantes de la región
                         y los actualiza constantemente.
                     </p>
@@ -70,25 +67,25 @@ export function DestinationsSection() {
                     {DESTINATIONS.map(({ country, emoji, highlights }) => (
                         <div
                             key={country}
-                            className="group p-5 rounded-2xl border border-violet-100 bg-white hover:border-violet-300 hover:shadow-md hover:shadow-violet-100/40 transition-all duration-300 cursor-default"
+                            className="group p-5 rounded-2xl border border-orange-100 dark:border-orange-900/30 bg-white dark:bg-gray-800 hover:border-orange-300 dark:hover:border-orange-700 hover:shadow-md hover:shadow-orange-100/40 dark:hover:shadow-orange-900/20 transition-all duration-300 cursor-default"
                         >
                             <div className="flex items-center gap-3 mb-3">
                                 <span className="text-2xl">{emoji}</span>
-                                <h3 className="text-base font-bold text-gray-900 group-hover:text-[#6B3FA0] transition-colors">
+                                <h3 className="text-base font-bold text-gray-900 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
                                     {country}
                                 </h3>
                             </div>
-                            <p className="text-sm text-gray-400 leading-relaxed">
+                            <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
                                 {highlights}
                             </p>
                         </div>
                     ))}
 
                     {/* "Próximamente" card */}
-                    <div className="p-5 rounded-2xl border border-dashed border-gray-200 bg-gray-50/60 flex flex-col items-center justify-center text-center gap-2">
+                    <div className="p-5 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-800/60 flex flex-col items-center justify-center text-center gap-2">
                         <span className="text-2xl">🌎</span>
-                        <p className="text-sm font-semibold text-gray-400">Más destinos próximamente</p>
-                        <p className="text-xs text-gray-300">Chile · Bolivia · Brasil</p>
+                        <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">Más destinos próximamente</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500">Chile · Bolivia · Brasil</p>
                     </div>
                 </div>
 
@@ -97,10 +94,10 @@ export function DestinationsSection() {
                     {STATS.map(({ value, label }) => (
                         <div
                             key={label}
-                            className="text-center py-5 px-4 rounded-2xl bg-[#2B195A] text-white"
+                            className="text-center py-5 px-4 rounded-2xl bg-orange-600 dark:bg-orange-700 text-white"
                         >
-                            <p className="text-3xl font-black tracking-tight text-violet-200">{value}</p>
-                            <p className="text-xs text-violet-300/80 mt-1 font-medium uppercase tracking-wide">{label}</p>
+                            <p className="text-3xl font-black tracking-tight text-orange-100">{value}</p>
+                            <p className="text-xs text-orange-200/80 mt-1 font-medium uppercase tracking-wide">{label}</p>
                         </div>
                     ))}
                 </div>

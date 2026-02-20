@@ -1,13 +1,13 @@
 /** Shared map constants used across all map components */
 
 export const DAY_COLORS = [
-    '#10B981', // green  — Day 1
-    '#F59E0B', // amber  — Day 2
-    '#EF4444', // red    — Day 3
-    '#8B5CF6', // purple — Day 4
-    '#3B82F6', // blue   — Day 5
-    '#EC4899', // pink   — Day 6
-    '#14B8A6', // teal   — Day 7
+    '#FF1744', // bright red     — Day 1
+    '#00E676', // bright green   — Day 2
+    '#2979FF', // bright blue    — Day 3
+    '#FF9100', // bright orange  — Day 4
+    '#D500F9', // bright purple  — Day 5
+    '#00E5FF', // bright cyan    — Day 6
+    '#FFEA00', // bright yellow  — Day 7
 ] as const;
 
 /** Default map center — Lima, Perú */
@@ -41,6 +41,21 @@ export function getCircleMarkerIcon(
     };
 }
 
+/** Returns a pulsing marker icon for a selected day (larger scale). */
+export function getPulsingMarkerIcon(
+    dayNumber: number,
+    scale = 14,
+): google.maps.Symbol {
+    return {
+        path: google.maps.SymbolPath.CIRCLE,
+        fillColor: getDayColor(dayNumber),
+        fillOpacity: 1,
+        strokeColor: '#ffffff',
+        strokeWeight: 3,
+        scale,
+    };
+}
+
 /** Returns the standard label for a day number marker. */
 export function getDayMarkerLabel(dayNumber: number): google.maps.MarkerLabel {
     return {
@@ -50,3 +65,93 @@ export function getDayMarkerLabel(dayNumber: number): google.maps.MarkerLabel {
         fontWeight: 'bold',
     };
 }
+
+/** Grayscale map styles for a black and white theme */
+export const GRAYSCALE_MAP_STYLES: google.maps.MapTypeStyle[] = [
+    {
+        elementType: 'geometry',
+        stylers: [{ color: '#f5f5f5' }],
+    },
+    {
+        elementType: 'labels.icon',
+        stylers: [{ visibility: 'off' }],
+    },
+    {
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#616161' }],
+    },
+    {
+        elementType: 'labels.text.stroke',
+        stylers: [{ color: '#f5f5f5' }],
+    },
+    {
+        featureType: 'administrative.land_parcel',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#bdbdbd' }],
+    },
+    {
+        featureType: 'poi',
+        elementType: 'geometry',
+        stylers: [{ color: '#eeeeee' }],
+    },
+    {
+        featureType: 'poi',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#757575' }],
+    },
+    {
+        featureType: 'poi.park',
+        elementType: 'geometry',
+        stylers: [{ color: '#e5e5e5' }],
+    },
+    {
+        featureType: 'poi.park',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#9e9e9e' }],
+    },
+    {
+        featureType: 'road',
+        elementType: 'geometry',
+        stylers: [{ color: '#ffffff' }],
+    },
+    {
+        featureType: 'road.arterial',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#757575' }],
+    },
+    {
+        featureType: 'road.highway',
+        elementType: 'geometry',
+        stylers: [{ color: '#dadada' }],
+    },
+    {
+        featureType: 'road.highway',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#616161' }],
+    },
+    {
+        featureType: 'road.local',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#9e9e9e' }],
+    },
+    {
+        featureType: 'transit.line',
+        elementType: 'geometry',
+        stylers: [{ color: '#e5e5e5' }],
+    },
+    {
+        featureType: 'transit.station',
+        elementType: 'geometry',
+        stylers: [{ color: '#eeeeee' }],
+    },
+    {
+        featureType: 'water',
+        elementType: 'geometry',
+        stylers: [{ color: '#c9c9c9' }],
+    },
+    {
+        featureType: 'water',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#9e9e9e' }],
+    },
+];

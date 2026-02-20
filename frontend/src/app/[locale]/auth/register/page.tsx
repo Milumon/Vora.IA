@@ -10,7 +10,7 @@ export default function RegisterPage() {
         <Link href="/" className="flex items-center justify-center space-x-2 group">
           <MapPin className="h-8 w-8 text-primary transition-transform group-hover:scale-110" />
           <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            ViajesPeru.AI
+            Vora.AI
           </span>
         </Link>
 

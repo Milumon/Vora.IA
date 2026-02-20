@@ -66,8 +66,8 @@ export function formatDateRange(startDay: DayPlan, endDay: DayPlan): string | nu
 
 /**
  * Horizontal image strip — exactly **1 photo per place**.
- * Images fill the card width (max 4 visible); wider aspect ratio.
- * Scrolls horizontally when there are more than 4 places.
+ * Images fill the card width (max 3 visible); wider aspect ratio.
+ * Scrolls horizontally when there are more than 3 places.
  */
 function DayImageCarousel({ places }: { places: PlaceInfo[] }) {
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -97,7 +97,7 @@ function DayImageCarousel({ places }: { places: PlaceInfo[] }) {
 
     if (photoItems.length === 0) return null;
 
-    const visibleCount = Math.min(photoItems.length, 4);
+    const visibleCount = Math.min(photoItems.length, 3);
 
     const scrollRight = useCallback(() => {
         const el = scrollRef.current;

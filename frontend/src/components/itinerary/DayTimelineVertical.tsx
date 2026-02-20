@@ -23,9 +23,9 @@ function getMobilityIcon(mode: string) {
 }
 
 function getMobilityColor(mode: string) {
-    if (mode === 'flight') return 'border-sky-400 text-sky-500';
-    if (mode === 'drive') return 'border-emerald-400 text-emerald-500';
-    return 'border-orange-400 text-orange-400';
+    if (mode === 'flight') return 'border-yellow-400 dark:border-yellow-600 text-yellow-500 dark:text-yellow-400';
+    if (mode === 'drive') return 'border-emerald-400 dark:border-emerald-600 text-emerald-500 dark:text-emerald-400';
+    return 'border-orange-400 dark:border-orange-600 text-orange-400 dark:text-orange-300';
 }
 
 function getMobilityLabel(mode: string) {
@@ -45,21 +45,28 @@ function MobilityTimelineNode({
 }) {
     const mode = segment.recommended_mode || 'bus';
     const Icon = getMobilityIcon(mode);
-    const colorClasses = getMobilityColor(mode);
     const label = getMobilityLabel(mode);
 
     return (
-        <div className="flex gap-6">
-            <div className="flex flex-col items-center w-[120px] flex-shrink-0">
-                <div className={`w-10 h-10 rounded-full bg-white border-[3px] flex items-center justify-center flex-shrink-0 z-0 ${colorClasses}`}>
-                    <Icon className="w-4 h-4" />
+        <div className="flex gap-12">
+            {/* Left: Timeline node + line + text */}
+            <div className="flex gap-4 flex-shrink-0">
+                {/* Node and line */}
+                <div className="flex flex-col items-center">
+                    <div className="w-12 h-12 rounded-full bg-gray-900 dark:bg-white flex items-center justify-center flex-shrink-0 z-0 relative">
+                        <Icon className="w-5 h-5 text-white dark:text-black" />
+                    </div>
+                    {!isLast && (
+                        <div className="flex-1 w-[2px] bg-gray-900 dark:bg-white -mt-0" style={{ minHeight: '120px' }} />
+                    )}
                 </div>
-                <div className="mt-2 text-center">
-                    <p className="text-sm font-semibold text-[#2D2840] leading-tight">Traslado</p>
-                    <p className={`text-xs font-semibold ${colorClasses.split(' ')[1]}`}>{label}</p>
+
+                {/* Text labels */}
+                <div className="pt-1">
+                    <p className="text-base font-semibold text-gray-900 dark:text-white whitespace-nowrap">Traslado</p>
+                    <p className="text-sm font-medium text-yellow-600 dark:text-yellow-400 whitespace-nowrap">{label}</p>
                     {segment.departure_date && (
-                        <p className="text-xs text-gray-400 mt-0.5">
-                            {/* e.g. "Mar 1" from the departure date */}
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 whitespace-nowrap">
                             {(() => {
                                 try {
                                     return new Date(segment.departure_date + 'T12:00:00').toLocaleDateString('es-PE', {
@@ -73,10 +80,10 @@ function MobilityTimelineNode({
                         </p>
                     )}
                 </div>
-                {!isLast && <div className="flex-1 w-0.5 bg-gray-200 mt-3" />}
             </div>
 
-            <div className="flex-1 pb-8">
+            {/* Right: Card content */}
+            <div className="flex-1 pb-8 pt-1">
                 <MobilityCard segment={segment} />
             </div>
         </div>
@@ -93,16 +100,25 @@ function AccommodationTimelineNode({
     isLast: boolean;
 }) {
     return (
-        <div className="flex gap-6">
-            <div className="flex flex-col items-center w-[120px] flex-shrink-0">
-                <div className="w-10 h-10 rounded-full bg-white border-[3px] border-purple-400 flex items-center justify-center flex-shrink-0 z-0">
-                    <Building2 className="w-4 h-4 text-purple-500" />
+        <div className="flex gap-10">
+            {/* Left: Timeline node + line + text */}
+            <div className="flex gap-4 flex-shrink-0">
+                {/* Node and line */}
+                <div className="flex flex-col items-center">
+                    <div className="w-12 h-12 rounded-full bg-gray-900 dark:bg-white flex items-center justify-center flex-shrink-0 z-0 relative">
+                        <Building2 className="w-5 h-5 text-white dark:text-black" />
+                    </div>
+                    {!isLast && (
+                        <div className="flex-1 w-[2px] bg-gray-900 dark:bg-white -mt-0" style={{ minHeight: '120px' }} />
+                    )}
                 </div>
-                <div className="mt-2 text-center">
-                    <p className="text-sm font-semibold text-[#2D2840] leading-tight">Hospedaje</p>
-                    <p className="text-xs font-semibold text-purple-500">Hotel</p>
+
+                {/* Text labels */}
+                <div className="pt-1">
+                    <p className="text-base font-semibold text-gray-900 dark:text-white whitespace-nowrap">Hospedaje</p>
+                    <p className="text-sm font-medium text-orange-600 dark:text-orange-400 whitespace-nowrap">Hotel</p>
                     {checkIn && (
-                        <p className="text-xs text-gray-400 mt-0.5">
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 whitespace-nowrap">
                             {(() => {
                                 try {
                                     return new Date(checkIn + 'T12:00:00').toLocaleDateString('es-PE', {
@@ -116,10 +132,10 @@ function AccommodationTimelineNode({
                         </p>
                     )}
                 </div>
-                {!isLast && <div className="flex-1 w-0.5 bg-gray-200 mt-3" />}
             </div>
 
-            <div className="flex-1 pb-8">
+            {/* Right: Card content */}
+            <div className="flex-1 pb-8 pt-1">
                 <AccommodationCard options={options} />
             </div>
         </div>
@@ -135,7 +151,7 @@ export function DayTimelineVertical({
     const totalDays = itinerary.day_plans.length;
 
     return (
-        <div className="px-6 py-8">
+        <div className="px-16 py-8 ">
             {itinerary.day_plans.map((day, index) => {
                 const isLast = index === totalDays - 1;
                 const mobilitySegment = day.mobility;
@@ -161,26 +177,29 @@ export function DayTimelineVertical({
 
                         {/* ── Day node ── */}
                         <div className="flex gap-6">
-                            {/* Left column: node + connector */}
-                            <div className="flex flex-col items-center w-[120px] flex-shrink-0">
-                                <div className="w-10 h-10 rounded-full bg-white border-[3px] border-[#6B3FA0] flex items-center justify-center flex-shrink-0 z-0">
-                                    <Calendar className="w-4 h-4 text-[#6B3FA0]" />
+                            {/* Left: Timeline node + line + text */}
+                            <div className="flex gap-4 flex-shrink-0">
+                                {/* Node and line */}
+                                <div className="flex flex-col items-center">
+                                    <div className="w-12 h-12 rounded-full bg-gray-900 dark:bg-white flex items-center justify-center flex-shrink-0 z-0 relative">
+                                        <Calendar className="w-5 h-5 text-white dark:text-black" />
+                                    </div>
+                                    {!isLast && (
+                                        <div className="flex-1 w-[2px] bg-gray-900 dark:bg-white -mt-0" style={{ minHeight: '120px' }} />
+                                    )}
                                 </div>
 
-                                <div className="mt-2 text-center">
-                                    <p className="text-sm font-semibold text-[#2D2840] leading-tight">Itinerario</p>
-                                    {/* Show calendar date range like "Mar 1 – 3" when we have dates, else "Días 1 – 5" */}
-                                    <p className="text-xs font-semibold text-[#2D2840]">
-                                        Día {day.day_number}
+                                {/* Text labels */}
+                                <div className="pt-1">
+                                    <p className="text-base font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+                                        Días {day.day_number}
                                     </p>
-                                    <p className="text-xs text-gray-400 mt-0.5">{dayDateLabel}</p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">{dayDateLabel}</p>
                                 </div>
-
-                                {!isLast && <div className="flex-1 w-0.5 bg-gray-200 mt-3" />}
                             </div>
 
-                            {/* Right column: DayCard */}
-                            <div className={`flex-1 ${!isLast ? 'pb-8' : 'pb-2'}`}>
+                            {/* Right: Card content */}
+                            <div className={`flex-1 ${!isLast ? 'pb-8' : 'pb-2'} pt-1`}>
                                 <DayCard day={day} onDaySelect={onDaySelect} />
                             </div>
                         </div>

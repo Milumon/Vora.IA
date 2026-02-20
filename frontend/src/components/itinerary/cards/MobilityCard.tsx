@@ -16,16 +16,16 @@ const MODE_CONFIG: Record<MobilityMode, {
     bgColor: string; borderColor: string; gradientFrom: string; gradientTo: string;
 }> = {
     flight: {
-        label: 'Vuelo', icon: Plane, color: 'text-sky-600', bgColor: 'bg-sky-50',
-        borderColor: 'border-sky-200', gradientFrom: 'from-sky-50', gradientTo: 'to-blue-50',
+        label: 'Vuelo', icon: Plane, color: 'text-yellow-600 dark:text-yellow-500', bgColor: 'bg-yellow-50 dark:bg-yellow-900/20',
+        borderColor: 'border-yellow-200 dark:border-yellow-800', gradientFrom: 'from-yellow-50 dark:from-yellow-900/20', gradientTo: 'to-amber-50 dark:to-amber-900/20',
     },
     bus: {
-        label: 'Bus', icon: Bus, color: 'text-orange-600', bgColor: 'bg-orange-50',
-        borderColor: 'border-orange-200', gradientFrom: 'from-orange-50', gradientTo: 'to-amber-50',
+        label: 'Bus', icon: Bus, color: 'text-orange-600 dark:text-orange-500', bgColor: 'bg-orange-50 dark:bg-orange-900/20',
+        borderColor: 'border-orange-200 dark:border-orange-800', gradientFrom: 'from-orange-50 dark:from-orange-900/20', gradientTo: 'to-amber-50 dark:to-amber-900/20',
     },
     drive: {
-        label: 'Auto', icon: Car, color: 'text-emerald-600', bgColor: 'bg-emerald-50',
-        borderColor: 'border-emerald-200', gradientFrom: 'from-emerald-50', gradientTo: 'to-green-50',
+        label: 'Auto', icon: Car, color: 'text-emerald-600 dark:text-emerald-500', bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
+        borderColor: 'border-emerald-200 dark:border-emerald-800', gradientFrom: 'from-emerald-50 dark:from-emerald-900/20', gradientTo: 'to-green-50 dark:to-green-900/20',
     },
 };
 
@@ -78,7 +78,7 @@ function ModeTabs({ modes, activeMode, onSelect }: {
 }) {
     if (modes.length <= 1) return null;
     return (
-        <div className="flex gap-1 p-1 bg-gray-100 rounded-xl">
+        <div className="flex gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl">
             {modes.map((mode) => {
                 const { icon: Icon, label, color } = MODE_CONFIG[mode];
                 const isActive = mode === activeMode;
@@ -86,7 +86,7 @@ function ModeTabs({ modes, activeMode, onSelect }: {
                     <button
                         key={mode}
                         onClick={(e) => { e.stopPropagation(); onSelect(mode); }}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${isActive ? `bg-white shadow-sm ${color}` : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${isActive ? `bg-white dark:bg-gray-700 shadow-sm ${color}` : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700/50'
                             }`}
                     >
                         <Icon className="w-3.5 h-3.5" />
@@ -106,29 +106,29 @@ function RouteBar({ segment, mode, option }: {
         <div className="flex items-center gap-3">
             <div className="text-center min-w-[52px]">
                 {option?.departure_time ? (
-                    <p className="text-lg font-bold text-[#1a1a2e] leading-none">
+                    <p className="text-lg font-bold text-gray-900 dark:text-white leading-none">
                         {option.departure_time.slice(11, 16) || option.departure_time}
                     </p>
-                ) : <div className="w-2 h-2 rounded-full bg-gray-300 mx-auto" />}
-                <p className="text-[10px] text-gray-400 mt-0.5 truncate max-w-[52px]">{segment.origin}</p>
+                ) : <div className="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600 mx-auto" />}
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5 truncate max-w-[52px]">{segment.origin}</p>
             </div>
 
             <div className="flex-1 flex flex-col items-center gap-0.5">
                 <div className="relative w-full flex items-center">
-                    <div className="flex-1 h-[2px] bg-gray-200 rounded" />
+                    <div className="flex-1 h-[2px] bg-gray-200 dark:bg-gray-700 rounded" />
                     <div className="mx-1.5"><Icon className={`w-4 h-4 ${color}`} /></div>
-                    <div className="flex-1 h-[2px] bg-gray-200 rounded" />
+                    <div className="flex-1 h-[2px] bg-gray-200 dark:bg-gray-700 rounded" />
                 </div>
-                <p className="text-[10px] text-gray-400">{getDurationForMode(segment, mode)}</p>
+                <p className="text-[10px] text-gray-500 dark:text-gray-400">{getDurationForMode(segment, mode)}</p>
             </div>
 
             <div className="text-center min-w-[52px]">
                 {option?.arrival_time ? (
-                    <p className="text-lg font-bold text-[#1a1a2e] leading-none">
+                    <p className="text-lg font-bold text-gray-900 dark:text-white leading-none">
                         {option.arrival_time.slice(11, 16) || option.arrival_time}
                     </p>
-                ) : <div className="w-2 h-2 rounded-full bg-gray-300 mx-auto" />}
-                <p className="text-[10px] text-gray-400 mt-0.5 truncate max-w-[52px]">{segment.destination}</p>
+                ) : <div className="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600 mx-auto" />}
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5 truncate max-w-[52px]">{segment.destination}</p>
             </div>
         </div>
     );
@@ -144,26 +144,26 @@ function FlightOptionRow({ opt }: { opt: Record<string, unknown> }) {
     const stops = Number(opt.stops || 0);
 
     return (
-        <div className="flex items-center gap-2.5 py-2 px-1 rounded-lg hover:bg-gray-50 transition-colors">
+        <div className="flex items-center gap-2.5 py-2 px-1 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
             {logo ? (
-                <div className="w-7 h-7 rounded-md overflow-hidden bg-white border border-gray-100 flex-shrink-0 flex items-center justify-center">
+                <div className="w-7 h-7 rounded-md overflow-hidden bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 flex-shrink-0 flex items-center justify-center">
                     <Image src={logo} alt={airline} width={24} height={24} className="object-contain" unoptimized />
                 </div>
             ) : (
-                <div className="w-7 h-7 rounded-md bg-sky-100 flex items-center justify-center flex-shrink-0">
-                    <Plane className="w-3.5 h-3.5 text-sky-500" />
+                <div className="w-7 h-7 rounded-md bg-yellow-100 dark:bg-yellow-900/20 flex items-center justify-center flex-shrink-0">
+                    <Plane className="w-3.5 h-3.5 text-yellow-600 dark:text-yellow-500" />
                 </div>
             )}
             <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-gray-800 truncate">{airline}</p>
-                <p className="text-[10px] text-gray-400">{duration} · {stops === 0 ? 'Directo' : `${stops} escala(s)`}</p>
+                <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">{airline}</p>
+                <p className="text-[10px] text-gray-500 dark:text-gray-400">{duration} · {stops === 0 ? 'Directo' : `${stops} escala(s)`}</p>
             </div>
-            <p className="text-sm font-bold text-gray-900 shrink-0">{formatPrice(price, currency)}</p>
+            <p className="text-sm font-bold text-gray-900 dark:text-white shrink-0">{formatPrice(price, currency)}</p>
             {bookingUrl && (
                 <a
                     href={bookingUrl} target="_blank" rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-600
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-yellow-500 dark:bg-yellow-600 hover:bg-yellow-600 dark:hover:bg-yellow-700
                      text-white text-[10px] font-semibold transition-colors shrink-0"
                 >
                     Reservar <ExternalLink className="w-3 h-3" />
@@ -179,8 +179,8 @@ function FlightAlternatives({ options }: { options: Record<string, unknown>[] })
     if (options.length === 0) return null;
 
     return (
-        <div className="mt-3 pt-3 border-t border-gray-100">
-            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-2">
+        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+            <p className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                 {options.length} opcion{options.length !== 1 ? 'es' : ''} de vuelo
             </p>
             <div className="space-y-0.5">
@@ -189,7 +189,7 @@ function FlightAlternatives({ options }: { options: Record<string, unknown>[] })
             {options.length > 3 && (
                 <button
                     onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
-                    className="flex items-center gap-1 mt-2 text-[10px] font-semibold text-sky-500 hover:text-sky-700 transition-colors"
+                    className="flex items-center gap-1 mt-2 text-[10px] font-semibold text-yellow-600 dark:text-yellow-500 hover:text-yellow-700 dark:hover:text-yellow-400 transition-colors"
                 >
                     {expanded ? 'Ver menos' : `Ver ${options.length - 3} más`}
                     {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -213,13 +213,13 @@ export function MobilityCard({ segment }: MobilityCardProps) {
     const distance = getDistanceForMode(segment, activeMode);
 
     return (
-        <div className={`w-full bg-white rounded-2xl shadow-md border ${config.borderColor} overflow-hidden`}>
+        <div className={`w-full bg-white dark:bg-black rounded-2xl shadow-md border ${config.borderColor} overflow-hidden`}>
             {/* Header strip */}
             <div className={`bg-gradient-to-r ${config.gradientFrom} ${config.gradientTo} px-5 py-3`}>
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         {activeMode === 'flight' && option?.airline_logo ? (
-                            <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden">
+                            <div className="w-8 h-8 rounded-full bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center overflow-hidden">
                                 <Image src={option.airline_logo} alt={option.provider} width={24} height={24} className="object-contain" unoptimized />
                             </div>
                         ) : (
@@ -236,7 +236,7 @@ export function MobilityCard({ segment }: MobilityCardProps) {
                     </div>
                     {option && option.price > 0 && (
                         <div className="text-right">
-                            <p className="text-[10px] text-gray-400 leading-none mb-0.5">Desde</p>
+                            <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-none mb-0.5">Desde</p>
                             <p className={`text-xl font-black ${config.color} leading-none`}>
                                 {formatPrice(option.price, option.currency)}
                             </p>
@@ -250,7 +250,7 @@ export function MobilityCard({ segment }: MobilityCardProps) {
                 <ModeTabs modes={availableModes} activeMode={activeMode} onSelect={handleModeSelect} />
                 {option && (
                     <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-bold text-[#2D2840] truncate">{option.provider}</p>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{option.provider}</p>
                         {option.service_type && (
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide shrink-0 ${config.bgColor} ${config.color}`}>
                                 {option.service_type}
@@ -259,7 +259,7 @@ export function MobilityCard({ segment }: MobilityCardProps) {
                     </div>
                 )}
                 <RouteBar segment={segment} mode={activeMode} option={option} />
-                <div className="flex items-center gap-4 text-xs text-gray-500">
+                <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
                     <span className="flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5" />
                         {getDurationForMode(segment, activeMode)}
@@ -279,7 +279,7 @@ export function MobilityCard({ segment }: MobilityCardProps) {
                         href={option.booking_url} target="_blank" rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
                         className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl
-                       bg-sky-500 hover:bg-sky-600 text-white text-sm font-semibold transition-colors"
+                       bg-yellow-500 dark:bg-yellow-600 hover:bg-yellow-600 dark:hover:bg-yellow-700 text-white text-sm font-semibold transition-colors"
                     >
                         Reservar mejor opción — {option.provider}
                         <ArrowRight className="w-4 h-4" />

@@ -37,13 +37,13 @@ export function ChatPanel({ messages, isLoading, onSendMessage }: ChatPanelProps
 
     return (
         /* Outer: full-height white page */
-        <div className="flex flex-col w-full h-full bg-white overflow-hidden">
+        <div className="flex flex-col w-full h-full bg-white dark:bg-black overflow-hidden">
 
             {/* Width constraint: 2/3 of viewport, centered */}
             <div className="flex flex-col flex-1 mx-auto w-full overflow-hidden" style={{ maxWidth: '66.666vw' }}>
 
                 {/* Header bar */}
-                <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100">
+                <div className="flex items-start gap-3 px-6 py-4 border-b border-gray-100 dark:border-gray-9jus 00">
                     {/* <div className="w-9 h-9 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
                         <Image src="/images/Vora.webp" alt="Vora" width={36} height={36} className="object-cover" />
                     </div>
@@ -52,8 +52,8 @@ export function ChatPanel({ messages, isLoading, onSendMessage }: ChatPanelProps
                         <p className="text-gray-400 text-xs">Planificadora de viajes IA</p>
                     </div> */}
                     {isLoading && (
-                        <span className="ml-auto flex items-center gap-1.5 text-gray-400 text-xs">
-                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        <span className="ml-auto flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs">
+                            <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse" />
                             Pensando…
                         </span>
                     )}
@@ -69,7 +69,7 @@ export function ChatPanel({ messages, isLoading, onSendMessage }: ChatPanelProps
                 </div>
 
                 {/* Input area */}
-                <div className="px-6 py-4 border-t border-gray-100">
+                <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-800">
                     <MessageInput
                         onSendMessage={onSendMessage}
                         disabled={isLoading}

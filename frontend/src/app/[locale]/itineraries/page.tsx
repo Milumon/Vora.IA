@@ -38,7 +38,7 @@ export default function ItinerariesPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex items-center justify-center min-h-[400px] bg-white dark:bg-black">
         <LoadingSpinner size="lg" />
       </div>
     );
@@ -46,9 +46,9 @@ export default function ItinerariesPage() {
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-16">
+      <div className="container mx-auto px-4 py-16 bg-white dark:bg-black">
         <div className="flex flex-col items-center justify-center text-center max-w-md mx-auto space-y-6">
-          <p className="text-destructive">{error}</p>
+          <p className="text-destructive dark:text-red-400">{error}</p>
           <Button asChild size="lg" variant="outline">
             <Link href={`/${locale}/auth/login`}>Iniciar sesión</Link>
           </Button>
@@ -59,14 +59,14 @@ export default function ItinerariesPage() {
 
   if (itineraries.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-16">
+      <div className="container mx-auto px-4 py-16 bg-white dark:bg-black min-h-screen">
         <div className="flex flex-col items-center justify-center text-center max-w-md mx-auto space-y-6">
-          <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-            <FolderHeart className="h-10 w-10 text-primary" />
+          <div className="w-20 h-20 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center">
+            <FolderHeart className="h-10 w-10 text-primary dark:text-primary" />
           </div>
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold">No tienes itinerarios aún</h2>
-            <p className="text-muted-foreground">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">No tienes itinerarios aún</h2>
+            <p className="text-muted-foreground dark:text-gray-400">
               Comienza una conversación con nuestro asistente para crear tu primer itinerario
               personalizado
             </p>
@@ -83,11 +83,11 @@ export default function ItinerariesPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 bg-white dark:bg-black min-h-screen">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold">Mis Itinerarios</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Mis Itinerarios</h1>
+          <p className="text-muted-foreground dark:text-gray-400 mt-1">
             Todos tus planes de viaje en un solo lugar
           </p>
         </div>

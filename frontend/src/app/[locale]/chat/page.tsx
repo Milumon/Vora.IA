@@ -193,7 +193,7 @@ export default function ChatPage() {
 
   return (
     <div
-      className="relative w-full overflow-hidden bg-black"
+      className="relative w-full overflow-hidden bg-white dark:bg-black"
       style={{ height: 'calc(100vh - 4rem)' }}
     >
       {/* ── PHASE 1: Chat Panel ───────────────────────────────────────── */}
@@ -225,7 +225,7 @@ export default function ChatPage() {
       >
         {/* Chat Sidebar — 38% */}
         <div
-          className="flex-shrink-0 border-r border-gray-200 transition-all duration-500"
+          className="flex-shrink-0 border-r border-gray-200 dark:border-gray-700 transition-all duration-500"
           style={{
             width: phase === 'itinerary' ? '38%' : '100%',
             transform: phase === 'itinerary' ? 'translateX(0)' : 'translateX(-100%)',
@@ -236,7 +236,7 @@ export default function ChatPage() {
 
         {/* Right Panel — 62% - Scrollable */}
         <div
-          className="flex-1 overflow-y-auto bg-white transition-all duration-500"
+          className="flex-1 overflow-y-auto bg-white dark:bg-black transition-all duration-500"
           style={{
             opacity: phase === 'itinerary' ? 1 : 0,
             transform: phase === 'itinerary' ? 'translateX(0)' : 'translateX(40px)',
@@ -261,22 +261,22 @@ export default function ChatPage() {
               />
 
               {/* Action buttons */}
-              <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex gap-3">
+              <div className="sticky bottom-0 bg-white dark:bg-black border-t border-gray-200 dark:border-gray-700 px-6 py-4 flex gap-3">
                 <button
                   onClick={handleSaveItinerary}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-black dark:bg-gray-800 text-white text-sm font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
                 >
                   <Save className="w-4 h-4" />
                   Guardar
                 </button>
                 <button
                   onClick={handleShareItinerary}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white text-gray-900 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors border border-gray-300"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border border-gray-300 dark:border-gray-600"
                 >
                   <Share2 className="w-4 h-4" />
                   Compartir
                 </button>
-                <button className="flex items-center justify-center gap-2 px-4 py-3 bg-white text-gray-900 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors border border-gray-300">
+                <button className="flex items-center justify-center gap-2 px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border border-gray-300 dark:border-gray-600">
                   <Download className="w-4 h-4" />
                   Descargar
                 </button>

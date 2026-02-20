@@ -40,11 +40,11 @@ export function MessageBubble({ message }: MessageBubbleProps) {
       )}
     >
       {/* Avatar */}
-      <div className="h-8 w-8 shrink-0 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+      <div className="h-8 w-8 shrink-0 rounded-full overflow-hidden bg-white dark:bg-black flex items-center justify-center">
         {isUser ? (
           <Avatar className="h-8 w-8">
             <AvatarImage src={userAvatar} alt={userName} />
-            <AvatarFallback className="bg-gray-900 text-white text-sm">
+            <AvatarFallback className="bg-orange-600 dark:bg-orange-500 text-white text-sm">
               {user ? (userName ? userName.charAt(0).toUpperCase() : user.email?.charAt(0).toUpperCase()) : <User className="h-4 w-4" />}
             </AvatarFallback>
           </Avatar>
@@ -70,14 +70,14 @@ export function MessageBubble({ message }: MessageBubbleProps) {
           className={cn(
             'rounded-2xl px-4 py-2.5 break-words overflow-wrap-anywhere',
             isUser
-              ? 'bg-gray-900 text-white'
-              : 'bg-gray-100 text-gray-900'
+              ? 'bg-orange-600 dark:bg-orange-500 text-white'
+              : 'bg-white dark:bg-black text-gray-900 dark:text-gray-100 '
           )}
         >
           {isUser ? (
             <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
           ) : (
-            <div className="prose prose-sm max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-p:break-words prose-headings:text-gray-900 prose-p:text-gray-900 prose-li:text-gray-900">
+            <div className="prose prose-sm max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-p:break-words prose-headings:text-gray-900 dark:prose-headings:text-gray-100 prose-p:text-gray-900 dark:prose-p:text-gray-100 prose-li:text-gray-900 dark:prose-li:text-gray-100 prose-strong:text-gray-900 dark:prose-strong:text-gray-100">
               <ReactMarkdown>{message.content}</ReactMarkdown>
             </div>
           )}

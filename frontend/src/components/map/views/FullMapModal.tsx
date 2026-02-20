@@ -14,10 +14,15 @@ import {
     DEFAULT_MAP_CENTER,
     MAP_CONTAINER_STYLE,
     getCircleMarkerIcon,
+    getPulsingMarkerIcon,
     getDayMarkerLabel,
     getDayColor,
     DAY_COLORS,
+    GRAYSCALE_MAP_STYLES,
 } from '../shared/mapConstants';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { PulsingMarker } from '../shared/PulsingMarker';
 
 interface FullMapModalProps {
     itinerary: Itinerary;
@@ -40,9 +45,9 @@ function PlaceInfoWindowContent({
             <img
                 src={getPlaceThumbnail(place.photos)}
                 alt={place.name}
-                style={{ width: '100%', height: 128, objectFit: 'cover', borderRadius: '8px 8px 0 0' }}
+                style={{ width: '100%', height: 128, objectFit: 'cover', borderRadius: '8px 8px 8px 8px' }}
             />
-            <h4 style={{ fontWeight: 600, fontSize: 13, marginBottom: 4, color: '#111' }}>{place.name}</h4>
+            <h4 style={{ fontWeight: 600, fontSize: 13, padding: '8px 0 0 0', marginBottom: 8, color: '#111' }}>{place.name}</h4>
             {place.rating && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#666', marginBottom: 6 }}>
                     <span>⭐</span>
@@ -91,6 +96,18 @@ export function FullMapModal({
     const [allPlaces, setAllPlaces] = useState<Array<PlaceInfo & { dayNumber: number }>>([]);
     const [modalPlace, setModalPlace] = useState<PlaceInfo | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
+    const [pulsingMarker, setPulsingMarker] = useState<string | null>(null);
+    
+    // POI visibility controls
+    const [showAllPOI, setShowAllPOI] = useState(false);
+    const [showAttractions, setShowAttractions] = useState(false);
+    const [showBusiness, setShowBusiness] = useState(false);
+    const [showGovernment, setShowGovernment] = useState(false);
+    const [showMedical, setShowMedical] = useState(false);
+    const [showParks, setShowParks] = useState(false);
+    const [showWorship, setShowWorship] = useState(false);
+    const [showSchools, setShowSchools] = useState(false);
+    const [showSports, setShowSports] = useState(false);
 
     useEffect(() => {
         const places: Array<PlaceInfo & { dayNumber: number }> = [];
@@ -117,11 +134,112 @@ export function FullMapModal({
             map.panTo(new google.maps.LatLng(selectedPlace.location.lat, selectedPlace.location.lng));
             map.setZoom(15);
             setActiveMarker(selectedPlace);
+            setPulsingMarker(selectedPlace.place_id);
         }
     }, [map, selectedPlace]);
 
     const onLoad = useCallback((mapInstance: google.maps.Map) => setMap(mapInstance), []);
     const onUnmount = useCallback(() => setMap(null), []);
+
+    // Update map POI visibility based on checkbox states
+    useEffect(() => {
+        if (!map) return;
+
+        const styles: google.maps.MapTypeStyle[] = [...GRAYSCALE_MAP_STYLES];
+
+        // If showAllPOI is true, show all POIs. Otherwise, hide all by default and show selectively
+        if (!showAllPOI) {
+            styles.push({
+                featureType: 'poi',
+                stylers: [{ visibility: 'off' }],
+            });
+
+            // Selectively show based on individual checkboxes
+            if (showAttractions) {
+                styles.push({
+                    featureType: 'poi.attraction',
+                    stylers: [{ visibility: 'on' }],
+                });
+            }
+
+            if (showBusiness) {
+                styles.push({
+                    featureType: 'poi.business',
+                    stylers: [{ visibility: 'on' }],
+                });
+            }
+
+            if (showGovernment) {
+                styles.push({
+                    featureType: 'poi.government',
+                    stylers: [{ visibility: 'on' }],
+                });
+            }
+
+            if (showMedical) {
+                styles.push({
+                    featureType: 'poi.medical',
+                    stylers: [{ visibility: 'on' }],
+                });
+            }
+
+            if (showParks) {
+                styles.push({
+                    featureType: 'poi.park',
+                    stylers: [{ visibility: 'on' }],
+                });
+            }
+
+            if (showWorship) {
+                styles.push({
+                    featureType: 'poi.place_of_worship',
+                    stylers: [{ visibility: 'on' }],
+                });
+            }
+
+            if (showSchools) {
+                styles.push({
+                    featureType: 'poi.school',
+                    stylers: [{ visibility: 'on' }],
+                });
+            }
+
+            if (showSports) {
+                styles.push({
+                    featureType: 'poi.sports_complex',
+                    stylers: [{ visibility: 'on' }],
+                });
+            }
+        }
+
+        map.setOptions({ styles });
+    }, [map, showAllPOI, showAttractions, showBusiness, showGovernment, showMedical, showParks, showWorship, showSchools, showSports]);
+
+    // Handle master checkbox toggle
+    const handleAllPOIToggle = (checked: boolean) => {
+        setShowAllPOI(checked);
+        if (checked) {
+            // When enabling all, also enable individual checkboxes
+            setShowAttractions(true);
+            setShowBusiness(true);
+            setShowGovernment(true);
+            setShowMedical(true);
+            setShowParks(true);
+            setShowWorship(true);
+            setShowSchools(true);
+            setShowSports(true);
+        } else {
+            // When disabling all, also disable individual checkboxes
+            setShowAttractions(false);
+            setShowBusiness(false);
+            setShowGovernment(false);
+            setShowMedical(false);
+            setShowParks(false);
+            setShowWorship(false);
+            setShowSchools(false);
+            setShowSports(false);
+        }
+    };
 
     const getRoutePaths = useCallback((): google.maps.LatLngLiteral[][] => {
         return itinerary.day_plans
@@ -172,25 +290,27 @@ export function FullMapModal({
                                 mapTypeControl: false,
                                 streetViewControl: false,
                                 fullscreenControl: true,
+                                styles: GRAYSCALE_MAP_STYLES,
                             }}
                         >
-                            {allPlaces.map((place, index) => (
-                                <Marker
-                                    key={`${place.place_id}-${index}`}
-                                    position={{ lat: place.location.lat, lng: place.location.lng }}
-                                    icon={getCircleMarkerIcon(place.dayNumber, 10)}
-                                    label={getDayMarkerLabel(place.dayNumber)}
-                                    onClick={() => {
-                                        setActiveMarker(place);
-                                        onPlaceSelect(place);
-                                    }}
-                                    animation={
-                                        selectedPlace?.place_id === place.place_id
-                                            ? google.maps.Animation.BOUNCE
-                                            : undefined
-                                    }
-                                />
-                            ))}
+                            {allPlaces.map((place, index) => {
+                                const isPulsing = pulsingMarker === place.place_id;
+                                
+                                return (
+                                    <PulsingMarker
+                                        key={`${place.place_id}-${index}`}
+                                        position={{ lat: place.location.lat, lng: place.location.lng }}
+                                        dayNumber={place.dayNumber}
+                                        label={place.dayNumber.toString()}
+                                        isPulsing={isPulsing}
+                                        onClick={() => {
+                                            setActiveMarker(place);
+                                            onPlaceSelect(place);
+                                            setPulsingMarker(place.place_id);
+                                        }}
+                                    />
+                                );
+                            })}
 
                             {getRoutePaths().map((path, index) => (
                                 <Polyline
@@ -221,6 +341,134 @@ export function FullMapModal({
                             )}
                         </GoogleMap>
                     )}
+
+                    {/* POI Visibility Controls - Top Left */}
+                    <Card className="absolute top-4 left-4 shadow-lg max-h-[calc(100vh-8rem)] overflow-y-auto">
+                        <CardContent className="p-3 space-y-2.5">
+                            <p className="text-xs font-semibold mb-2">Mostrar en el mapa:</p>
+
+                            {/* Individual POI checkboxes */}
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id="attractions"
+                                    checked={showAttractions}
+                                    onCheckedChange={(checked) => setShowAttractions(checked as boolean)}
+                                    disabled={showAllPOI}
+                                />
+                                <Label
+                                    htmlFor="attractions"
+                                    className="text-xs font-normal cursor-pointer"
+                                >
+                                    Atracciones turísticas
+                                </Label>
+                            </div>
+
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id="business"
+                                    checked={showBusiness}
+                                    onCheckedChange={(checked) => setShowBusiness(checked as boolean)}
+                                    disabled={showAllPOI}
+                                />
+                                <Label
+                                    htmlFor="business"
+                                    className="text-xs font-normal cursor-pointer"
+                                >
+                                    Negocios y comercios
+                                </Label>
+                            </div>
+
+                            {/* <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id="government"
+                                    checked={showGovernment}
+                                    onCheckedChange={(checked) => setShowGovernment(checked as boolean)}
+                                    disabled={showAllPOI}
+                                />
+                                <Label
+                                    htmlFor="government"
+                                    className="text-xs font-normal cursor-pointer"
+                                >
+                                    Instituciones gubernamentales
+                                </Label>
+                            </div> */}
+
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id="medical"
+                                    checked={showMedical}
+                                    onCheckedChange={(checked) => setShowMedical(checked as boolean)}
+                                    disabled={showAllPOI}
+                                />
+                                <Label
+                                    htmlFor="medical"
+                                    className="text-xs font-normal cursor-pointer"
+                                >
+                                    Centros médicos
+                                </Label>
+                            </div>
+
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id="parks"
+                                    checked={showParks}
+                                    onCheckedChange={(checked) => setShowParks(checked as boolean)}
+                                    disabled={showAllPOI}
+                                />
+                                <Label
+                                    htmlFor="parks"
+                                    className="text-xs font-normal cursor-pointer"
+                                >
+                                    Parques y plazas
+                                </Label>
+                            </div>
+
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id="worship"
+                                    checked={showWorship}
+                                    onCheckedChange={(checked) => setShowWorship(checked as boolean)}
+                                    disabled={showAllPOI}
+                                />
+                                <Label
+                                    htmlFor="worship"
+                                    className="text-xs font-normal cursor-pointer"
+                                >
+                                    Lugares de culto
+                                </Label>
+                            </div>
+
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id="schools"
+                                    checked={showSchools}
+                                    onCheckedChange={(checked) => setShowSchools(checked as boolean)}
+                                    disabled={showAllPOI}
+                                />
+                                <Label
+                                    htmlFor="schools"
+                                    className="text-xs font-normal cursor-pointer"
+                                >
+                                    Escuelas y universidades
+                                </Label>
+                            </div>
+
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id="sports"
+                                    checked={showSports}
+                                    onCheckedChange={(checked) => setShowSports(checked as boolean)}
+                                    disabled={showAllPOI}
+                                />
+                                <Label
+                                    htmlFor="sports"
+                                    className="text-xs font-normal cursor-pointer"
+                                >
+                                    Complejos deportivos
+                                </Label>
+                            </div>
+                        </CardContent>
+                    </Card>
 
                     {/* Day legend */}
                     <Card className="absolute bottom-4 left-4 shadow-lg">

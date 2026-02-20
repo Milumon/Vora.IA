@@ -11,7 +11,7 @@ export function Footer() {
           <div className="flex items-center space-x-2">
             <MapPin className="h-5 w-5 text-primary" />
             <span className="text-sm font-medium text-muted-foreground">
-              ViajesPeru.AI
+              Vora.AI
             </span>
           </div>
 

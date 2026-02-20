@@ -15,9 +15,13 @@
     --popover: 0 0% 100%;
     --popover-foreground: 20 14.3% 4.1%;
     
-    /* Terracota accent - warm Peruvian clay */
+    /* Orange brand - vibrant and warm */
     --primary: 24 9.8% 10%;
     --primary-foreground: 60 9.1% 97.8%;
+    
+    /* Brand colors - orange theme */
+    --brand-orange: 25 95% 53%;
+    --brand-deep: 20 90% 48%;
     
     /* Andean blue - for informational elements */
     --secondary: 60 4.8% 95.9%;
@@ -27,7 +31,7 @@
     --muted: 60 4.8% 95.9%;
     --muted-foreground: 25 5.3% 44.7%;
     
-    /* Accent - soft terracota for chat bubbles */
+    /* Accent - soft orange for chat bubbles */
     --accent: 60 4.8% 95.9%;
     --accent-foreground: 24 9.8% 10%;
     
@@ -193,7 +197,7 @@
   scrollbar-width: none;
 }
 
-/* Minimal scrollbar for chat and timeline */
+/* Minimal scrollbar for chat and timeline - dark mode aware */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -204,10 +208,86 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
+  background: hsl(var(--muted-foreground) / 0.3);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.4);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.6);
+}
+
+/* Map marker pulsing animation */
+@keyframes pulse-ring {
+  0% {
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0.4;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.5);
+    opacity: 0;
+  }
+}
+
+@keyframes marker-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 currentColor;
+  }
+  50% {
+    box-shadow: 0 0 0 8px transparent;
+  }
+}
+
+/* Sonar wave effect - rings emanating from center */
+@keyframes sonar-wave {
+  0% {
+    width: 32px;
+    height: 32px;
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    width: 80px;
+    height: 80px;
+    opacity: 0;
+  }
+}
+
+/* Inner glow pulse for sonar effect */
+@keyframes inner-glow {
+  0%, 100% {
+    opacity: 0.2;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+}
+
+/* Dark mode shadow utilities */
+@layer utilities {
+  .dark .shadow-subtle {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+  
+  .dark .shadow-layered {
+    box-shadow: 
+      0 0 0 0.5px rgba(255, 255, 255, 0.08),
+      0 1px 2px rgba(0, 0, 0, 0.4),
+      0 2px 4px rgba(0, 0, 0, 0.3);
+  }
 }

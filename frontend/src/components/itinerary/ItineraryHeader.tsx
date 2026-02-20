@@ -40,7 +40,7 @@ export function ItineraryHeader({ itinerary }: ItineraryHeaderProps) {
   }).length;
 
   return (
-    <div className="bg-white p-6 flex gap-8 items-start z-0">
+    <div className="bg-white dark:bg-black p-6 flex gap-8 items-start z-0">
       {/* Left Column: Image */}
       <div className="flex-shrink-0 flex flex-col gap-3">
         <div className="relative w-[300px] h-[300px] rounded-3xl overflow-hidden shadow-sm transition-transform hover:scale-[1.02]">
@@ -53,19 +53,19 @@ export function ItineraryHeader({ itinerary }: ItineraryHeaderProps) {
             priority
           />
         </div>
-        <button className="text-sm font-semibold text-gray-900 underline underline-offset-4 hover:text-gray-700 text-center w-[300px]">
+        <button className="text-sm font-semibold text-gray-900 dark:text-white underline underline-offset-4 hover:text-gray-700 dark:hover:text-gray-300 text-center w-[300px]">
           Vista previa
         </button>
       </div>
 
       {/* Right Column: Content */}
       <div className="flex-grow pt-4">
-        <h1 className="text-4xl font-bold text-[#2D2840] mb-6 leading-tight">
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
           {itinerary.title}
         </h1>
 
         {/* Stats Row */}
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-4 text-gray-700">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-4 text-gray-700 dark:text-gray-300">
           <div className="flex items-center gap-2.5">
             <Calendar className="w-5 h-5 stroke-[1.5]" />
             <span className="text-base font-medium">{itinerary.day_plans.length} días</span>
@@ -102,7 +102,7 @@ export function ItineraryHeader({ itinerary }: ItineraryHeaderProps) {
 
         {/* Description */}
         {itinerary.description && (
-          <p className="mt-6 text-gray-600 leading-relaxed max-w-2xl">
+          <p className="mt-6 text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl">
             {itinerary.description}
           </p>
         )}

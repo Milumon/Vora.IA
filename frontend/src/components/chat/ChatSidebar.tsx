@@ -55,20 +55,20 @@ export function ChatSidebar() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-white border-r border-gray-200">
+    <div className="flex flex-col h-full bg-white dark:bg-black border-r border-gray-200 dark:border-gray-800">
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-6 py-6">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full max-w-2xl mx-auto">
             {/* Welcome Message */}
             <div className="text-center mb-12 space-y-4">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-blue-50 to-indigo-50 mb-6">
-                <Sparkles className="w-10 h-10 text-blue-600" />
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 mb-6">
+                <Sparkles className="w-10 h-10 text-orange-600 dark:text-orange-400" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                 {userName ? `Hola, ${userName}` : 'Bienvenido a Vora'}
               </h2>
-              <p className="text-base text-gray-600 max-w-md mx-auto leading-relaxed">
+              <p className="text-base text-gray-600 dark:text-gray-300 max-w-md mx-auto leading-relaxed">
                 Cuéntame sobre tu próximo viaje y crearé un itinerario personalizado para ti
               </p>
             </div>
@@ -76,12 +76,12 @@ export function ChatSidebar() {
             {/* Suggested Prompts - Estilo similar a la imagen */}
             {showSuggestions && (
               <div className="w-full space-y-3">
-                <p className="text-sm font-medium text-gray-700 mb-4">Prueba con estas ideas:</p>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">Prueba con estas ideas:</p>
                 <div className="grid gap-3">
                   {SUGGESTED_PROMPTS.map((prompt, idx) => (
                     <button
                       key={idx}
-                      className="w-full text-left px-4 py-4 text-sm text-gray-800 bg-white hover:bg-gray-50 rounded-xl transition-all border border-gray-200 hover:border-gray-300 hover:shadow-sm"
+                      className="w-full text-left px-4 py-4 text-sm text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl transition-all border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-sm"
                       onClick={() => handleSuggestionClick(prompt)}
                     >
                       <span className="block">{prompt}</span>
@@ -107,9 +107,9 @@ export function ChatSidebar() {
       </div>
 
       {/* Input Area - Estilo minimalista similar a la imagen */}
-      <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 bg-white">
+      <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
         <form onSubmit={handleSubmit} className="relative">
-          <div className="relative flex items-end gap-2 bg-white border border-gray-300 rounded-2xl px-4 py-3 focus-within:border-gray-400 transition-colors">
+          <div className="relative flex items-end gap-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-2xl px-4 py-3 focus-within:border-gray-400 dark:focus-within:border-gray-600 transition-colors">
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -117,7 +117,7 @@ export function ChatSidebar() {
               placeholder="Pregunta cualquier cosa..."
               disabled={isLoading}
               rows={1}
-              className="flex-1 resize-none bg-transparent text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none max-h-40 overflow-y-auto"
+              className="flex-1 resize-none bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:outline-none max-h-40 overflow-y-auto"
               style={{
                 minHeight: '24px',
                 maxHeight: '128px',
@@ -146,7 +146,7 @@ export function ChatSidebar() {
             <button
               type="submit"
               disabled={!input.trim() || isLoading}
-              className="flex-shrink-0 p-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              className="flex-shrink-0 p-2 bg-orange-600 dark:bg-orange-500 text-white rounded-lg hover:bg-orange-700 dark:hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               aria-label="Enviar mensaje"
             >
               <Send className="w-5 h-5" />

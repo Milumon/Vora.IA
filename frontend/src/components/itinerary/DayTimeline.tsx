@@ -113,7 +113,7 @@ function TimeSection({
   return (
     <div className="relative">
       {/* Timeline Line */}
-      <div className="absolute left-4 top-8 bottom-0 w-0.5 bg-border" />
+      <div className="absolute left-4 top-8 bottom-0 w-1 bg-border" />
 
       {/* Time Badge */}
       <div className="flex items-center gap-3 mb-4">

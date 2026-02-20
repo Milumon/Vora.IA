@@ -11,6 +11,7 @@ import {
     MAP_CONTAINER_STYLE,
     getCircleMarkerIcon,
     getDayColor,
+    GRAYSCALE_MAP_STYLES,
 } from '../shared/mapConstants';
 import { MapLoadingState } from '../shared/MapLoadingState';
 
@@ -83,7 +84,7 @@ export function CompactMapPreview({ itinerary, onOpenFullMap }: CompactMapPrevie
                     disableDefaultUI: true,
                     gestureHandling: 'none',
                     zoomControl: false,
-                    styles: [{ featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] }],
+                    styles: GRAYSCALE_MAP_STYLES,
                 }}
             >
                 {allPlaces.map((place, index) => (

@@ -31,39 +31,39 @@ const budgetLabels = {
 
 export function ItineraryDetail({ itinerary }: ItineraryDetailProps) {
   return (
-    <div className="container mx-auto py-8 px-4 space-y-6 max-w-6xl">
+    <div className="container mx-auto py-8 px-4 space-y-6 max-w-6xl bg-black dark:bg-black min-h-screen">
       {/* Header */}
       <div className="space-y-3">
-        <h1 className="text-4xl font-bold">
+        <h1 className="text-4xl font-bold text-white dark:text-white">
           {itinerary.title}
         </h1>
-        <p className="text-muted-foreground text-lg">{itinerary.description}</p>
+        <p className="text-gray-400 dark:text-gray-500 text-lg">{itinerary.description}</p>
       </div>
 
       {/* Metadata */}
-      <Card>
+      <Card className="bg-gray-800 dark:bg-gray-800 border-gray-700 dark:border-gray-700">
         <CardContent className="pt-6">
           <div className="flex flex-wrap gap-6">
             <div className="flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-muted-foreground" />
-              <span className="font-medium">{itinerary.destination}</span>
+              <MapPin className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+              <span className="font-medium text-white dark:text-gray-200">{itinerary.destination}</span>
             </div>
-            <Separator orientation="vertical" className="h-6" />
+            <Separator orientation="vertical" className="h-6 bg-gray-700 dark:bg-gray-700" />
             <div className="flex items-center gap-2">
-              <CalendarDays className="h-5 w-5 text-muted-foreground" />
-              <span>{itinerary.days} días</span>
+              <CalendarDays className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+              <span className="text-gray-300 dark:text-gray-400">{itinerary.days} días</span>
             </div>
-            <Separator orientation="vertical" className="h-6" />
+            <Separator orientation="vertical" className="h-6 bg-gray-700 dark:bg-gray-700" />
             <div className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-muted-foreground" />
-              <Badge variant="outline">{budgetLabels[itinerary.budget]}</Badge>
+              <DollarSign className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+              <Badge variant="outline" className="border-gray-700 dark:border-gray-700 text-gray-300 dark:text-gray-400">{budgetLabels[itinerary.budget]}</Badge>
             </div>
             {itinerary.travelers && (
               <>
-                <Separator orientation="vertical" className="h-6" />
+                <Separator orientation="vertical" className="h-6 bg-gray-700 dark:bg-gray-700" />
                 <div className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-muted-foreground" />
-                  <span>{itinerary.travelers} viajeros</span>
+                  <Users className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+                  <span className="text-gray-300 dark:text-gray-400">{itinerary.travelers} viajeros</span>
                 </div>
               </>
             )}
@@ -73,10 +73,10 @@ export function ItineraryDetail({ itinerary }: ItineraryDetailProps) {
 
       {/* Mapa del Recorrido */}
       {itinerary.data.day_plans && itinerary.data.day_plans.length > 0 && (
-        <Card>
+        <Card className="bg-gray-800 dark:bg-gray-800 border-gray-700 dark:border-gray-700">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-primary" />
+            <CardTitle className="flex items-center gap-2 text-white dark:text-white">
+              <MapPin className="h-5 w-5 text-orange-500 dark:text-orange-400" />
               Mapa del Recorrido
             </CardTitle>
           </CardHeader>
@@ -102,10 +102,10 @@ export function ItineraryDetail({ itinerary }: ItineraryDetailProps) {
 
       {/* Tips */}
       {itinerary.data.tips && itinerary.data.tips.length > 0 && (
-        <Card>
+        <Card className="bg-gray-800 dark:bg-gray-800 border-gray-700 dark:border-gray-700">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Lightbulb className="h-5 w-5 text-primary" />
+            <CardTitle className="flex items-center gap-2 text-white dark:text-white">
+              <Lightbulb className="h-5 w-5 text-orange-500 dark:text-orange-400" />
               Consejos para tu viaje
             </CardTitle>
           </CardHeader>
@@ -113,8 +113,8 @@ export function ItineraryDetail({ itinerary }: ItineraryDetailProps) {
             <ul className="space-y-3">
               {itinerary.data.tips.map((tip, idx) => (
                 <li key={idx} className="flex items-start gap-3">
-                  <span className="text-primary font-bold mt-0.5">•</span>
-                  <span className="text-muted-foreground">{tip}</span>
+                  <span className="text-orange-500 dark:text-orange-400 font-bold mt-0.5">•</span>
+                  <span className="text-gray-400 dark:text-gray-500">{tip}</span>
                 </li>
               ))}
             </ul>
