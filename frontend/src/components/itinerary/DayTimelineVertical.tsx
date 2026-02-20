@@ -48,21 +48,21 @@ function MobilityTimelineNode({
     const label = getMobilityLabel(mode);
 
     return (
-        <div className="flex gap-12">
+        <div className="flex gap-3 md:gap-12">
             {/* Left: Timeline node + line + text */}
-            <div className="flex gap-4 flex-shrink-0">
+            <div className="flex gap-2 md:gap-4 flex-shrink-0">
                 {/* Node and line */}
                 <div className="flex flex-col items-center">
-                    <div className="w-12 h-12 rounded-full bg-gray-900 dark:bg-white flex items-center justify-center flex-shrink-0 z-0 relative">
-                        <Icon className="w-5 h-5 text-white dark:text-black" />
+                    <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-gray-900 dark:bg-white flex items-center justify-center flex-shrink-0 z-0 relative">
+                        <Icon className="w-4 h-4 md:w-5 md:h-5 text-white dark:text-black" />
                     </div>
                     {!isLast && (
-                        <div className="flex-1 w-[2px] bg-gray-900 dark:bg-white -mt-0" style={{ minHeight: '120px' }} />
+                        <div className="flex-1 w-[2px] bg-gray-900 dark:bg-white -mt-0" style={{ minHeight: '80px' }} />
                     )}
                 </div>
 
-                {/* Text labels */}
-                <div className="pt-1">
+                {/* Text labels - hidden on mobile */}
+                <div className="pt-1 hidden md:block">
                     <p className="text-base font-semibold text-gray-900 dark:text-white whitespace-nowrap">Traslado</p>
                     <p className="text-sm font-medium text-yellow-600 dark:text-yellow-400 whitespace-nowrap">{label}</p>
                     {segment.departure_date && (
@@ -83,7 +83,7 @@ function MobilityTimelineNode({
             </div>
 
             {/* Right: Card content */}
-            <div className="flex-1 pb-8 pt-1">
+            <div className="flex-1 pb-4 md:pb-8 pt-1">
                 <MobilityCard segment={segment} />
             </div>
         </div>
@@ -100,21 +100,21 @@ function AccommodationTimelineNode({
     isLast: boolean;
 }) {
     return (
-        <div className="flex gap-10">
+        <div className="flex gap-3 md:gap-10">
             {/* Left: Timeline node + line + text */}
-            <div className="flex gap-4 flex-shrink-0">
+            <div className="flex gap-2 md:gap-4 flex-shrink-0">
                 {/* Node and line */}
                 <div className="flex flex-col items-center">
-                    <div className="w-12 h-12 rounded-full bg-gray-900 dark:bg-white flex items-center justify-center flex-shrink-0 z-0 relative">
-                        <Building2 className="w-5 h-5 text-white dark:text-black" />
+                    <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-gray-900 dark:bg-white flex items-center justify-center flex-shrink-0 z-0 relative">
+                        <Building2 className="w-4 h-4 md:w-5 md:h-5 text-white dark:text-black" />
                     </div>
                     {!isLast && (
-                        <div className="flex-1 w-[2px] bg-gray-900 dark:bg-white -mt-0" style={{ minHeight: '120px' }} />
+                        <div className="flex-1 w-[2px] bg-gray-900 dark:bg-white -mt-0" style={{ minHeight: '80px' }} />
                     )}
                 </div>
 
-                {/* Text labels */}
-                <div className="pt-1">
+                {/* Text labels - hidden on mobile */}
+                <div className="pt-1 hidden md:block">
                     <p className="text-base font-semibold text-gray-900 dark:text-white whitespace-nowrap">Hospedaje</p>
                     <p className="text-sm font-medium text-orange-600 dark:text-orange-400 whitespace-nowrap">Hotel</p>
                     {checkIn && (
@@ -135,7 +135,7 @@ function AccommodationTimelineNode({
             </div>
 
             {/* Right: Card content */}
-            <div className="flex-1 pb-8 pt-1">
+            <div className="flex-1 pb-4 md:pb-8 pt-1">
                 <AccommodationCard options={options} />
             </div>
         </div>
@@ -151,7 +151,7 @@ export function DayTimelineVertical({
     const totalDays = itinerary.day_plans.length;
 
     return (
-        <div className="px-16 py-8 ">
+        <div className="px-4 md:px-8 lg:px-16 py-6 md:py-8 ">
             {itinerary.day_plans.map((day, index) => {
                 const isLast = index === totalDays - 1;
                 const mobilitySegment = day.mobility;
@@ -176,21 +176,21 @@ export function DayTimelineVertical({
                         )}
 
                         {/* ── Day node ── */}
-                        <div className="flex gap-6">
+                        <div className="flex gap-2 md:gap-6">
                             {/* Left: Timeline node + line + text */}
-                            <div className="flex gap-4 flex-shrink-0">
+                            <div className="flex gap-2 md:gap-4 flex-shrink-0">
                                 {/* Node and line */}
                                 <div className="flex flex-col items-center">
-                                    <div className="w-12 h-12 rounded-full bg-gray-900 dark:bg-white flex items-center justify-center flex-shrink-0 z-0 relative">
-                                        <Calendar className="w-5 h-5 text-white dark:text-black" />
+                                    <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-gray-900 dark:bg-white flex items-center justify-center flex-shrink-0 z-0 relative">
+                                        <Calendar className="w-4 h-4 md:w-5 md:h-5 text-white dark:text-black" />
                                     </div>
                                     {!isLast && (
-                                        <div className="flex-1 w-[2px] bg-gray-900 dark:bg-white -mt-0" style={{ minHeight: '120px' }} />
+                                        <div className="flex-1 w-[2px] bg-gray-900 dark:bg-white -mt-0" style={{ minHeight: '80px' }} />
                                     )}
                                 </div>
 
-                                {/* Text labels */}
-                                <div className="pt-1">
+                                {/* Text labels - hidden on mobile */}
+                                <div className="pt-1 hidden md:block">
                                     <p className="text-base font-semibold text-gray-900 dark:text-white whitespace-nowrap">
                                         Días {day.day_number}
                                     </p>
@@ -199,7 +199,7 @@ export function DayTimelineVertical({
                             </div>
 
                             {/* Right: Card content */}
-                            <div className={`flex-1 ${!isLast ? 'pb-8' : 'pb-2'} pt-1`}>
+                            <div className={`flex-1 ${!isLast ? 'pb-4 md:pb-8' : 'pb-2'} pt-1`}>
                                 <DayCard day={day} onDaySelect={onDaySelect} />
                             </div>
                         </div>

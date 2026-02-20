@@ -215,7 +215,7 @@ export default function ChatPage() {
 
       {/* ── PHASE 2: Itinerary Split View ─────────────────────────────── */}
       <div
-        className="absolute inset-0 flex transition-all duration-600 ease-in-out"
+        className="absolute inset-0 flex flex-col md:flex-row transition-all duration-600 ease-in-out"
         style={{
           opacity: phase === 'itinerary' ? 1 : 0,
           transform: phase === 'itinerary' ? 'scale(1)' : 'scale(0.97)',
@@ -223,9 +223,9 @@ export default function ChatPage() {
           zIndex: phase === 'itinerary' ? 10 : 1,
         }}
       >
-        {/* Chat Sidebar — 38% */}
+        {/* Chat Sidebar — 38% on desktop, hidden on mobile */}
         <div
-          className="flex-shrink-0 border-r border-gray-200 dark:border-gray-700 transition-all duration-500"
+          className="hidden md:flex flex-shrink-0 border-r border-gray-200 dark:border-gray-700 transition-all duration-500"
           style={{
             width: phase === 'itinerary' ? '38%' : '100%',
             transform: phase === 'itinerary' ? 'translateX(0)' : 'translateX(-100%)',
@@ -234,7 +234,7 @@ export default function ChatPage() {
           <ChatSidebar />
         </div>
 
-        {/* Right Panel — 62% - Scrollable */}
+        {/* Right Panel — 62% on desktop, full width on mobile - Scrollable */}
         <div
           className="flex-1 overflow-y-auto bg-white dark:bg-black transition-all duration-500"
           style={{
@@ -247,7 +247,7 @@ export default function ChatPage() {
             <>
               <ItineraryHeader itinerary={generatedItinerary} />
 
-              <div className="h-96 rounded-lg p-10">
+              <div className="h-64 md:h-96 rounded-lg p-4 md:p-10">
                 <CompactMapPreview
                   itinerary={generatedItinerary}
                   onOpenFullMap={() => setIsMapModalOpen(true)}
@@ -261,24 +261,24 @@ export default function ChatPage() {
               />
 
               {/* Action buttons */}
-              <div className="sticky bottom-0 bg-white dark:bg-black border-t border-gray-200 dark:border-gray-700 px-6 py-4 flex gap-3">
+              <div className="sticky bottom-0 bg-white dark:bg-black border-t border-gray-200 dark:border-gray-700 px-4 md:px-6 py-3 md:py-4 flex flex-col sm:flex-row gap-2 md:gap-3">
                 <button
                   onClick={handleSaveItinerary}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-black dark:bg-gray-800 text-white text-sm font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 md:py-3 bg-black dark:bg-gray-800 text-white text-sm font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
                 >
                   <Save className="w-4 h-4" />
                   Guardar
                 </button>
                 <button
                   onClick={handleShareItinerary}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border border-gray-300 dark:border-gray-600"
+                  className="flex-1 flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 md:py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border border-gray-300 dark:border-gray-600"
                 >
                   <Share2 className="w-4 h-4" />
                   Compartir
                 </button>
-                <button className="flex items-center justify-center gap-2 px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border border-gray-300 dark:border-gray-600">
+                <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 md:py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border border-gray-300 dark:border-gray-600">
                   <Download className="w-4 h-4" />
-                  Descargar
+                  <span className="sm:inline">Descargar</span>
                 </button>
               </div>
             </>

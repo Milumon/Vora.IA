@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow, Polyline } from '@react-google-maps/api';
 import type { Itinerary, PlaceInfo } from '@/store/chatStore';
-import { X, Star } from 'lucide-react';
+import { X, Star, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -97,6 +97,7 @@ export function FullMapModal({
     const [modalPlace, setModalPlace] = useState<PlaceInfo | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [pulsingMarker, setPulsingMarker] = useState<string | null>(null);
+    const [isPOIControlsCollapsed, setIsPOIControlsCollapsed] = useState(false);
     
     // POI visibility controls
     const [showAllPOI, setShowAllPOI] = useState(false);
@@ -255,10 +256,10 @@ export function FullMapModal({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
-            <Card className="absolute inset-4 shadow-2xl overflow-hidden flex flex-col">
+        <div className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm">
+            <Card className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[90%] shadow-2xl overflow-hidden flex flex-col">
                 {/* Header */}
-                <CardContent className="flex items-center justify-between px-6 py-4 border-b">
+                <CardContent className="flex items-center bg-black dark:bg-gray-100 text-white dark:text-black justify-between px-6 py-4 border-b">
                     <div>
                         <h2 className="text-lg font-semibold">{itinerary.title}</h2>
                         <p className="text-sm text-muted-foreground mt-0.5">
@@ -345,128 +346,147 @@ export function FullMapModal({
                     {/* POI Visibility Controls - Top Left */}
                     <Card className="absolute top-4 left-4 shadow-lg max-h-[calc(100vh-8rem)] overflow-y-auto">
                         <CardContent className="p-3 space-y-2.5">
-                            <p className="text-xs font-semibold mb-2">Mostrar en el mapa:</p>
-
-                            {/* Individual POI checkboxes */}
-                            <div className="flex items-center space-x-2">
-                                <Checkbox
-                                    id="attractions"
-                                    checked={showAttractions}
-                                    onCheckedChange={(checked) => setShowAttractions(checked as boolean)}
-                                    disabled={showAllPOI}
-                                />
-                                <Label
-                                    htmlFor="attractions"
-                                    className="text-xs font-normal cursor-pointer"
+                            <div className="flex items-center justify-between mb-2">
+                                <p className="text-xs font-semibold">Mostrar en el mapa:</p>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 rounded-full"
+                                    onClick={() => setIsPOIControlsCollapsed(!isPOIControlsCollapsed)}
+                                    aria-label={isPOIControlsCollapsed ? "Expandir controles" : "Colapsar controles"}
                                 >
-                                    Atracciones turísticas
-                                </Label>
+                                    {isPOIControlsCollapsed ? (
+                                        <ChevronDown className="h-4 w-4" />
+                                    ) : (
+                                        <ChevronUp className="h-4 w-4" />
+                                    )}
+                                </Button>
                             </div>
 
-                            <div className="flex items-center space-x-2">
-                                <Checkbox
-                                    id="business"
-                                    checked={showBusiness}
-                                    onCheckedChange={(checked) => setShowBusiness(checked as boolean)}
-                                    disabled={showAllPOI}
-                                />
-                                <Label
-                                    htmlFor="business"
-                                    className="text-xs font-normal cursor-pointer"
-                                >
-                                    Negocios y comercios
-                                </Label>
-                            </div>
+                            {!isPOIControlsCollapsed && (
+                                <>
+                                    {/* Individual POI checkboxes */}
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id="attractions"
+                                            checked={showAttractions}
+                                            onCheckedChange={(checked) => setShowAttractions(checked as boolean)}
+                                            disabled={showAllPOI}
+                                        />
+                                        <Label
+                                            htmlFor="attractions"
+                                            className="text-xs font-normal cursor-pointer"
+                                        >
+                                            Atracciones turísticas
+                                        </Label>
+                                    </div>
 
-                            {/* <div className="flex items-center space-x-2">
-                                <Checkbox
-                                    id="government"
-                                    checked={showGovernment}
-                                    onCheckedChange={(checked) => setShowGovernment(checked as boolean)}
-                                    disabled={showAllPOI}
-                                />
-                                <Label
-                                    htmlFor="government"
-                                    className="text-xs font-normal cursor-pointer"
-                                >
-                                    Instituciones gubernamentales
-                                </Label>
-                            </div> */}
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id="business"
+                                            checked={showBusiness}
+                                            onCheckedChange={(checked) => setShowBusiness(checked as boolean)}
+                                            disabled={showAllPOI}
+                                        />
+                                        <Label
+                                            htmlFor="business"
+                                            className="text-xs font-normal cursor-pointer"
+                                        >
+                                            Negocios y comercios
+                                        </Label>
+                                    </div>
 
-                            <div className="flex items-center space-x-2">
-                                <Checkbox
-                                    id="medical"
-                                    checked={showMedical}
-                                    onCheckedChange={(checked) => setShowMedical(checked as boolean)}
-                                    disabled={showAllPOI}
-                                />
-                                <Label
-                                    htmlFor="medical"
-                                    className="text-xs font-normal cursor-pointer"
-                                >
-                                    Centros médicos
-                                </Label>
-                            </div>
+                                    {/* <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id="government"
+                                            checked={showGovernment}
+                                            onCheckedChange={(checked) => setShowGovernment(checked as boolean)}
+                                            disabled={showAllPOI}
+                                        />
+                                        <Label
+                                            htmlFor="government"
+                                            className="text-xs font-normal cursor-pointer"
+                                        >
+                                            Instituciones gubernamentales
+                                        </Label>
+                                    </div> */}
 
-                            <div className="flex items-center space-x-2">
-                                <Checkbox
-                                    id="parks"
-                                    checked={showParks}
-                                    onCheckedChange={(checked) => setShowParks(checked as boolean)}
-                                    disabled={showAllPOI}
-                                />
-                                <Label
-                                    htmlFor="parks"
-                                    className="text-xs font-normal cursor-pointer"
-                                >
-                                    Parques y plazas
-                                </Label>
-                            </div>
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id="medical"
+                                            checked={showMedical}
+                                            onCheckedChange={(checked) => setShowMedical(checked as boolean)}
+                                            disabled={showAllPOI}
+                                        />
+                                        <Label
+                                            htmlFor="medical"
+                                            className="text-xs font-normal cursor-pointer"
+                                        >
+                                            Centros médicos
+                                        </Label>
+                                    </div>
 
-                            <div className="flex items-center space-x-2">
-                                <Checkbox
-                                    id="worship"
-                                    checked={showWorship}
-                                    onCheckedChange={(checked) => setShowWorship(checked as boolean)}
-                                    disabled={showAllPOI}
-                                />
-                                <Label
-                                    htmlFor="worship"
-                                    className="text-xs font-normal cursor-pointer"
-                                >
-                                    Lugares de culto
-                                </Label>
-                            </div>
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id="parks"
+                                            checked={showParks}
+                                            onCheckedChange={(checked) => setShowParks(checked as boolean)}
+                                            disabled={showAllPOI}
+                                        />
+                                        <Label
+                                            htmlFor="parks"
+                                            className="text-xs font-normal cursor-pointer"
+                                        >
+                                            Parques y plazas
+                                        </Label>
+                                    </div>
 
-                            <div className="flex items-center space-x-2">
-                                <Checkbox
-                                    id="schools"
-                                    checked={showSchools}
-                                    onCheckedChange={(checked) => setShowSchools(checked as boolean)}
-                                    disabled={showAllPOI}
-                                />
-                                <Label
-                                    htmlFor="schools"
-                                    className="text-xs font-normal cursor-pointer"
-                                >
-                                    Escuelas y universidades
-                                </Label>
-                            </div>
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id="worship"
+                                            checked={showWorship}
+                                            onCheckedChange={(checked) => setShowWorship(checked as boolean)}
+                                            disabled={showAllPOI}
+                                        />
+                                        <Label
+                                            htmlFor="worship"
+                                            className="text-xs font-normal cursor-pointer"
+                                        >
+                                            Lugares de culto
+                                        </Label>
+                                    </div>
 
-                            <div className="flex items-center space-x-2">
-                                <Checkbox
-                                    id="sports"
-                                    checked={showSports}
-                                    onCheckedChange={(checked) => setShowSports(checked as boolean)}
-                                    disabled={showAllPOI}
-                                />
-                                <Label
-                                    htmlFor="sports"
-                                    className="text-xs font-normal cursor-pointer"
-                                >
-                                    Complejos deportivos
-                                </Label>
-                            </div>
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id="schools"
+                                            checked={showSchools}
+                                            onCheckedChange={(checked) => setShowSchools(checked as boolean)}
+                                            disabled={showAllPOI}
+                                        />
+                                        <Label
+                                            htmlFor="schools"
+                                            className="text-xs font-normal cursor-pointer"
+                                        >
+                                            Escuelas y universidades
+                                        </Label>
+                                    </div>
+
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id="sports"
+                                            checked={showSports}
+                                            onCheckedChange={(checked) => setShowSports(checked as boolean)}
+                                            disabled={showAllPOI}
+                                        />
+                                        <Label
+                                            htmlFor="sports"
+                                            className="text-xs font-normal cursor-pointer"
+                                        >
+                                            Complejos deportivos
+                                        </Label>
+                                    </div>
+                                </>
+                            )}
                         </CardContent>
                     </Card>
 

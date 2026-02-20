@@ -192,7 +192,7 @@ export function HeroSection({ onSendMessage, isLoading }: HeroSectionProps) {
                             className={cn(
                                 'bg-transparent border-0 shadow-none',
                                 'text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 text-base',
-                                'px-5 pt-4 pb-2 min-h-[72px] max-h-[200px]',
+                                'px-5 pt-4 pb-2 min-h-[120px] max-h-[200px]',
                                 'focus:ring-0 focus:outline-none resize-none',
                             )}
                         />

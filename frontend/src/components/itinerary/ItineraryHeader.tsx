@@ -40,60 +40,60 @@ export function ItineraryHeader({ itinerary }: ItineraryHeaderProps) {
   }).length;
 
   return (
-    <div className="bg-white dark:bg-black p-6 flex gap-8 items-start z-0">
+    <div className="bg-white dark:bg-black p-4 md:p-6 flex flex-col md:flex-row gap-4 md:gap-8 items-start z-0">
       {/* Left Column: Image */}
-      <div className="flex-shrink-0 flex flex-col gap-3">
-        <div className="relative w-[300px] h-[300px] rounded-3xl overflow-hidden shadow-sm transition-transform hover:scale-[1.02]">
+      <div className="w-full md:w-auto flex-shrink-0 flex flex-col gap-3">
+        <div className="relative w-full md:w-[300px] h-[200px] md:h-[300px] rounded-2xl md:rounded-3xl overflow-hidden shadow-sm transition-transform hover:scale-[1.02]">
           <Image
             src={headerImage}
             alt={itinerary.title}
             fill
             className="object-cover"
-            sizes="300px"
+            sizes="(max-width: 768px) 100vw, 300px"
             priority
           />
         </div>
-        <button className="text-sm font-semibold text-gray-900 dark:text-white underline underline-offset-4 hover:text-gray-700 dark:hover:text-gray-300 text-center w-[300px]">
+        <button className="text-sm font-semibold text-gray-900 dark:text-white underline underline-offset-4 hover:text-gray-700 dark:hover:text-gray-300 text-center w-full md:w-[300px]">
           Vista previa
         </button>
       </div>
 
       {/* Right Column: Content */}
-      <div className="flex-grow pt-4">
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
+      <div className="flex-grow w-full md:pt-4">
+        <h1 className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4 md:mb-6 leading-tight">
           {itinerary.title}
         </h1>
 
         {/* Stats Row */}
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-4 text-gray-700 dark:text-gray-300">
-          <div className="flex items-center gap-2.5">
-            <Calendar className="w-5 h-5 stroke-[1.5]" />
-            <span className="text-base font-medium">{itinerary.day_plans.length} días</span>
+        <div className="flex flex-wrap items-center gap-x-4 md:gap-x-6 gap-y-3 md:gap-y-4 text-gray-700 dark:text-gray-300">
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 md:w-5 md:h-5 stroke-[1.5]" />
+            <span className="text-sm md:text-base font-medium">{itinerary.day_plans.length} días</span>
           </div>
 
-          <div className="flex items-center gap-2.5">
-            <MapPin className="w-5 h-5 stroke-[1.5]" />
-            <span className="text-base font-medium">{cities} {cities === 1 ? 'ciudad' : 'ciudades'}</span>
+          <div className="flex items-center gap-2">
+            <MapPin className="w-4 h-4 md:w-5 md:h-5 stroke-[1.5]" />
+            <span className="text-sm md:text-base font-medium">{cities} {cities === 1 ? 'ciudad' : 'ciudades'}</span>
           </div>
 
-          <div className="flex items-center gap-2.5">
-            <Star className="w-5 h-5 stroke-[1.5]" />
-            <span className="text-base font-medium">{totalPlaces} experiencias</span>
+          <div className="flex items-center gap-2">
+            <Star className="w-4 h-4 md:w-5 md:h-5 stroke-[1.5]" />
+            <span className="text-sm md:text-base font-medium">{totalPlaces} experiencias</span>
           </div>
 
           {totalHotels > 0 && (
-            <div className="flex items-center gap-2.5">
-              <Building2 className="w-5 h-5 stroke-[1.5]" />
-              <span className="text-base font-medium">
+            <div className="flex items-center gap-2">
+              <Building2 className="w-4 h-4 md:w-5 md:h-5 stroke-[1.5]" />
+              <span className="text-sm md:text-base font-medium">
                 {totalHotels} {totalHotels === 1 ? 'hotel' : 'hoteles'}
               </span>
             </div>
           )}
 
           {totalTransports > 0 && (
-            <div className="flex items-center gap-2.5">
-              <Plane className="w-5 h-5 stroke-[1.5]" />
-              <span className="text-base font-medium">
+            <div className="flex items-center gap-2">
+              <Plane className="w-4 h-4 md:w-5 md:h-5 stroke-[1.5]" />
+              <span className="text-sm md:text-base font-medium">
                 {totalTransports} {totalTransports === 1 ? 'transporte' : 'transportes'}
               </span>
             </div>
@@ -102,7 +102,7 @@ export function ItineraryHeader({ itinerary }: ItineraryHeaderProps) {
 
         {/* Description */}
         {itinerary.description && (
-          <p className="mt-6 text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl">
+          <p className="mt-4 md:mt-6 text-sm md:text-base text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl">
             {itinerary.description}
           </p>
         )}

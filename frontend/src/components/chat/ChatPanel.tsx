@@ -39,8 +39,8 @@ export function ChatPanel({ messages, isLoading, onSendMessage }: ChatPanelProps
         /* Outer: full-height white page */
         <div className="flex flex-col w-full h-full bg-white dark:bg-black overflow-hidden">
 
-            {/* Width constraint: 2/3 of viewport, centered */}
-            <div className="flex flex-col flex-1 mx-auto w-full overflow-hidden" style={{ maxWidth: '66.666vw' }}>
+            {/* Width constraint: 100% on mobile, 2/3 on desktop, centered */}
+            <div className="flex flex-col flex-1 mx-auto w-full overflow-hidden md:max-w-[66.666vw]">
 
                 {/* Header bar */}
                 <div className="flex items-start gap-3 px-6 py-4 border-b border-gray-100 dark:border-gray-9jus 00">

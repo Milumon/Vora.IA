@@ -9,7 +9,7 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
-import { MessageSquare, FolderHeart, User, LogOut } from 'lucide-react';
+import { MessageSquare, FolderHeart, User, LogOut, LogIn, UserPlus } from 'lucide-react';
 
 export function Header() {
   const t = useTranslations('common');
@@ -95,11 +95,35 @@ export function Header() {
             </>
           ) : (
             <>
-              <Button variant="ghost" asChild>
+              {/* Desktop: texto completo */}
+              <Button variant="ghost" asChild className="hidden sm:flex">
                 <Link href="/auth/login">{tCommon('auth.login')}</Link>
               </Button>
-              <Button asChild>
+              <Button asChild className="hidden sm:flex">
                 <Link href="/auth/register">{tCommon('auth.register')}</Link>
+              </Button>
+              
+              {/* Mobile: solo iconos */}
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                asChild 
+                className="sm:hidden"
+                aria-label={tCommon('auth.login')}
+              >
+                <Link href="/auth/login">
+                  <LogIn className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button 
+                size="icon" 
+                asChild 
+                className="sm:hidden"
+                aria-label={tCommon('auth.register')}
+              >
+                <Link href="/auth/register">
+                  <UserPlus className="h-4 w-4" />
+                </Link>
               </Button>
             </>
           )}

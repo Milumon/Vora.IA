@@ -147,7 +147,7 @@ export function PlaceDetailModal({ place, open, onOpenChange }: PlaceDetailModal
 
                 {/* Content */}
                 <div className="overflow-y-auto flex flex-col p-6 max-h-[calc(90vh-300px)] sm:max-h-[calc(90vh-400px)]">
-                    <div className="space-y-4">
+                    <div className="space-y-2">
                         <DialogHeader>
                             <DialogTitle className="text-2xl">{place.name}</DialogTitle>
                             {place.address && (
@@ -217,11 +217,11 @@ export function PlaceDetailModal({ place, open, onOpenChange }: PlaceDetailModal
                         {/* Google Maps CTA */}
                         <Button 
                             variant="outline" 
-                            className="w-full gap-2" 
+                            className="w-full gap-2 py-2 bg-black hover:bg-black/80 dark:bg-amber-500 dark:hover:bg-amber-600 text-white hover:text-white" 
                             size="lg"
                             onClick={openInGoogleMaps}
                         >
-                            <ExternalLink className="h-4 w-4" />
+                            <ExternalLink className="h-4 w-4 text-white" />
                             Ver en Google Maps
                         </Button>
                     </div>

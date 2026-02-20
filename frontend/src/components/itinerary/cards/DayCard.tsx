@@ -66,24 +66,13 @@ export function formatDateRange(startDay: DayPlan, endDay: DayPlan): string | nu
 
 /**
  * Horizontal image strip — exactly **1 photo per place**.
- * Images fill the card width (max 3 visible); wider aspect ratio.
+ * Images fill the card width (max 3 visible on desktop, 1 on mobile); wider aspect ratio.
  * Scrolls horizontally when there are more than 3 places.
  */
 function DayImageCarousel({ places }: { places: PlaceInfo[] }) {
     const scrollRef = useRef<HTMLDivElement>(null);
     const [canScroll, setCanScroll] = useState(false);
-
-    const checkScroll = useCallback(() => {
-        const el = scrollRef.current;
-        if (!el) return;
-        setCanScroll(el.scrollWidth > el.clientWidth + 4);
-    }, []);
-
-    useEffect(() => {
-        checkScroll();
-        window.addEventListener('resize', checkScroll);
-        return () => window.removeEventListener('resize', checkScroll);
-    }, [checkScroll]);
+    const [visibleCount, setVisibleCount] = useState(3);
 
     // 1 photo per place — take the first valid photo from each place
     const photoItems: { url: string; placeName: string }[] = [];
@@ -95,9 +84,32 @@ function DayImageCarousel({ places }: { places: PlaceInfo[] }) {
         }
     });
 
-    if (photoItems.length === 0) return null;
+    const updateVisibleCount = useCallback(() => {
+        if (typeof window !== 'undefined') {
+            setVisibleCount(window.innerWidth < 768 ? 1 : Math.min(photoItems.length, 3));
+        }
+    }, [photoItems.length]);
 
-    const visibleCount = Math.min(photoItems.length, 3);
+    const checkScroll = useCallback(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+        setCanScroll(el.scrollWidth > el.clientWidth + 4);
+    }, []);
+
+    useEffect(() => {
+        updateVisibleCount();
+        checkScroll();
+        
+        const handleResize = () => {
+            updateVisibleCount();
+            checkScroll();
+        };
+        
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, [updateVisibleCount, checkScroll]);
+
+    if (photoItems.length === 0) return null;
 
     const scrollRight = useCallback(() => {
         const el = scrollRef.current;
@@ -120,7 +132,7 @@ function DayImageCarousel({ places }: { places: PlaceInfo[] }) {
                         style={{
                             width: `calc(${100 / visibleCount}% - ${((visibleCount - 1) * 4) / visibleCount
                                 }px)`,
-                            aspectRatio: '3 / 2',
+                            aspectRatio: '16 / 9',
                         }}
                         title={item.placeName}
                     >

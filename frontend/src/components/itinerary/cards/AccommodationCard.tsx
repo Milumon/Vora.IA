@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Star, ChevronRight, ChevronDown, ChevronUp, MapPin, ExternalLink, Wifi, Coffee, Car, Waves } from 'lucide-react';
 import Image from 'next/image';
 import type { AccommodationOption } from '@/store/chatStore';
@@ -58,52 +58,100 @@ function HotelImageCarousel({
     name: string;
     onImageClick: () => void;
 }) {
-    const scrollRef = useRef<HTMLDivElement>(null);
-    const scrollRight = useCallback(() => {
-        scrollRef.current?.scrollBy({ left: 168, behavior: 'smooth' });
-    }, []);
+    const [currentIndex, setCurrentIndex] = useState(0);
 
     if (images.length === 0) {
         return (
-            <div className="w-full h-40 rounded-xl bg-gradient-to-br from-orange-100 to-amber-100 flex items-center justify-center">
-                <MapPin className="w-8 h-8 text-orange-300" />
+            <div className="w-full h-40 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center">
+                <MapPin className="w-8 h-8 text-gray-400 dark:text-gray-500" />
             </div>
         );
     }
 
-    const hasMoreImages = images.length > 3;
+    const goToPrevious = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+    };
+
+    const goToNext = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+    };
+
+    const hasMultipleImages = images.length > 1;
 
     return (
-        <div className="relative group/carousel overflow-hidden">
-            {/* Contenedor con ancho máximo para mostrar solo 3 imágenes */}
-            <div 
-                ref={scrollRef} 
-                className="flex gap-2 overflow-x-auto scrollbar-hide scroll-smooth rounded-xl"
-                style={{ maxWidth: 'calc(3 * 160px + 2 * 18px)' }} // 3 imágenes de 160px + 2 gaps de 8px
+        <div className="relative group/carousel">
+            {/* Imagen principal */}
+            <button
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onImageClick();
+                }}
+                className="relative w-full h-48 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 cursor-pointer hover:opacity-95 transition-opacity"
             >
-                {images.map((url, idx) => (
-                    <button
-                        key={idx}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onImageClick();
-                        }}
-                        className="relative flex-shrink-0 w-40 h-28 rounded-xl overflow-hidden bg-gray-100 cursor-pointer hover:opacity-90 transition-opacity"
-                    >
-                        <Image src={url} alt={`${name} — foto ${idx + 1}`} fill className="object-cover" sizes="160px" unoptimized />
-                    </button>
-                ))}
-            </div>
-            {hasMoreImages && (
+                <Image 
+                    src={images[currentIndex]} 
+                    alt={`${name} — foto ${currentIndex + 1}`} 
+                    fill 
+                    className="object-cover" 
+                    sizes="(max-width: 768px) 100vw, 600px" 
+                    unoptimized 
+                />
+                
+                {/* Indicador de posición */}
+                {hasMultipleImages && (
+                    <div className="absolute bottom-2 right-2 px-2 py-1 rounded-md bg-black/60 text-white text-xs font-medium">
+                        {currentIndex + 1} / {images.length}
+                    </div>
+                )}
+            </button>
+
+            {/* Botón izquierdo */}
+            {hasMultipleImages && (
                 <button
-                    onClick={(e) => { e.stopPropagation(); scrollRight(); }}
-                    aria-label="Ver más imágenes"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full
-                     bg-white/90 shadow-md flex items-center justify-center
-                     opacity-0 group-hover/carousel:opacity-100 transition-opacity"
+                    onClick={goToPrevious}
+                    aria-label="Imagen anterior"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full
+                     bg-white/90 dark:bg-gray-800/90 shadow-md flex items-center justify-center
+                     opacity-0 group-hover/carousel:opacity-100 hover:bg-white dark:hover:bg-gray-700 transition-all"
                 >
-                    <ChevronRight className="w-4 h-4 text-gray-700" />
+                    <ChevronRight className="w-4 h-4 text-gray-700 dark:text-gray-200 rotate-180" />
                 </button>
+            )}
+
+            {/* Botón derecho */}
+            {hasMultipleImages && (
+                <button
+                    onClick={goToNext}
+                    aria-label="Imagen siguiente"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full
+                     bg-white/90 dark:bg-gray-800/90 shadow-md flex items-center justify-center
+                     opacity-0 group-hover/carousel:opacity-100 hover:bg-white dark:hover:bg-gray-700 transition-all"
+                >
+                    <ChevronRight className="w-4 h-4 text-gray-700 dark:text-gray-200" />
+                </button>
+            )}
+
+            {/* Indicadores de puntos (opcional, para mejor UX) */}
+            {hasMultipleImages && images.length <= 5 && (
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+                    {images.map((_, idx) => (
+                        <button
+                            key={idx}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setCurrentIndex(idx);
+                            }}
+                            className={`w-1.5 h-1.5 rounded-full transition-all ${
+                                idx === currentIndex 
+                                    ? 'bg-white w-4' 
+                                    : 'bg-white/50 hover:bg-white/75'
+                            }`}
+                            aria-label={`Ir a imagen ${idx + 1}`}
+                        />
+                    ))}
+                </div>
             )}
         </div>
     );
@@ -162,7 +210,7 @@ function HotelOptionCard({
     onImageClick: () => void;
 }) {
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-sm transition-shadow">
+        <div className="bg-white dark:bg-black rounded-xl border border-gray-200 dark:border-orange-500 overflow-hidden hover:shadow-sm transition-shadow">
             <HotelImageCarousel images={hotel.images} name={hotel.name} onImageClick={onImageClick} />
             <div className="p-4 space-y-3">
                 <div className="flex items-start justify-between gap-2">
@@ -172,7 +220,7 @@ function HotelOptionCard({
                             <HotelStars stars={hotel.stars} />
                         </div>
                         {hotel.type && (
-                            <span className="inline-flex px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-[10px] font-semibold uppercase tracking-wide">
+                            <span className="inline-flex px-2 py-0.5 rounded-full bg-gray-100 dark:bg-orange-700 text-gray-700 dark:text-gray-300 text-[10px] font-semibold uppercase tracking-wide">
                                 {hotel.type}
                             </span>
                         )}
@@ -202,7 +250,7 @@ function HotelOptionCard({
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
                         className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl
-                       bg-black dark:bg-gray-800 hover:bg-gray-800 dark:hover:bg-gray-700 active:bg-gray-700 dark:active:bg-gray-600
+                       bg-black dark:bg-orange-700 hover:bg-gray-800 dark:hover:bg-orange-900 active:bg-gray-700 dark:active:bg-gray-600
                        text-white text-sm font-semibold transition-colors"
                     >
                         Ver disponibilidad
@@ -236,7 +284,7 @@ export function AccommodationCard({ options }: AccommodationCardProps) {
         <>
             <div className="w-auto bg-white dark:bg-black rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-gray-900 to-gray-800 dark:from-gray-800 dark:to-gray-700 px-5 py-3">
+                <div className="bg-gradient-to-r from-gray-900 to-gray-800 dark:from-black dark:to-orange-600 px-5 py-3">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <div className="w-8 h-8 rounded-full bg-gray-800 dark:bg-gray-700 flex items-center justify-center">

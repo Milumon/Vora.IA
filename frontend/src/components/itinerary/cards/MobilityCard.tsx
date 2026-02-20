@@ -219,7 +219,7 @@ export function MobilityCard({ segment }: MobilityCardProps) {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         {activeMode === 'flight' && option?.airline_logo ? (
-                            <div className="w-8 h-8 rounded-full bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center overflow-hidden">
+                            <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden">
                                 <Image src={option.airline_logo} alt={option.provider} width={24} height={24} className="object-contain" unoptimized />
                             </div>
                         ) : (
