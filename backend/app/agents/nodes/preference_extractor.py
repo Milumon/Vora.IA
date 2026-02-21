@@ -15,7 +15,6 @@ Flujo:
 """
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
 from typing import List, Optional, Literal
 from datetime import datetime, date
@@ -86,7 +85,8 @@ async def extract_preferences(state: TravelState) -> dict:
         api_key=settings.OPENAI_API_KEY
     )
 
-    parser = PydanticOutputParser(pydantic_object=ExtractedPreferences)
+    # Usar with_structured_output en lugar de PydanticOutputParser (más robusto)
+    structured_llm = llm.with_structured_output(ExtractedPreferences)
 
     # ── 1. Leer estado actual ─────────────────────────────────────────────
     messages = state.get("messages", [])
@@ -101,17 +101,26 @@ async def extract_preferences(state: TravelState) -> dict:
     # ── 2. Construir snapshot para el prompt ──────────────────────────────
     confirmed_str, missing_required_str = _build_field_snapshot(current)
 
-    # ── 3. Invocar LLM ───────────────────────────────────────────────────
+    # ── 3. Invocar LLM con manejo robusto de errores ─────────────────────
     prompt = _build_extraction_prompt()
-    chain = prompt | llm | parser
+    chain = prompt | structured_llm
 
-    result = await chain.ainvoke({
-        "conversation": conversation_context,
-        "confirmed_fields": confirmed_str,
-        "missing_required_fields": missing_required_str,
-        "accumulated_summary": accumulated or "Primera interacción",
-        "format_instructions": parser.get_format_instructions()
-    })
+    try:
+        result = await chain.ainvoke({
+            "conversation": conversation_context,
+            "confirmed_fields": confirmed_str,
+            "missing_required_fields": missing_required_str,
+            "accumulated_summary": accumulated or "Primera interacción",
+        })
+    except Exception as e:
+        logger.error(f"OUTPUT_PARSING_FAILURE in preference_extractor: {e}", exc_info=True)
+        # Fallback: crear resultado por defecto basado en estado actual
+        result = ExtractedPreferences(
+            destination=current.get("destination"),
+            days=current.get("days"),
+            needs_clarification=not (current.get("destination") and current.get("days")),
+            clarification_questions=_generate_missing_questions(current, {})
+        )
 
     # ── 4. Merge: solo actualizar campos que el LLM extrajo ──────────────
     update = _merge_extracted(result)
@@ -264,7 +273,7 @@ Huaraz, Ayacucho, Cajamarca, Tarapoto, Puerto Maldonado, Machu Picchu, Chachapoy
 Abancay, Callao, Huancavelica, Huánuco, Ica, Huancayo, Huacho, Moquegua, Cerro de Pasco,
 Moyobamba, Tacna, Tumbes, Pucallpa.
 
-{format_instructions}
+Responde con un objeto JSON que contenga los campos del modelo ExtractedPreferences.
 
 Conversación completa:
 {conversation}

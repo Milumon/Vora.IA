@@ -60,19 +60,27 @@ Responde SOLO con una palabra: new_trip, refine, question, o clarify"""),
     ])
     
     chain = prompt | llm
-    result = await chain.ainvoke({
-        "message": last_message,
-        "recent_context": recent_context,
-        "accumulated_summary": accumulated or "Sin información previa",
-        "has_destination": str(has_destination),
-        "has_days": str(has_days),
-        "has_itinerary": str(has_itinerary),
-    })
     
-    intent = result.content.strip().lower()
-    
-    valid_intents = ["new_trip", "refine", "question", "clarify"]
-    if intent not in valid_intents:
+    try:
+        result = await chain.ainvoke({
+            "message": last_message,
+            "recent_context": recent_context,
+            "accumulated_summary": accumulated or "Sin información previa",
+            "has_destination": str(has_destination),
+            "has_days": str(has_days),
+            "has_itinerary": str(has_itinerary),
+        })
+        
+        intent = result.content.strip().lower()
+        
+        valid_intents = ["new_trip", "refine", "question", "clarify"]
+        if intent not in valid_intents:
+            intent = "clarify" if (has_destination or has_days) else "new_trip"
+    except Exception as e:
+        from app.config.logging import get_logger
+        logger = get_logger(__name__)
+        logger.error(f"Error in intent_classifier: {e}", exc_info=True)
+        # Fallback: usar heurística basada en estado
         intent = "clarify" if (has_destination or has_days) else "new_trip"
     
     return {

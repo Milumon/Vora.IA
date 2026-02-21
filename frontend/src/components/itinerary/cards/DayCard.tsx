@@ -1,10 +1,8 @@
 'use client';
 
-import { useRef, useCallback, useState, useEffect } from 'react';
-import { ChevronRight, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import type { DayPlan, PlaceInfo } from '@/store/chatStore';
 import Image from 'next/image';
 import { getPlacePhotos } from '@/lib/utils/google-places';
@@ -65,108 +63,46 @@ export function formatDateRange(startDay: DayPlan, endDay: DayPlan): string | nu
 /* ─── Image Carousel ──────────────────────────────────────────── */
 
 /**
- * Horizontal image strip — exactly **1 photo per place**.
- * Images fill the card width (max 3 visible on desktop, 1 on mobile); wider aspect ratio.
- * Scrolls horizontally when there are more than 3 places.
+ * Grid de 2 imágenes — muestra hasta 2 fotos de los lugares del día.
+ * Layout: 2 columnas en desktop, 1 columna en mobile.
  */
 function DayImageCarousel({ places }: { places: PlaceInfo[] }) {
-    const scrollRef = useRef<HTMLDivElement>(null);
-    const [canScroll, setCanScroll] = useState(false);
-    const [visibleCount, setVisibleCount] = useState(3);
-
-    // 1 photo per place — take the first valid photo from each place
+    // Recolectar hasta 2 fotos de los lugares
     const photoItems: { url: string; placeName: string }[] = [];
-    places.forEach((place) => {
+    
+    for (const place of places) {
+        if (photoItems.length >= 2) break;
+        
         const urls = getPlacePhotos(place.photos, 1, 600);
         const url = urls.find((u) => u && u !== '/placeholder-place.jpg') || urls[0];
+        
         if (url) {
             photoItems.push({ url, placeName: place.name });
         }
-    });
-
-    const updateVisibleCount = useCallback(() => {
-        if (typeof window !== 'undefined') {
-            setVisibleCount(window.innerWidth < 768 ? 1 : Math.min(photoItems.length, 3));
-        }
-    }, [photoItems.length]);
-
-    const checkScroll = useCallback(() => {
-        const el = scrollRef.current;
-        if (!el) return;
-        setCanScroll(el.scrollWidth > el.clientWidth + 4);
-    }, []);
-
-    useEffect(() => {
-        updateVisibleCount();
-        checkScroll();
-
-        const handleResize = () => {
-            updateVisibleCount();
-            checkScroll();
-        };
-
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, [updateVisibleCount, checkScroll]);
+    }
 
     if (photoItems.length === 0) return null;
 
-    const scrollRight = useCallback(() => {
-        const el = scrollRef.current;
-        if (!el) return;
-        const slotWidth = el.clientWidth / visibleCount;
-        el.scrollBy({ left: slotWidth, behavior: 'smooth' });
-    }, [visibleCount]);
-
     return (
-        <div className="relative group/carousel">
-            <div
-                ref={scrollRef}
-                className="flex gap-1 overflow-x-auto scrollbar-hide scroll-smooth"
-                onScroll={checkScroll}
-            >
-                {photoItems.map((item, idx) => (
-                    <div
-                        key={`${item.placeName}-${idx}`}
-                        className="relative flex-shrink-0 rounded-lg overflow-hidden bg-muted"
-                        style={{
-                            width: `calc(${100 / visibleCount}% - ${((visibleCount - 1) * 4) / visibleCount
-                                }px)`,
-                            aspectRatio: '16 / 9',
-                        }}
-                        title={item.placeName}
-                    >
-                        <Image
-                            src={item.url}
-                            alt={item.placeName}
-                            fill
-                            className="object-cover"
-                            sizes={`${Math.round(100 / visibleCount)}vw`}
-                        />
-                    </div>
-                ))}
-            </div>
-
-            {/* Gradient fade on right edge when scrollable */}
-            {canScroll && (
-                <div className="absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-card/80 to-transparent pointer-events-none rounded-r-lg" />
-            )}
-
-            {/* Scroll-right button */}
-            {canScroll && (
-                <Button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        scrollRight();
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {photoItems.map((item, idx) => (
+                <div
+                    key={`${item.placeName}-${idx}`}
+                    className="relative rounded-lg overflow-hidden bg-muted"
+                    style={{
+                        aspectRatio: '16 / 9',
                     }}
-                    variant="secondary"
-                    size="icon"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 z-10 h-7 w-7 rounded-full shadow-lg opacity-0 group-hover/carousel:opacity-100 transition-opacity bg-black/40 hover:bg-black/60 border-0 text-white [&_svg]:text-white"
-                    aria-label="Ver más imágenes"
+                    title={item.placeName}
                 >
-                    <ChevronRight className="w-4 h-4" />
-                </Button>
-            )}
+                    <Image
+                        src={item.url}
+                        alt={item.placeName}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 640px) 100vw, 50vw"
+                    />
+                </div>
+            ))}
         </div>
     );
 }
@@ -208,7 +144,7 @@ interface DayCardProps {
  * A single day card in the vertical itinerary timeline.
  *
  * Shows:
- * - Horizontal image carousel with **2 photos per place**
+ * - Grid de 2 imágenes de los lugares del día
  * - Tag row: day number · experience count · calendar date (e.g. "Mar 1")
  * - Sequential route chain
  * - Day summary with arrow CTA
@@ -226,7 +162,7 @@ export function DayCard({ day, onDaySelect }: DayCardProps) {
             className="cursor-pointer shadow-md hover:shadow-xl transition-all group"
         >
             <CardContent className="p-5 space-y-4">
-                {/* Image carousel — 2 photos per place */}
+                {/* Grid de 2 imágenes */}
                 <DayImageCarousel places={places} />
 
                 {/* Tags */}

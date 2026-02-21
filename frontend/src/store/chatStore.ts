@@ -81,6 +81,8 @@ interface DayPlan {
   evening: PlaceInfo[];
   notes: string;
   day_summary?: string;
+  /** Lunch recommendation from the agent (optional — a placeholder is used if absent) */
+  lunch?: PlaceInfo;
   /** Unified mobility data (replaces old bus_transfer) */
   mobility?: MobilitySegment;
   /** Accommodation options for this day */

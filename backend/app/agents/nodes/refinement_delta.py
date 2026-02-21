@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
 from typing import List, Optional, Literal
 
@@ -96,7 +95,8 @@ async def extract_refinement_delta(state: TravelState) -> dict:
         api_key=settings.OPENAI_API_KEY,
     )
 
-    parser = PydanticOutputParser(pydantic_object=RefinementDelta)
+    # Usar with_structured_output en lugar de PydanticOutputParser (más robusto)
+    structured_llm = llm.with_structured_output(RefinementDelta)
 
     messages = state.get("messages", [])
     last_message = messages[-1]["content"] if messages else ""
@@ -151,18 +151,17 @@ INSTRUCCIONES:
 7. Si el usuario pide algo específico como "quiero más restaurantes el día 2" → specific_instructions
 8. Siempre incluye un summary_of_changes breve
 
-{format_instructions}"""),
+Responde con un objeto JSON que contenga los campos del modelo RefinementDelta."""),
         ("user", "Extrae los cambios solicitados por el usuario.")
     ])
 
-    chain = prompt | llm | parser
+    chain = prompt | structured_llm
 
     try:
         delta = await chain.ainvoke({
             "current_state": "\n".join(current_state_summary) or "Sin información previa",
             "itinerary_summary": itinerary_summary or "Sin itinerario previo",
             "user_request": last_message,
-            "format_instructions": parser.get_format_instructions(),
         })
 
         # Determine refinement scope
@@ -197,7 +196,8 @@ INSTRUCCIONES:
         return update
 
     except Exception as e:
-        logger.error(f"refinement_delta error: {e}", exc_info=True)
+        logger.error(f"OUTPUT_PARSING_FAILURE in refinement_delta: {e}", exc_info=True)
+        logger.warning(f"Usando fallback para refinement. Mensaje del usuario: {last_message[:100]}")
         # Fallback: metadata_only scope, preserve everything
         return {
             "refinement_scope": "metadata_only",

@@ -37,7 +37,7 @@ export default function ChatPage() {
   const router = useRouter();
   const locale = useLocale();
   const { user } = useAuth();
-  const [, setSelectedDay] = useState(1);
+  // Day selection now navigates to the day detail subpage
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const [loadingItinerary, setLoadingItinerary] = useState(false);
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
@@ -53,10 +53,10 @@ export default function ChatPage() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (pendingMessageSentRef.current) return;
-    
+
     const pending = localStorage.getItem('vora_pending_message');
     console.log('🔍 [Mount] Checking for pending message:', pending);
-    
+
     if (pending) {
       console.log('✅ [Mount] Found pending message, setting state');
       setPendingMessage(pending);
@@ -70,27 +70,27 @@ export default function ChatPage() {
       console.log('⏭️ [Send] No pending message');
       return;
     }
-    
+
     if (pendingMessageSentRef.current) {
       console.log('⏭️ [Send] Already sent, skipping');
       return;
     }
-    
+
     if (!user) {
       console.log('⏳ [Send] Waiting for user authentication...');
       return;
     }
-    
+
     console.log('🚀 [Send] All conditions met, sending message:', pendingMessage);
     pendingMessageSentRef.current = true;
-    
+
     // Small delay to ensure everything is mounted
     const timer = setTimeout(() => {
       console.log('📤 [Send] Executing sendMessage now...');
       sendMessage(pendingMessage);
       setPendingMessage(null);
     }, 300);
-    
+
     return () => clearTimeout(timer);
   }, [pendingMessage, user, sendMessage]);
 
@@ -256,7 +256,7 @@ export default function ChatPage() {
 
               <DayTimelineVertical
                 itinerary={generatedItinerary}
-                onDaySelect={setSelectedDay}
+                onDaySelect={(dayNumber) => router.push(`/${locale}/chat/day/${dayNumber}`)}
                 onPlaceClick={setSelectedPlace}
               />
 

@@ -7,8 +7,7 @@ import { X, Star, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { getPlaceThumbnail } from '@/lib/utils/google-places';
+
 import { PlaceDetailModal } from '../overlays/PlaceDetailModal';
 import { AccommodationDetailModal } from '../overlays/AccommodationDetailModal';
 import {
@@ -25,6 +24,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { PulsingMarker } from '../shared/PulsingMarker';
+import { PlaceInfoWindowContent } from '../shared/PlaceInfoWindowContent';
 
 interface FullMapModalProps {
     itinerary: Itinerary;
@@ -32,53 +32,6 @@ interface FullMapModalProps {
     onClose: () => void;
     selectedPlace?: PlaceInfo | null;
     onPlaceSelect: (place: PlaceInfo) => void;
-}
-
-/** InfoWindow content rendered inside a Google Maps InfoWindow. */
-function PlaceInfoWindowContent({
-    place,
-    onViewDetails,
-}: {
-    place: PlaceInfo;
-    onViewDetails: () => void;
-}) {
-    return (
-        <div className="max-w-[240px]">
-            <img
-                src={getPlaceThumbnail(place.photos)}
-                alt={place.name}
-                style={{ width: '100%', height: 128, objectFit: 'cover', borderRadius: '8px 8px 8px 8px' }}
-            />
-            <h4 style={{ fontWeight: 600, fontSize: 13, padding: '8px 0 0 0', marginBottom: 8, color: '#111' }}>{place.name}</h4>
-            {place.rating && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#666', marginBottom: 6 }}>
-                    <span>⭐</span>
-                    <span>{place.rating}</span>
-                </div>
-            )}
-            {place.why_visit && (
-                <p style={{ fontSize: 11, color: '#666', lineHeight: 1.4, marginBottom: 10 }}>
-                    {place.why_visit.length > 80 ? place.why_visit.substring(0, 80) + '...' : place.why_visit}
-                </p>
-            )}
-            <button
-                onClick={onViewDetails}
-                style={{
-                    width: '100%',
-                    padding: '8px 16px',
-                    backgroundColor: '#111',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: 6,
-                    fontSize: 13,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                }}
-            >
-                Ver Detalles
-            </button>
-        </div>
-    );
 }
 
 export function FullMapModal({
@@ -100,11 +53,11 @@ export function FullMapModal({
     const [modalOpen, setModalOpen] = useState(false);
     const [pulsingMarker, setPulsingMarker] = useState<string | null>(null);
     const [isPOIControlsCollapsed, setIsPOIControlsCollapsed] = useState(false);
-    
+
     // Accommodation modal state
     const [selectedAccommodation, setSelectedAccommodation] = useState<AccommodationOption | null>(null);
     const [accommodationModalOpen, setAccommodationModalOpen] = useState(false);
-    
+
     // Google POI place state
     const [selectedGooglePOI, setSelectedGooglePOI] = useState<PlaceInfo | null>(null);
     const [googlePOIModalOpen, setGooglePOIModalOpen] = useState(false);
@@ -171,13 +124,13 @@ export function FullMapModal({
 
     const onLoad = useCallback((mapInstance: google.maps.Map) => {
         setMap(mapInstance);
-        
+
         // Add click listener for POI markers
         mapInstance.addListener('click', (event: any) => {
             // Check if a POI was clicked
             if (event.placeId) {
                 event.stop(); // Prevent default info window
-                
+
                 // Fetch place details using Places Service
                 const service = new google.maps.places.PlacesService(mapInstance);
                 service.getDetails(
@@ -207,20 +160,20 @@ export function FullMapModal({
                                 rating: place.rating,
                                 price_level: place.price_level,
                                 types: place.types || [],
-                                photos: place.photos?.map((photo) => 
+                                photos: place.photos?.map((photo) =>
                                     photo.getUrl({ maxWidth: 800, maxHeight: 600 })
                                 ) || [],
                                 location: {
                                     lat: place.geometry?.location?.lat() || 0,
                                     lng: place.geometry?.location?.lng() || 0,
                                 },
-                                why_visit: place.opening_hours?.isOpen() 
-                                    ? 'Abierto ahora' 
-                                    : place.opening_hours 
-                                    ? 'Cerrado' 
-                                    : undefined,
+                                why_visit: place.opening_hours?.isOpen()
+                                    ? 'Abierto ahora'
+                                    : place.opening_hours
+                                        ? 'Cerrado'
+                                        : undefined,
                             };
-                            
+
                             setSelectedGooglePOI(placeInfo);
                             setGooglePOIModalOpen(true);
                         }
@@ -229,7 +182,7 @@ export function FullMapModal({
             }
         });
     }, []);
-    
+
     const onUnmount = useCallback(() => setMap(null), []);
 
     // Update map POI visibility based on checkbox states
@@ -615,15 +568,15 @@ export function FullMapModal({
             </Card>
 
             <PlaceDetailModal place={modalPlace} open={modalOpen} onOpenChange={setModalOpen} />
-            <AccommodationDetailModal 
-                accommodation={selectedAccommodation} 
-                open={accommodationModalOpen} 
-                onOpenChange={setAccommodationModalOpen} 
+            <AccommodationDetailModal
+                accommodation={selectedAccommodation}
+                open={accommodationModalOpen}
+                onOpenChange={setAccommodationModalOpen}
             />
-            <PlaceDetailModal 
-                place={selectedGooglePOI} 
-                open={googlePOIModalOpen} 
-                onOpenChange={setGooglePOIModalOpen} 
+            <PlaceDetailModal
+                place={selectedGooglePOI}
+                open={googlePOIModalOpen}
+                onOpenChange={setGooglePOIModalOpen}
             />
         </div>
     );
