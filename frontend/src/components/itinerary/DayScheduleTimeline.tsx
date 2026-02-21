@@ -41,7 +41,7 @@ function addMinutes(time: string, minutes: number): string {
 
 /* ─── Schedule event type ───────────────────────────────────────────────────── */
 
-type PlaceEvent = { type: 'place' | 'lunch'; place: PlaceInfo; time: string };
+type PlaceEvent = { type: 'place' | 'lunch'; place: PlaceInfo; time: string; endTime?: string };
 type ReturnEvent = { type: 'return'; accommodation: AccommodationOption; time: string };
 type ScheduleEvent = PlaceEvent | ReturnEvent;
 
@@ -53,12 +53,16 @@ function buildSchedule(day: DayPlan): ScheduleEvent[] {
 
     // Morning
     for (const place of day.morning ?? []) {
-        events.push({ type: 'place', place, time: cursor });
-        cursor = addMinutes(cursor, parseDurationMinutes(place.visit_duration) + 20); // +20 travel
+        const startTime = cursor;
+        const duration = parseDurationMinutes(place.visit_duration);
+        const endTime = addMinutes(startTime, duration);
+        events.push({ type: 'place', place, time: startTime, endTime });
+        cursor = addMinutes(endTime, 20); // +20 travel
     }
 
     // Lunch block — always include at ~13:00 (unless cursor is already past 14:00)
     const lunchStart = cursor < '13:00' ? '13:00' : cursor;
+    const lunchEnd = addMinutes(lunchStart, 90);
 
     const lunchPlace: PlaceInfo = (day as any).lunch ?? {
         place_id: `lunch-day-${day.day_number}`,
@@ -71,19 +75,25 @@ function buildSchedule(day: DayPlan): ScheduleEvent[] {
         visit_duration: '1h 30min',
     };
 
-    events.push({ type: 'lunch', place: lunchPlace, time: lunchStart });
-    cursor = addMinutes(lunchStart, 90 + 15); // 90min lunch + 15min travel
+    events.push({ type: 'lunch', place: lunchPlace, time: lunchStart, endTime: lunchEnd });
+    cursor = addMinutes(lunchEnd, 15); // +15min travel
 
     // Afternoon
     for (const place of day.afternoon ?? []) {
-        events.push({ type: 'place', place, time: cursor });
-        cursor = addMinutes(cursor, parseDurationMinutes(place.visit_duration) + 20);
+        const startTime = cursor;
+        const duration = parseDurationMinutes(place.visit_duration);
+        const endTime = addMinutes(startTime, duration);
+        events.push({ type: 'place', place, time: startTime, endTime });
+        cursor = addMinutes(endTime, 20);
     }
 
     // Evening
     for (const place of day.evening ?? []) {
-        events.push({ type: 'place', place, time: cursor });
-        cursor = addMinutes(cursor, parseDurationMinutes(place.visit_duration) + 20);
+        const startTime = cursor;
+        const duration = parseDurationMinutes(place.visit_duration);
+        const endTime = addMinutes(startTime, duration);
+        events.push({ type: 'place', place, time: startTime, endTime });
+        cursor = addMinutes(endTime, 20);
     }
 
     // Return to accommodation — ensure at least 20:00
@@ -198,6 +208,18 @@ export function DayScheduleTimeline({
                                     <div className="w-px flex-1 bg-border mt-1 mb-1 min-h-[1.5rem]" />
                                 )}
                             </div>
+
+                            {/* Time badge - positioned to the right of the node */}
+                            {event.type !== 'return' && (event as PlaceEvent).endTime && (
+                                <div className="flex-shrink-0 pt-1">
+                                    <Badge 
+                                        variant="outline" 
+                                        className="text-xs font-mono bg-background/50 border-border/50 text-muted-foreground"
+                                    >
+                                        {event.time} - {(event as PlaceEvent).endTime}
+                                    </Badge>
+                                </div>
+                            )}
 
                             {/* Card */}
                             <div
