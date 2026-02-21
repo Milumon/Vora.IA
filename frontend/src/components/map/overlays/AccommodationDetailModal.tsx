@@ -19,11 +19,13 @@ import {
     ExternalLink,
     ImageIcon,
     Award,
+    MapPin,
+    Calendar,
 } from 'lucide-react';
 import type { AccommodationOption } from '@/store/chatStore';
 
-interface HotelDetailModalProps {
-    hotel: AccommodationOption | null;
+interface AccommodationDetailModalProps {
+    accommodation: AccommodationOption | null;
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }
@@ -49,13 +51,13 @@ function ratingColor(r: number) {
     return 'bg-orange-500 dark:bg-orange-400';
 }
 
-export function HotelDetailModal({ hotel, open, onOpenChange }: HotelDetailModalProps) {
+export function AccommodationDetailModal({ accommodation, open, onOpenChange }: AccommodationDetailModalProps) {
     const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
     const [imageError, setImageError] = useState(false);
 
-    if (!hotel) return null;
+    if (!accommodation) return null;
 
-    const photos = hotel.images.filter(Boolean);
+    const photos = accommodation.images.filter(Boolean);
     const displayPhoto = imageError || !photos.length
         ? '/placeholder-place.jpg'
         : photos[currentPhotoIndex];
@@ -73,8 +75,8 @@ export function HotelDetailModal({ hotel, open, onOpenChange }: HotelDetailModal
     };
 
     const openBookingUrl = () => {
-        if (hotel.booking_url) {
-            window.open(hotel.booking_url, '_blank');
+        if (accommodation.booking_url) {
+            window.open(accommodation.booking_url, '_blank');
         }
     };
 
@@ -91,10 +93,10 @@ export function HotelDetailModal({ hotel, open, onOpenChange }: HotelDetailModal
         >
             <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-hidden p-0 flex flex-col">
                 {/* Photo gallery */}
-                <div className="relative w-full h-[300px] sm:h-[400px] shrink-0 bg-muted overflow-hidden">
+                <div className="relative w-full h-[300px] sm:h-[300px] shrink-0 bg-muted overflow-hidden">
                     <Image
                         src={displayPhoto}
-                        alt={`${hotel.name} - Foto ${currentPhotoIndex + 1}`}
+                        alt={`${accommodation.name} - Foto ${currentPhotoIndex + 1}`}
                         fill
                         className="object-cover"
                         sizes="(max-width: 768px) 100vw, 896px"
@@ -147,8 +149,8 @@ export function HotelDetailModal({ hotel, open, onOpenChange }: HotelDetailModal
                                         setCurrentPhotoIndex(idx);
                                     }}
                                     className={`relative w-14 h-14 rounded-md overflow-hidden border-2 transition-all flex-shrink-0 ${idx === currentPhotoIndex
-                                            ? 'border-primary shadow-lg scale-110'
-                                            : 'border-background/60 hover:border-background/80'
+                                        ? 'border-primary shadow-lg scale-110'
+                                        : 'border-background/60 hover:border-background/80'
                                         }`}
                                 >
                                     <Image
@@ -172,30 +174,62 @@ export function HotelDetailModal({ hotel, open, onOpenChange }: HotelDetailModal
 
                 {/* Content */}
                 <div className="overflow-y-auto flex flex-col p-6 max-h-[calc(90vh-300px)] sm:max-h-[calc(90vh-400px)]">
-                    <div className="space-y-4">
+                    <div className="space-y-2">
                         <DialogHeader>
                             <div className="flex items-start justify-between gap-4">
                                 <div className="flex-1 min-w-0 space-y-2">
-                                    <DialogTitle className="text-2xl">{hotel.name}</DialogTitle>
+                                    <DialogTitle className="text-2xl">{accommodation.name}</DialogTitle>
 
-                                    {/* Hotel type */}
-                                    {hotel.type && (
-                                        <Badge variant="secondary">
-                                            {hotel.type}
-                                        </Badge>
-                                    )}
+                                    {/* Accommodation type and badges in horizontal layout */}
+                                    <div className="flex flex-wrap gap-2">
+                                        {accommodation.type && (
+                                            <Badge variant="secondary" className="gap-1">
+                                                <MapPin className="h-3 w-3" />
+                                                {accommodation.type}
+                                            </Badge>
+                                        )}
+                                        {accommodation.badges && accommodation.badges.length > 0 && (
+                                            <>
+                                                {accommodation.badges.map((badge, i) => (
+                                                    <Badge key={i} variant="secondary" className="gap-1">
+                                                        <Award className="h-3 w-3" />
+                                                        {badge}
+                                                    </Badge>
+                                                ))}
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {/* Price */}
                                 <Card className="shrink-0">
                                     <CardContent className="p-3 text-right">
-                                        <p className="text-2xl font-bold text-primary leading-none">
-                                            {formatPrice(hotel.price_per_night, hotel.currency)}
-                                        </p>
-                                        <p className="text-xs text-muted-foreground mt-1">por noche</p>
-                                        {hotel.total_price > 0 && hotel.total_price !== hotel.price_per_night && (
+                                        {accommodation.price_per_night > 0 ? (
+                                            <>
+                                                <p className="text-2xl font-bold text-primary leading-none">
+                                                    {formatPrice(accommodation.price_per_night, accommodation.currency)}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground mt-1">por noche</p>
+                                                {accommodation.total_price > 0 && accommodation.total_price !== accommodation.price_per_night && (
+                                                    <p className="text-xs text-muted-foreground mt-1">
+                                                        Total: {formatPrice(accommodation.total_price, accommodation.currency)}
+                                                    </p>
+                                                )}
+                                            </>
+                                        ) : accommodation.total_price > 0 ? (
+                                            <>
+                                                <p className="text-2xl font-bold text-primary leading-none">
+                                                    {formatPrice(accommodation.total_price, accommodation.currency)}
+                                                </p>
+                                            </>
+                                        ) : (
+                                            <p className="text-2xl font-bold text-primary leading-none">
+                                                Consultar
+                                            </p>
+                                        )}
+                                        {accommodation.pricing_qualifier && (
                                             <p className="text-xs text-muted-foreground mt-1">
-                                                Total: {formatPrice(hotel.total_price, hotel.currency)}
+                                                {accommodation.pricing_qualifier}
                                             </p>
                                         )}
                                     </CardContent>
@@ -205,56 +239,51 @@ export function HotelDetailModal({ hotel, open, onOpenChange }: HotelDetailModal
 
                         <Separator />
 
-                        {/* Badges */}
-                        {hotel.badges && hotel.badges.length > 0 && (
-                            <div className="flex flex-wrap gap-2">
-                                {hotel.badges.map((badge, i) => (
-                                    <Badge key={i} variant="secondary" className="gap-1">
-                                        <Award className="h-3 w-3" />
-                                        {badge}
-                                    </Badge>
-                                ))}
-                            </div>
-                        )}
-
                         {/* Check-in / Check-out */}
-                        <div className="flex items-center gap-4 text-sm">
-                            <div>
-                                <span className="text-muted-foreground">Check-in:</span>
-                                <span className="ml-2 font-semibold">{hotel.check_in}</span>
-                            </div>
-                            <Separator orientation="vertical" className="h-4" />
-                            <div>
-                                <span className="text-muted-foreground">Check-out:</span>
-                                <span className="ml-2 font-semibold">{hotel.check_out}</span>
-                            </div>
-                        </div>
+                        <Card>
+                            <CardContent className="p-4">
+                                <div className="flex items-center gap-4 text-sm">
+                                    <div className="flex items-center gap-2">
+                                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                                        <div>
+                                            <span className="text-muted-foreground">Check-in:</span>
+                                            <span className="ml-2 font-semibold">{accommodation.check_in}</span>
+                                        </div>
+                                    </div>
+                                    <Separator orientation="vertical" className="h-4" />
+                                    <div>
+                                        <span className="text-muted-foreground">Check-out:</span>
+                                        <span className="ml-2 font-semibold">{accommodation.check_out}</span>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
 
                         {/* Rating */}
-                        {hotel.rating > 0 && (
+                        {accommodation.rating > 0 && (
                             <div className="flex items-center gap-2 flex-wrap">
-                                <Badge className={`${ratingColor(hotel.rating)} text-white border-0`}>
+                                <Badge className={`${ratingColor(accommodation.rating)} text-white border-0`}>
                                     <Star className="w-3.5 h-3.5 fill-current mr-1" />
-                                    {hotel.rating.toFixed(1)}
+                                    {accommodation.rating.toFixed(1)}
                                 </Badge>
                                 <span className="text-sm font-semibold">
-                                    {ratingLabel(hotel.rating)}
+                                    {ratingLabel(accommodation.rating)}
                                 </span>
-                                {hotel.reviews_count > 0 && (
+                                {accommodation.reviews_count > 0 && (
                                     <span className="text-xs text-muted-foreground">
-                                        ({hotel.reviews_count.toLocaleString()} reseñas)
+                                        ({accommodation.reviews_count.toLocaleString()} reseñas)
                                     </span>
                                 )}
                             </div>
                         )}
 
                         {/* Subtitles / Details */}
-                        {hotel.subtitles && hotel.subtitles.length > 0 && (
+                        {accommodation.subtitles && accommodation.subtitles.length > 0 && (
                             <Card>
                                 <CardContent className="p-4">
                                     <h4 className="font-semibold text-sm mb-3">Detalles</h4>
                                     <div className="flex flex-wrap gap-2">
-                                        {hotel.subtitles.map((subtitle, i) => (
+                                        {accommodation.subtitles.map((subtitle, i) => (
                                             <Badge key={i} variant="outline">
                                                 {subtitle}
                                             </Badge>
@@ -265,7 +294,7 @@ export function HotelDetailModal({ hotel, open, onOpenChange }: HotelDetailModal
                         )}
 
                         {/* Booking CTA */}
-                        {hotel.booking_url && (
+                        {accommodation.booking_url && (
                             <Button
                                 className="w-full gap-2"
                                 size="lg"

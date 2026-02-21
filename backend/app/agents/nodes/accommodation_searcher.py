@@ -1,17 +1,18 @@
 """
 accommodation_searcher.py
 --------------------------
-Nodo LangGraph que busca opciones de alojamiento (hoteles, hostales, Airbnb)
-usando SerpApi Google Hotels.
+Nodo LangGraph que busca opciones de alojamiento (Airbnb) usando Apify
+"[New] Fast Airbnb Scraper".
 
 Calcula automáticamente check-in / check-out basado en las fechas del viaje
 y retorna una lista normalizada de AccommodationOption.
 """
 from datetime import date, timedelta, datetime
 from typing import List, Dict, Optional
+import math
 
 from app.agents.state import TravelState
-from app.services.serpapi_client import search_google_hotels
+from app.services.apify_client import search_airbnb_listings
 from app.config.logging import get_logger
 
 logger = get_logger(__name__)
@@ -32,11 +33,11 @@ def _parse_date(value) -> date | None:
 
 async def search_accommodation(state: TravelState) -> dict:
     """
-    Busca opciones de alojamiento en el destino del viaje.
-    
+    Busca opciones de alojamiento Airbnb en el destino del viaje via Apify.
+
     Calcula check-in y check-out automáticamente:
-    - check_in = start_date del viaje
-    - check_out = start_date + days (o end_date si existe)
+    - check_in = start_date del viaje (o state.check_in si viene del frontend)
+    - check_out = start_date + days (o state.check_out / end_date)
     """
     destination = state.get("destination")
     if not destination:
@@ -49,6 +50,7 @@ async def search_accommodation(state: TravelState) -> dict:
     days = state.get("days") or 3
 
     if not start_date:
+        # Default: 30 days from now (future trip)
         start_date = date.today() + timedelta(days=30)
 
     if end_date:
@@ -58,61 +60,72 @@ async def search_accommodation(state: TravelState) -> dict:
 
     check_in_str = start_date.strftime("%Y-%m-%d")
     check_out_str = check_out.strftime("%Y-%m-%d")
-    adults = state.get("travelers") or 1
+    adults = state.get("travelers") or 2
+
+    # ── Currency & budget from state ────────────────────────────────────────
+    currency = state.get("currency") or "PEN"
+    budget_min = state.get("budget_min") or 0
+    budget_max = state.get("budget_max") or 0   # 0 = sin límite superior en Apify
+
+    # If using the old string-based budget, map to price ranges
+    budget_str = state.get("budget")
+    if budget_str and not state.get("budget_max"):
+        if currency == "PEN":
+            budget_ranges = {
+                "low": (0, 200),
+                "medium": (150, 500),
+                "high": (400, 2000),
+            }
+        else:  # USD
+            budget_ranges = {
+                "low": (0, 60),
+                "medium": (40, 150),
+                "high": (100, 600),
+            }
+        budget_min, budget_max = budget_ranges.get(budget_str, (0, 600))
 
     logger.info(
-        f"accommodation_searcher: {destination} | "
-        f"{check_in_str} → {check_out_str} | {adults} adulto(s)"
+        "accommodation_searcher: %s | %s → %s | %d adulto(s) | %s %d–%d",
+        destination, check_in_str, check_out_str, adults,
+        currency, budget_min, budget_max,
     )
 
-    # ── Búsqueda de hoteles ─────────────────────────────────────────────────
-    hotels = await search_google_hotels(
-        destination=destination,
-        check_in_date=check_in_str,
-        check_out_date=check_out_str,
+    # ── Búsqueda en Apify ───────────────────────────────────────────────────
+    listings = await search_airbnb_listings(
+        location=destination,
+        check_in=check_in_str,
+        check_out=check_out_str,
         adults=adults,
-        max_results=8,
+        currency=currency,
+        price_min=budget_min,
+        price_max=budget_max,
+        max_results=12,
     )
 
     # ── Filtrar y ordenar por calidad ───────────────────────────────────────
-    hotels = _rank_hotels(hotels, state.get("budget"))
+    listings = _rank_listings(listings)
 
-    logger.info(f"accommodation_searcher: ✓ {len(hotels)} opciones de alojamiento")
+    logger.info("accommodation_searcher: ✓ %d opciones de alojamiento", len(listings))
 
-    return {"accommodation_options": hotels}
+    return {"accommodation_options": listings}
 
 
-def _rank_hotels(hotels: List[Dict], budget: Optional[str] = None) -> List[Dict]:
+def _rank_listings(listings: List[Dict]) -> List[Dict]:
     """
-    Rank hotels by a balanced score: rating × reviews, filtered by budget.
-    
-    Budget tiers:
-      - low: < $50/night
-      - medium: $50–$150/night
-      - high: > $100/night (no upper cap)
+    Rank listings by a balanced score: rating × log(reviews + 1).
     """
-    if not hotels:
+    if not listings:
         return []
 
-    # Budget filter
-    if budget == "low":
-        hotels = [h for h in hotels if h.get("price_per_night", 0) < 50] or hotels[:4]
-    elif budget == "medium":
-        hotels = [h for h in hotels if 30 <= h.get("price_per_night", 0) <= 150] or hotels
-    elif budget == "high":
-        hotels = [h for h in hotels if h.get("price_per_night", 0) >= 80] or hotels
-
-    # Score: rating * log(reviews + 1) for balanced quality ranking
-    import math
-    for h in hotels:
-        rating = h.get("rating", 0)
-        reviews = h.get("reviews_count", 0)
+    for h in listings:
+        rating = h.get("rating") or 0
+        reviews = h.get("reviews_count") or 0
         h["_score"] = rating * math.log(reviews + 1, 10) if reviews > 0 else rating
 
-    hotels.sort(key=lambda h: h.get("_score", 0), reverse=True)
+    listings.sort(key=lambda h: h.get("_score", 0), reverse=True)
 
     # Clean up internal score
-    for h in hotels:
+    for h in listings:
         h.pop("_score", None)
 
-    return hotels
+    return listings

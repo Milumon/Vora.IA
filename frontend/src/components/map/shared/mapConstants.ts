@@ -155,3 +155,25 @@ export const GRAYSCALE_MAP_STYLES: google.maps.MapTypeStyle[] = [
         stylers: [{ color: '#9e9e9e' }],
     },
 ];
+
+/** Returns a black circular marker with a home/building icon for accommodation pins. */
+export function getAccommodationMarkerIcon(): google.maps.Icon {
+    // Black circle with white building/home icon
+    const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+      <circle cx="20" cy="20" r="18" fill="#222222" stroke="#ffffff" stroke-width="2.5"/>
+      <g transform="translate(12, 11)">
+        <path fill="#ffffff" d="M8 0L0 6v12h16V6L8 0zm6 16H2V7l6-4.5L14 7v9zm-8-8h4v6H6V8z"/>
+      </g>
+    </svg>`;
+    return {
+        url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
+        scaledSize: new google.maps.Size(40, 40),
+        anchor: new google.maps.Point(20, 20),
+    };
+}
+
+/** @deprecated Use getAccommodationMarkerIcon instead */
+export function getAirbnbMarkerIcon(): google.maps.Icon {
+    return getAccommodationMarkerIcon();
+}

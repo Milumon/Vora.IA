@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     # SerpApi (Google Flights + Hotels)
     SERPAPI_API_KEY: str = ""
     
+    # Apify (Airbnb Scraper)
+    APIFY_API_TOKEN: str = ""
+    
     # Rate Limiting
     RATE_LIMIT_PER_MINUTE: int = 60
     

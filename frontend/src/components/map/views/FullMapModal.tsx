@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow, Polyline } from '@react-google-maps/api';
-import type { Itinerary, PlaceInfo } from '@/store/chatStore';
+import type { Itinerary, PlaceInfo, AccommodationOption } from '@/store/chatStore';
 import { X, Star, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { getPlaceThumbnail } from '@/lib/utils/google-places';
 import { PlaceDetailModal } from '../overlays/PlaceDetailModal';
+import { AccommodationDetailModal } from '../overlays/AccommodationDetailModal';
 import {
     DEFAULT_MAP_CENTER,
     MAP_CONTAINER_STYLE,
@@ -19,6 +20,7 @@ import {
     getDayColor,
     DAY_COLORS,
     GRAYSCALE_MAP_STYLES,
+    getAccommodationMarkerIcon,
 } from '../shared/mapConstants';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -99,6 +101,14 @@ export function FullMapModal({
     const [pulsingMarker, setPulsingMarker] = useState<string | null>(null);
     const [isPOIControlsCollapsed, setIsPOIControlsCollapsed] = useState(false);
     
+    // Accommodation modal state
+    const [selectedAccommodation, setSelectedAccommodation] = useState<AccommodationOption | null>(null);
+    const [accommodationModalOpen, setAccommodationModalOpen] = useState(false);
+    
+    // Google POI place state
+    const [selectedGooglePOI, setSelectedGooglePOI] = useState<PlaceInfo | null>(null);
+    const [googlePOIModalOpen, setGooglePOIModalOpen] = useState(false);
+
     // POI visibility controls
     const [showAllPOI, setShowAllPOI] = useState(false);
     const [showAttractions, setShowAttractions] = useState(false);
@@ -113,22 +123,42 @@ export function FullMapModal({
     useEffect(() => {
         const places: Array<PlaceInfo & { dayNumber: number }> = [];
         itinerary.day_plans.forEach((day) => {
-            [...day.morning, ...day.afternoon, ...day.evening].forEach((place) => {
+            [...(day.morning || []), ...(day.afternoon || []), ...(day.evening || [])].forEach((place) => {
                 places.push({ ...place, dayNumber: day.day_number });
             });
         });
         setAllPlaces(places);
     }, [itinerary]);
 
+    // Collect accommodation coordinates (first option per day)
+    const accommodationMarkers = useMemo(() => {
+        const markers: Array<{ lat: number; lng: number; name: string; accommodation: AccommodationOption }> = [];
+        itinerary.day_plans.forEach((day) => {
+            const acc = day.accommodation?.[0];
+            if (acc?.coordinates?.latitude && acc?.coordinates?.longitude) {
+                markers.push({
+                    lat: acc.coordinates.latitude,
+                    lng: acc.coordinates.longitude,
+                    name: acc.name,
+                    accommodation: acc,
+                });
+            }
+        });
+        return markers;
+    }, [itinerary]);
+
     useEffect(() => {
-        if (map && allPlaces.length > 0) {
+        if (map && (allPlaces.length > 0 || accommodationMarkers.length > 0)) {
             const bounds = new google.maps.LatLngBounds();
             allPlaces.forEach((place) =>
                 bounds.extend(new google.maps.LatLng(place.location.lat, place.location.lng))
             );
+            accommodationMarkers.forEach((m) =>
+                bounds.extend(new google.maps.LatLng(m.lat, m.lng))
+            );
             map.fitBounds(bounds);
         }
-    }, [map, allPlaces]);
+    }, [map, allPlaces, accommodationMarkers]);
 
     useEffect(() => {
         if (map && selectedPlace) {
@@ -139,7 +169,67 @@ export function FullMapModal({
         }
     }, [map, selectedPlace]);
 
-    const onLoad = useCallback((mapInstance: google.maps.Map) => setMap(mapInstance), []);
+    const onLoad = useCallback((mapInstance: google.maps.Map) => {
+        setMap(mapInstance);
+        
+        // Add click listener for POI markers
+        mapInstance.addListener('click', (event: any) => {
+            // Check if a POI was clicked
+            if (event.placeId) {
+                event.stop(); // Prevent default info window
+                
+                // Fetch place details using Places Service
+                const service = new google.maps.places.PlacesService(mapInstance);
+                service.getDetails(
+                    {
+                        placeId: event.placeId,
+                        fields: [
+                            'place_id',
+                            'name',
+                            'formatted_address',
+                            'rating',
+                            'price_level',
+                            'types',
+                            'photos',
+                            'geometry',
+                            'opening_hours',
+                            'website',
+                            'formatted_phone_number',
+                        ],
+                    },
+                    (place, status) => {
+                        if (status === google.maps.places.PlacesServiceStatus.OK && place) {
+                            // Convert Google Place to PlaceInfo format
+                            const placeInfo: PlaceInfo = {
+                                place_id: place.place_id || '',
+                                name: place.name || 'Lugar sin nombre',
+                                address: place.formatted_address || '',
+                                rating: place.rating,
+                                price_level: place.price_level,
+                                types: place.types || [],
+                                photos: place.photos?.map((photo) => 
+                                    photo.getUrl({ maxWidth: 800, maxHeight: 600 })
+                                ) || [],
+                                location: {
+                                    lat: place.geometry?.location?.lat() || 0,
+                                    lng: place.geometry?.location?.lng() || 0,
+                                },
+                                why_visit: place.opening_hours?.isOpen() 
+                                    ? 'Abierto ahora' 
+                                    : place.opening_hours 
+                                    ? 'Cerrado' 
+                                    : undefined,
+                            };
+                            
+                            setSelectedGooglePOI(placeInfo);
+                            setGooglePOIModalOpen(true);
+                        }
+                    }
+                );
+            }
+        });
+    }, []);
+    
     const onUnmount = useCallback(() => setMap(null), []);
 
     // Update map POI visibility based on checkbox states
@@ -245,7 +335,7 @@ export function FullMapModal({
     const getRoutePaths = useCallback((): google.maps.LatLngLiteral[][] => {
         return itinerary.day_plans
             .map((day) => {
-                const dayPlaces = [...day.morning, ...day.afternoon, ...day.evening];
+                const dayPlaces = [...(day.morning || []), ...(day.afternoon || []), ...(day.evening || [])];
                 return dayPlaces.length > 1
                     ? dayPlaces.map((p) => ({ lat: p.location.lat, lng: p.location.lng }))
                     : null;
@@ -266,9 +356,9 @@ export function FullMapModal({
                             {allPlaces.length} lugares en {itinerary.day_plans.length} días
                         </p>
                     </div>
-                    <Button 
-                        onClick={onClose} 
-                        variant="ghost" 
+                    <Button
+                        onClick={onClose}
+                        variant="ghost"
                         size="icon"
                         className="rounded-full"
                     >
@@ -296,7 +386,7 @@ export function FullMapModal({
                         >
                             {allPlaces.map((place, index) => {
                                 const isPulsing = pulsingMarker === place.place_id;
-                                
+
                                 return (
                                     <PulsingMarker
                                         key={`${place.place_id}-${index}`}
@@ -312,6 +402,20 @@ export function FullMapModal({
                                     />
                                 );
                             })}
+
+                            {/* Accommodation markers */}
+                            {accommodationMarkers.map((m, index) => (
+                                <Marker
+                                    key={`accommodation-${index}`}
+                                    position={{ lat: m.lat, lng: m.lng }}
+                                    icon={getAccommodationMarkerIcon()}
+                                    title={m.name}
+                                    onClick={() => {
+                                        setSelectedAccommodation(m.accommodation);
+                                        setAccommodationModalOpen(true);
+                                    }}
+                                />
+                            ))}
 
                             {getRoutePaths().map((path, index) => (
                                 <Polyline
@@ -511,6 +615,16 @@ export function FullMapModal({
             </Card>
 
             <PlaceDetailModal place={modalPlace} open={modalOpen} onOpenChange={setModalOpen} />
+            <AccommodationDetailModal 
+                accommodation={selectedAccommodation} 
+                open={accommodationModalOpen} 
+                onOpenChange={setAccommodationModalOpen} 
+            />
+            <PlaceDetailModal 
+                place={selectedGooglePOI} 
+                open={googlePOIModalOpen} 
+                onOpenChange={setGooglePOIModalOpen} 
+            />
         </div>
     );
 }

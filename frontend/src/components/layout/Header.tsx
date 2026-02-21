@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
+import { CurrencyToggle } from '@/components/shared/CurrencyToggle';
 import { LocaleSwitcher } from '@/components/shared/LocaleSwitcher';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -102,12 +103,12 @@ export function Header() {
               <Button asChild className="hidden sm:flex">
                 <Link href="/auth/register">{tCommon('auth.register')}</Link>
               </Button>
-              
+
               {/* Mobile: solo iconos */}
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                asChild 
+              <Button
+                variant="ghost"
+                size="icon"
+                asChild
                 className="sm:hidden"
                 aria-label={tCommon('auth.login')}
               >
@@ -115,9 +116,9 @@ export function Header() {
                   <LogIn className="h-4 w-4" />
                 </Link>
               </Button>
-              <Button 
-                size="icon" 
-                asChild 
+              <Button
+                size="icon"
+                asChild
                 className="sm:hidden"
                 aria-label={tCommon('auth.register')}
               >
@@ -128,6 +129,7 @@ export function Header() {
             </>
           )}
 
+          <CurrencyToggle />
           <LocaleSwitcher />
           <ThemeToggle />
         </div>

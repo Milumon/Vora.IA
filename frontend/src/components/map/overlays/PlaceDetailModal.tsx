@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import {
     Dialog,
@@ -22,6 +22,7 @@ import {
     ChevronRight,
     ExternalLink,
     ImageIcon,
+    Loader2,
 } from 'lucide-react';
 import { getPlacePhotos } from '@/lib/utils/google-places';
 import type { PlaceInfo } from '@/store/chatStore';
@@ -37,10 +38,55 @@ const PRICE_LEVEL_LABELS = ['Económico', 'Moderado', 'Caro', 'Muy caro'];
 export function PlaceDetailModal({ place, open, onOpenChange }: PlaceDetailModalProps) {
     const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
     const [imageError, setImageError] = useState(false);
+    const [allPhotos, setAllPhotos] = useState<string[]>([]);
+    const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
+
+    // Fetch additional photos from Google Places API when modal opens
+    useEffect(() => {
+        if (!place || !open) {
+            setAllPhotos([]);
+            setIsLoadingPhotos(false);
+            return;
+        }
+
+        // Start with existing photos
+        const initialPhotos = getPlacePhotos(place.photos, 8, 1200);
+        setAllPhotos(initialPhotos);
+
+        // If we have a place_id and Google Maps is loaded, fetch more photos
+        if (place.place_id && typeof google !== 'undefined' && google.maps && google.maps.places) {
+            setIsLoadingPhotos(true);
+
+            // Create a temporary map element (required by PlacesService)
+            const mapDiv = document.createElement('div');
+            const service = new google.maps.places.PlacesService(mapDiv);
+
+            service.getDetails(
+                {
+                    placeId: place.place_id,
+                    fields: ['photos'],
+                },
+                (result, status) => {
+                    setIsLoadingPhotos(false);
+                    
+                    if (status === google.maps.places.PlacesServiceStatus.OK && result?.photos) {
+                        // Get up to 10 photos in high resolution
+                        const additionalPhotos = result.photos
+                            .slice(0, 10)
+                            .map((photo) => photo.getUrl({ maxWidth: 1200, maxHeight: 900 }));
+                        
+                        // Merge with existing photos, removing duplicates
+                        const uniquePhotos = Array.from(new Set([...initialPhotos, ...additionalPhotos]));
+                        setAllPhotos(uniquePhotos);
+                    }
+                }
+            );
+        }
+    }, [place, open]);
 
     if (!place) return null;
 
-    const photos = getPlacePhotos(place.photos, 8, 1200);
+    const photos = allPhotos.length > 0 ? allPhotos : getPlacePhotos(place.photos, 8, 1200);
     const displayPhoto = imageError || !photos.length ? '/placeholder-place.jpg' : photos[currentPhotoIndex];
     const totalPhotos = photos.length;
     const hasMultiplePhotos = totalPhotos > 1;
@@ -82,6 +128,7 @@ export function PlaceDetailModal({ place, open, onOpenChange }: PlaceDetailModal
                         sizes="(max-width: 768px) 100vw, 896px"
                         priority
                         onError={() => setImageError(true)}
+                        unoptimized
                     />
 
                     {/* Navigation controls */}
@@ -114,31 +161,41 @@ export function PlaceDetailModal({ place, open, onOpenChange }: PlaceDetailModal
                         >
                             <ImageIcon className="h-3 w-3 mr-1.5" />
                             {currentPhotoIndex + 1} / {totalPhotos}
+                            {isLoadingPhotos && (
+                                <Loader2 className="h-3 w-3 ml-1.5 animate-spin" />
+                            )}
                         </Badge>
                     )}
 
                     {/* Thumbnail strip */}
                     {hasMultiplePhotos && (
-                        <div className="absolute bottom-4 left-4 flex gap-2">
-                            {photos.slice(0, 5).map((photo, idx) => (
+                        <div className="absolute bottom-4 left-4 flex gap-2 overflow-x-auto max-w-[calc(100%-140px)] scrollbar-hide">
+                            {photos.slice(0, 8).map((photo, idx) => (
                                 <button
                                     key={idx}
                                     onClick={() => {
                                         setImageError(false);
                                         setCurrentPhotoIndex(idx);
                                     }}
-                                    className={`relative w-14 h-14 rounded-md overflow-hidden border-2 transition-all ${
+                                    className={`relative w-14 h-14 rounded-md overflow-hidden border-2 transition-all flex-shrink-0 ${
                                         idx === currentPhotoIndex
                                             ? 'border-primary shadow-lg scale-110'
                                             : 'border-background/60 hover:border-background/80'
                                     }`}
                                 >
-                                    <Image src={photo} alt={`Thumbnail ${idx + 1}`} fill className="object-cover" sizes="56px" />
+                                    <Image 
+                                        src={photo} 
+                                        alt={`Thumbnail ${idx + 1}`} 
+                                        fill 
+                                        className="object-cover" 
+                                        sizes="56px"
+                                        unoptimized
+                                    />
                                 </button>
                             ))}
-                            {totalPhotos > 5 && (
-                                <div className="w-14 h-14 rounded-md bg-background/60 backdrop-blur-sm border-2 border-background/60 flex items-center justify-center text-foreground text-xs font-medium">
-                                    +{totalPhotos - 5}
+                            {totalPhotos > 8 && (
+                                <div className="w-14 h-14 rounded-md bg-background/60 backdrop-blur-sm border-2 border-background/60 flex items-center justify-center text-foreground text-xs font-medium flex-shrink-0">
+                                    +{totalPhotos - 8}
                                 </div>
                             )}
                         </div>

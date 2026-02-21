@@ -13,7 +13,7 @@ import { getPlacePhotos } from '@/lib/utils/google-places';
 
 /** Collect all places from every time slot of a day. */
 function getAllPlaces(day: DayPlan): PlaceInfo[] {
-    return [...day.morning, ...day.afternoon, ...day.evening];
+    return [...(day.morning || []), ...(day.afternoon || []), ...(day.evening || [])];
 }
 
 /** Build a compact route string: "Place A → Place B → …" */
@@ -99,12 +99,12 @@ function DayImageCarousel({ places }: { places: PlaceInfo[] }) {
     useEffect(() => {
         updateVisibleCount();
         checkScroll();
-        
+
         const handleResize = () => {
             updateVisibleCount();
             checkScroll();
         };
-        
+
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, [updateVisibleCount, checkScroll]);
@@ -183,16 +183,16 @@ function DayTags({
     dateLabel: string;
 }) {
     return (
-        <div className="flex items-center gap-2 text-sm flex-wrap">
-            <Badge className="bg-orange-500 hover:bg-orange-500 text-white font-semibold border-0">
+        <div className="flex items-center gap-2 text-xs sm:text-sm flex-wrap">
+            <Badge className="bg-orange-500 hover:bg-orange-500 text-white font-semibold border-0 text-xs">
                 Día {dayNumber}
             </Badge>
-            <span className="text-muted-foreground">·</span>
+            <span className="text-muted-foreground hidden sm:inline">·</span>
             <span className="text-muted-foreground font-medium">
                 {experienceCount} {experienceCount === 1 ? 'Experiencia' : 'Experiencias'}
             </span>
-            <span className="text-muted-foreground">·</span>
-            <span className="text-muted-foreground text-sm">{dateLabel}</span>
+            <span className="text-muted-foreground hidden sm:inline">·</span>
+            <span className="text-muted-foreground text-xs sm:text-sm">{dateLabel}</span>
         </div>
     );
 }

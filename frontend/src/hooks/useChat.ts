@@ -2,6 +2,8 @@ import { useEffect } from 'react';
 import { useChatStore } from '@/store/chatStore';
 import { chatApi } from '@/lib/api/endpoints';
 import { useActiveConversation, useSaveMessage, useCreateConversation } from './useConversation';
+import { type DateRange } from 'react-day-picker';
+import { format } from 'date-fns';
 
 export function useChat() {
   const {
@@ -39,7 +41,10 @@ export function useChat() {
     }
   }, [activeConversation, conversationId, setMessages, setConversationId, setGeneratedItinerary]);
 
-  const sendMessage = async (content: string) => {
+  const sendMessage = async (
+    content: string,
+    meta?: { dateRange?: DateRange; budgetRange?: [number, number]; currency?: string },
+  ) => {
     setIsLoading(true);
 
     // Capture the current conversationId at call time to avoid stale state
@@ -74,8 +79,17 @@ export function useChat() {
     }
 
     try {
+      // Build accommodation filters from metadata
+      const filters = meta ? {
+        currency: meta.currency,
+        budget_min: meta.budgetRange?.[0],
+        budget_max: meta.budgetRange?.[1],
+        check_in: meta.dateRange?.from ? format(meta.dateRange.from, 'yyyy-MM-dd') : undefined,
+        check_out: meta.dateRange?.to ? format(meta.dateRange.to, 'yyyy-MM-dd') : undefined,
+      } : undefined;
+
       // Send to the chat API with the current thread_id
-      const response = await chatApi.sendMessage(content, currentConvId || undefined);
+      const response = await chatApi.sendMessage(content, currentConvId || undefined, filters);
       const { message, thread_id, needs_clarification, clarification_questions, itinerary } = response.data;
 
       // Always update conversationId from the backend response

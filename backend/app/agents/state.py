@@ -67,24 +67,22 @@ class MobilitySegment(TypedDict):
 # ── Accommodation types ─────────────────────────────────────────────────────
 
 class AccommodationOption(TypedDict):
-    """A single accommodation option (hotel, hostel, Airbnb, etc.)."""
+    """A single accommodation option (Airbnb listing via Apify)."""
     name: str
-    type: str                  # "Hotel", "Hostel", "Apartamento", etc.
+    type: str                  # "Apartment in Cusco", etc.
+    room_type: str             # "entire_home", "private_room", etc.
     price_per_night: float
     total_price: float
     currency: str
     rating: float              # 0–5
     reviews_count: int
-    stars: int                 # 0–5 (hotel class)
     images: List[str]
-    amenities: List[str]
+    badges: List[str]          # ["Guest favorite", ...]
+    subtitles: List[str]       # ["Free cancellation", ...]
     booking_url: str
-    address: str
-    description: str
+    coordinates: Optional[Dict[str, float]]  # {latitude, longitude}
     check_in: str              # YYYY-MM-DD
     check_out: str             # YYYY-MM-DD
-    check_in_time: str         # HH:MM
-    check_out_time: str        # HH:MM
 
 
 class DayPlan(TypedDict):
@@ -114,6 +112,9 @@ class TravelState(TypedDict):
     budget: Optional[Literal["low", "medium", "high"]]
     travel_style: Optional[List[str]]
     travelers: Optional[int]
+    currency: Optional[str]          # "PEN" or "USD"
+    budget_min: Optional[int]        # Min price filter for accommodation
+    budget_max: Optional[int]        # Max price filter for accommodation
 
     # Datos de lugares
     searched_places: List[PlaceInfo]

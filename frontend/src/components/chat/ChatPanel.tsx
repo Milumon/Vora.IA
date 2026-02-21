@@ -10,10 +10,15 @@
  * slides up carrying the conversation.
  */
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { MessageBubble } from './MessageBubble';
 import { MessageInput } from './MessageInput';
 import { TypingIndicator } from './TypingIndicator';
+import { DateRangePicker } from './widgets/DateRangePicker';
+import { BudgetSlider, CURRENCY_CONFIG } from './widgets/BudgetSlider';
+import { useCurrencyStore } from '@/store/currencyStore';
+import { ChevronDown, ChevronUp, SlidersHorizontal } from 'lucide-react';
+import { type DateRange } from 'react-day-picker';
 import Image from 'next/image';
 
 interface Message {
@@ -25,15 +30,35 @@ interface Message {
 interface ChatPanelProps {
     messages: Message[];
     isLoading: boolean;
-    onSendMessage: (text: string) => void;
+    onSendMessage: (text: string, meta?: { dateRange?: DateRange; budgetRange?: [number, number]; currency?: string }) => void;
 }
 
 export function ChatPanel({ messages, isLoading, onSendMessage }: ChatPanelProps) {
     const bottomRef = useRef<HTMLDivElement>(null);
+    const [filtersOpen, setFiltersOpen] = useState(false);
+    const { currency } = useCurrencyStore();
+    const config = CURRENCY_CONFIG[currency];
+
+    // Widget state
+    const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+    const [budgetRange, setBudgetRange] = useState<[number, number]>(config.default);
+
+    // Reset budget range when currency changes
+    useEffect(() => {
+        setBudgetRange(CURRENCY_CONFIG[currency].default);
+    }, [currency]);
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, isLoading]);
+
+    const handleSend = (text: string) => {
+        onSendMessage(text, {
+            dateRange,
+            budgetRange,
+            currency,
+        });
+    };
 
     return (
         /* Outer: full-height white page */
@@ -43,14 +68,7 @@ export function ChatPanel({ messages, isLoading, onSendMessage }: ChatPanelProps
             <div className="flex flex-col flex-1 mx-auto w-full overflow-hidden md:max-w-[66.666vw]">
 
                 {/* Header bar */}
-                <div className="flex items-start gap-3 px-6 py-4 border-b border-gray-100 dark:border-gray-9jus 00">
-                    {/* <div className="w-9 h-9 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
-                        <Image src="/images/Vora.webp" alt="Vora" width={36} height={36} className="object-cover" />
-                    </div>
-                    <div>
-                        <p className="text-gray-900 font-semibold text-sm leading-tight">Vora</p>
-                        <p className="text-gray-400 text-xs">Planificadora de viajes IA</p>
-                    </div> */}
+                <div className="flex items-start gap-3 px-6 py-4 border-b border-gray-100 dark:border-gray-900">
                     {isLoading && (
                         <span className="ml-auto flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs">
                             <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse" />
@@ -68,10 +86,40 @@ export function ChatPanel({ messages, isLoading, onSendMessage }: ChatPanelProps
                     <div ref={bottomRef} />
                 </div>
 
+                {/* Filters panel (collapsible) */}
+                <div className="border-t border-gray-100 dark:border-gray-800">
+                    <button
+                        type="button"
+                        onClick={() => setFiltersOpen(!filtersOpen)}
+                        className="flex items-center gap-2 w-full px-6 py-2.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                    >
+                        <SlidersHorizontal className="h-3.5 w-3.5" />
+                        Filtros de alojamiento
+                        {filtersOpen ? (
+                            <ChevronUp className="h-3.5 w-3.5 ml-auto" />
+                        ) : (
+                            <ChevronDown className="h-3.5 w-3.5 ml-auto" />
+                        )}
+                    </button>
+
+                    {filtersOpen && (
+                        <div className="px-6 pb-4 space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
+                            <DateRangePicker
+                                dateRange={dateRange}
+                                onDateRangeChange={setDateRange}
+                            />
+                            <BudgetSlider
+                                value={budgetRange}
+                                onValueChange={setBudgetRange}
+                            />
+                        </div>
+                    )}
+                </div>
+
                 {/* Input area */}
                 <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-800">
                     <MessageInput
-                        onSendMessage={onSendMessage}
+                        onSendMessage={handleSend}
                         disabled={isLoading}
                         placeholder="Sigue contándome sobre tu viaje…"
                     />

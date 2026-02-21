@@ -39,22 +39,21 @@ interface MobilitySegment {
 
 interface AccommodationOption {
   name: string;
-  type: string;
+  type: string;                  // "Apartment in Cusco"
+  room_type?: string;            // "entire_home", "private_room"
   price_per_night: number;
   total_price: number;
+  pricing_qualifier?: string;    // "en total", "por noche", etc.
   currency: string;
   rating: number;
   reviews_count: number;
-  stars: number;
   images: string[];
-  amenities: string[];
+  badges?: string[];             // ["Guest favorite", ...]
+  subtitles?: string[];          // ["Free cancellation", ...]
   booking_url: string;
-  address: string;
-  description: string;
+  coordinates?: { latitude: number; longitude: number };
   check_in: string;
   check_out: string;
-  check_in_time: string;
-  check_out_time: string;
 }
 
 /* ─── Place types ───────────────────────────────────────────── */
