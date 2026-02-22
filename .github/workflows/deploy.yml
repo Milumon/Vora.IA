@@ -3,6 +3,7 @@ name: Deploy Vora.IA to Cloud Run
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 env:
   REGION: us-central1
@@ -66,6 +67,7 @@ jobs:
             --cpu 1 \
             --min-instances 0 \
             --max-instances 10 \
+            --port 8000 \
             --set-env-vars "\
           ENVIRONMENT=production,\
           DEBUG=false,\
