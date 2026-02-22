@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Loader } from '@googlemaps/js-api-loader';
+import { setOptions, importLibrary } from '@googlemaps/js-api-loader';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 
 interface PlaceLocation {
@@ -49,8 +49,8 @@ export function GoogleMapView({
                     return;
                 }
 
-                const loader = new Loader({ apiKey, version: 'weekly', libraries: ['places'] });
-                await loader.load();
+                setOptions({ key: apiKey, v: 'weekly', libraries: ['places'] });
+                await importLibrary("maps");
                 if (!mapRef.current) return;
 
                 const mapCenter = center || places[0]?.location || DEFAULT_CENTER;

@@ -210,7 +210,7 @@ export const WebPreviewBody = ({
   );
 };
 
-export type WebPreviewConsoleProps = ComponentProps<"div"> & {
+export type WebPreviewConsoleProps = ComponentProps<typeof Collapsible> & {
   logs?: {
     level: "log" | "warn" | "error";
     message: string;

@@ -79,7 +79,12 @@ export function useChat() {
   // Hydrate Zustand from React Query when conversation loads
   useEffect(() => {
     if (activeConversation && !conversationId) {
-      setMessages(activeConversation.messages);
+      setMessages(
+        activeConversation.messages.map((msg) => ({
+          ...msg,
+          timestamp: msg.timestamp || new Date().toISOString(),
+        }))
+      );
       setConversationId(activeConversation.id);
 
       // If there's a latest itinerary, restore it

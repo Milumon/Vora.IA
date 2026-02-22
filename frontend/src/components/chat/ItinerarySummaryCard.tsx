@@ -7,7 +7,7 @@ import { ChevronDown, ChevronUp, MapPin, Clock, Star, Save, Share2, Edit3, Image
 import type { Itinerary, PlaceInfo } from '@/store/chatStore';
 import Image from 'next/image';
 import { getPlaceThumbnail } from '@/lib/utils/google-places';
-import { PlaceDetailModal } from '@/components/map/PlaceDetailModal';
+import { PlaceDetailModal } from '@/components/map/overlays/PlaceDetailModal';
 
 interface ItinerarySummaryCardProps {
   itinerary: Itinerary;
@@ -65,7 +65,7 @@ export function ItinerarySummaryCard({
       >
         {/* Imagen del lugar */}
         <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-muted">
-          {hasPhotos ? (
+          {hasPhotos && thumbnail ? (
             <>
               <Image
                 src={thumbnail}

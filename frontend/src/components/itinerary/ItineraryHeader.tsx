@@ -45,7 +45,7 @@ export function ItineraryHeader({ itinerary }: ItineraryHeaderProps) {
       <div className="w-full md:w-auto flex-shrink-0 flex flex-col gap-3">
         <div className="relative w-full md:w-[300px] h-[200px] md:h-[300px] rounded-2xl md:rounded-3xl overflow-hidden shadow-sm transition-transform hover:scale-[1.02]">
           <Image
-            src={headerImage}
+            src={headerImage || '/placeholder-place.jpg'}
             alt={itinerary.title}
             fill
             className="object-cover"
