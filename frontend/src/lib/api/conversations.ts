@@ -26,11 +26,10 @@ export interface ConversationWithItinerary extends Conversation {
 
 // ── Supabase Conversations API ────────────────────────────────────────────────
 
-const supabase = createClientComponentClient();
-
 export const conversationsApi = {
     /** Get the currently active conversation for the logged-in user */
     getActive: async (): Promise<ConversationWithItinerary | null> => {
+        const supabase = createClientComponentClient();
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return null;
 
@@ -49,6 +48,7 @@ export const conversationsApi = {
 
     /** Create a new conversation, deactivating any previous active one */
     create: async (): Promise<Conversation> => {
+        const supabase = createClientComponentClient();
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Not authenticated');
 
@@ -79,6 +79,7 @@ export const conversationsApi = {
         conversationId: string,
         message: { role: 'user' | 'assistant'; content: string; metadata?: any },
     ): Promise<Conversation> => {
+        const supabase = createClientComponentClient();
         // First, get the current messages
         const { data: current, error: fetchError } = await supabase
             .from('conversations')
@@ -109,6 +110,7 @@ export const conversationsApi = {
 
     /** Deactivate a conversation */
     deactivate: async (conversationId: string): Promise<void> => {
+        const supabase = createClientComponentClient();
         const { error } = await supabase
             .from('conversations')
             .update({ is_active: false })
