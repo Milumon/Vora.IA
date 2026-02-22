@@ -23,7 +23,7 @@ ruff==0.1.14
 mypy==1.8.0
 
 # Parser de fechas en español e inglés
-python-dateparser>=1.2.0
+dateparser>=1.2.0
 
 # SDK de Anthropic (para integración con tu agente Claude)
 anthropic>=0.34.0

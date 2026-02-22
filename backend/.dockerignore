@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.pyo
+.env*
+.git
+.gitignore
+tests/
+*.md
+.agents/
+.pre-commit-config.yaml
+uv.lock
+debug_*.py
+test_*.py
+pytest.ini
+setup.ps1
+start-dev.ps1
+start.ps1

@@ -1,0 +1,10 @@
+node_modules/
+.next/
+.git
+.gitignore
+*.md
+.agents/
+.eslintrc.json
+.prettierrc
+*.ps1
+pnpm-lock.yaml
