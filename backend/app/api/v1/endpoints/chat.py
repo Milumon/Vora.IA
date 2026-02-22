@@ -57,7 +57,7 @@ async def chat(
                     
                 if conversation.data:
                     conversation_raw = conversation.data
-                    previous_state = conversation.data.get("state", {})
+                    previous_state = conversation.data.get("state") or {}
                     conversation_exists = True
                     logger.info(f"Conversación recuperada para conversation_id: {conversation_id}")
             except Exception as e:
