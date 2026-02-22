@@ -110,11 +110,16 @@ class TravelState(TypedDict):
     end_date: Optional[date]
     days: Optional[int]
     budget: Optional[Literal["low", "medium", "high"]]
+    budget_total: Optional[int]      # Presupuesto total del viaje
     travel_style: Optional[List[str]]
     travelers: Optional[int]
     currency: Optional[str]          # "PEN" or "USD"
     budget_min: Optional[int]        # Min price filter for accommodation
     budget_max: Optional[int]        # Max price filter for accommodation
+
+    # Flags para widgets condicionales
+    missing_dates: bool              # Si faltan fechas en el primer mensaje
+    missing_budget: bool             # Si falta presupuesto en el primer mensaje
 
     # Datos de lugares
     searched_places: List[PlaceInfo]

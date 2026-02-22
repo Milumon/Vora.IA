@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-from datetime import datetime
+from datetime import datetime, date as date_type
 import uuid
 from supabase import Client
 from app.core.dependencies import get_current_active_user
@@ -78,6 +78,27 @@ async def chat(
         # Construir resumen compacto del estado acumulado para el contexto del LLM
         accumulated_summary = _build_state_summary(previous_state)
         
+        # Parsear fechas del widget (check_in/check_out → start_date/end_date)
+        widget_start_date = _parse_widget_date(chat_request.check_in)
+        widget_end_date = _parse_widget_date(chat_request.check_out)
+        widget_budget = chat_request.budget_total
+        
+        # Resolver valores finales: widget > estado previo
+        resolved_start_date = widget_start_date or _parse_widget_date(previous_state.get("start_date"))
+        resolved_end_date = widget_end_date or _parse_widget_date(previous_state.get("end_date"))
+        resolved_budget_total = widget_budget or previous_state.get("budget_total")
+        
+        # Limpiar flags si el widget proporcionó los datos faltantes
+        has_widget_dates = bool(widget_start_date or widget_end_date)
+        has_widget_budget = bool(widget_budget)
+        
+        # Enriquecer mensaje del usuario si viene con datos de widget
+        if has_widget_dates or has_widget_budget:
+            new_user_message = _enrich_widget_message(
+                new_user_message, widget_start_date, widget_end_date,
+                widget_budget, chat_request.currency or "PEN"
+            )
+        
         input_state = {
             "messages": previous_messages + [new_user_message],
             "max_iterations": 10,
@@ -91,16 +112,17 @@ async def chat(
             "destinations": previous_state.get("destinations"),
             "days": previous_state.get("days"),
             "budget": previous_state.get("budget"),
+            "budget_total": resolved_budget_total,
             "travel_style": previous_state.get("travel_style"),
             "travelers": previous_state.get("travelers"),
-            "start_date": previous_state.get("start_date"),
-            "end_date": previous_state.get("end_date"),
+            "start_date": resolved_start_date,
+            "end_date": resolved_end_date,
             "itinerary": previous_state.get("itinerary"),
             "mobility_options": previous_state.get("mobility_options", []),
             "accommodation_options": previous_state.get("accommodation_options", []),
             "currency": chat_request.currency or previous_state.get("currency", "PEN"),
-            "budget_min": chat_request.budget_min or previous_state.get("budget_min"),
-            "budget_max": chat_request.budget_max or previous_state.get("budget_max"),
+            "missing_dates": False if (resolved_start_date or resolved_end_date) else previous_state.get("missing_dates", False),
+            "missing_budget": False if resolved_budget_total else previous_state.get("missing_budget", False),
             "refinement_scope": None,
             "previous_itinerary": None,
         }
@@ -139,6 +161,7 @@ async def chat(
                     "destinations": result.get("destinations"),
                     "days": result.get("days"),
                     "budget": result.get("budget"),
+                    "budget_total": result.get("budget_total"),
                     "travel_style": result.get("travel_style"),
                     "travelers": result.get("travelers"),
                     "start_date": str(result.get("start_date", "")) if result.get("start_date") else None,
@@ -150,8 +173,8 @@ async def chat(
                     "mobility_options": result.get("mobility_options", []),
                     "accommodation_options": result.get("accommodation_options", []),
                     "currency": result.get("currency", "PEN"),
-                    "budget_min": result.get("budget_min"),
-                    "budget_max": result.get("budget_max"),
+                    "missing_dates": result.get("missing_dates", False),
+                    "missing_budget": result.get("missing_budget", False),
                 },
                 "is_active": True,
                 "last_message_at": datetime.utcnow().isoformat(),
@@ -201,7 +224,9 @@ async def chat(
             thread_id=conversation_id,
             itinerary=itinerary_response,
             needs_clarification=result.get("needs_clarification", False),
-            clarification_questions=result.get("clarification_questions", [])
+            clarification_questions=result.get("clarification_questions", []),
+            missing_dates=result.get("missing_dates", False),
+            missing_budget=result.get("missing_budget", False)
         )
         
     except Exception as e:
@@ -257,6 +282,34 @@ async def _save_itinerary(
         
     except Exception as e:
         logger.error(f"Error guardando itinerario: {e}", exc_info=True)
+
+
+def _parse_widget_date(raw) -> date_type | None:
+    """Parsea una fecha del widget o del estado previo a un objeto date."""
+    if raw is None:
+        return None
+    if isinstance(raw, date_type):
+        return raw
+    if isinstance(raw, str) and raw.strip():
+        try:
+            return date_type.fromisoformat(raw.strip())
+        except ValueError:
+            return None
+    return None
+
+
+def _enrich_widget_message(
+    message: dict, start_date, end_date, budget_total, currency: str
+) -> dict:
+    """Enriquece el contenido del mensaje con datos estructurados del widget."""
+    parts = [message["content"]]
+    if start_date:
+        parts.append(f"Fecha de inicio: {start_date}")
+    if end_date:
+        parts.append(f"Fecha de fin: {end_date}")
+    if budget_total:
+        parts.append(f"Presupuesto total: {budget_total} {currency}")
+    return {**message, "content": " | ".join(parts)}
 
 
 def _build_state_summary(state: dict) -> str:

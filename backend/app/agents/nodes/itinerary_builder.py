@@ -1,10 +1,10 @@
 """Nodo constructor de itinerarios completos."""
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import JsonOutputParser
 from typing import List, Dict, Optional
 from datetime import date, timedelta
 import json
+import re
 from app.agents.state import TravelState, DayPlan
 from app.config.settings import get_settings
 from app.config.logging import get_logger
@@ -30,10 +30,9 @@ async def build_itinerary(state: TravelState) -> dict:
     llm = ChatOpenAI(
         model=settings.OPENAI_MODEL,
         temperature=0.7,
-        api_key=settings.OPENAI_API_KEY
+        api_key=settings.OPENAI_API_KEY,
+        model_kwargs={"response_format": {"type": "json_object"}},
     )
-    
-    parser = JsonOutputParser()
     
     prompt = ChatPromptTemplate.from_messages([
         ("system", """Eres un experto planificador de viajes especializado en Perú con años de experiencia.
@@ -61,8 +60,9 @@ INSTRUCCIONES IMPORTANTES:
 7. Añade consejos prácticos específicos de Perú
 8. Considera el clima y la altitud (especialmente en Cusco, Puno, Arequipa)
 9. IMPORTANTE: Usa el place_id EXACTO de la lista de lugares disponibles para cada lugar que incluyas. Copia el ID tal cual aparece en "ID: ...".
+10. Sé conciso en "why_visit" (máximo 15 palabras) y en "notes" (máximo 2 líneas).
 
-FORMATO DE RESPUESTA (JSON):
+FORMATO DE RESPUESTA (JSON estricto):
 {{
   "title": "Título atractivo del itinerario",
   "description": "Descripción general del viaje (2-3 líneas)",
@@ -81,13 +81,13 @@ FORMATO DE RESPUESTA (JSON):
           "photos": [],
           "location": {{"lat": -12.0, "lng": -77.0}},
           "visit_duration": "2 horas",
-          "why_visit": "Razón para visitar este lugar"
+          "why_visit": "Razón breve para visitar"
         }}
       ],
       "afternoon": [...],
       "evening": [...],
       "notes": "Consejos específicos para este día",
-      "day_summary": "Resumen breve y atractivo del día (ej: Llegada a Cusco y exploración del Centro Histórico)"
+      "day_summary": "Resumen breve del día"
     }}
   ],
   "tips": [
@@ -97,17 +97,17 @@ FORMATO DE RESPUESTA (JSON):
   "estimated_budget": "Estimación de presupuesto total en USD"
 }}
 
-Responde SOLO con el JSON, sin texto adicional.
+Responde SOLO con el JSON válido.
 """),
         ("user", "Crea el mejor itinerario posible con esta información.")
     ])
     
     places_json = _format_places_for_llm(state.get("searched_places", []))
     
-    chain = prompt | llm | parser
+    chain = prompt | llm
     
     try:
-        result = await chain.ainvoke({
+        llm_response = await chain.ainvoke({
             "destination": state["destination"],
             "days": state["days"],
             "budget": state.get("budget", "medium"),
@@ -115,6 +115,8 @@ Responde SOLO con el JSON, sin texto adicional.
             "travelers": state.get("travelers", 1),
             "places_json": places_json
         })
+        
+        result = _parse_json_robust(llm_response.content)
         
         # Enriquecer lugares del itinerario con fotos y datos reales de searched_places
         searched_places_by_id = {p.get("place_id"): p for p in state.get("searched_places", []) if p.get("place_id")}
@@ -153,6 +155,42 @@ Responde SOLO con el JSON, sin texto adicional.
                 "timestamp": ""
             }]
         }
+
+
+# ── Robust JSON parsing ───────────────────────────────────────────────────────
+
+def _parse_json_robust(raw: str) -> dict:
+    """
+    Parse JSON from LLM output with multiple fallback strategies.
+    Handles markdown fences, leading/trailing text, and minor formatting issues.
+    """
+    text = raw.strip()
+
+    # Strategy 1: direct parse
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+
+    # Strategy 2: strip markdown code fences (```json ... ```)
+    cleaned = re.sub(r"^```(?:json)?\s*", "", text)
+    cleaned = re.sub(r"\s*```$", "", cleaned).strip()
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        pass
+
+    # Strategy 3: extract first complete JSON object { ... }
+    first_brace = text.find("{")
+    last_brace = text.rfind("}")
+    if first_brace != -1 and last_brace > first_brace:
+        candidate = text[first_brace : last_brace + 1]
+        try:
+            return json.loads(candidate)
+        except json.JSONDecodeError:
+            pass
+
+    raise ValueError(f"No se pudo parsear JSON del LLM (longitud={len(raw)})")
 
 
 # ── Date injection ────────────────────────────────────────────────────────────

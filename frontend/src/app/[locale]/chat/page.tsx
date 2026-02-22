@@ -42,12 +42,24 @@ export default function ChatPage() {
   const [loadingItinerary, setLoadingItinerary] = useState(false);
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
 
+  // Widget visibility flags - ya no se necesitan porque se manejan en metadata
+  // const [showDatePicker, setShowDatePicker] = useState(false);
+  // const [showBudgetSlider, setShowBudgetSlider] = useState(false);
+
   // ── Phase tracking ───────────────────────────────────────────────────────
   const [phase, setPhase] = useState<Phase>('chatting');
   // 'entering' = animating into the new phase
-  const [animating, setAnimating] = useState(false);
   const prevPhaseRef = useRef<Phase>('chatting');
   const pendingMessageSentRef = useRef(false);
+
+  // ── Detect missing info from last assistant message - ya no se necesita
+  // useEffect(() => {
+  //   const lastMessage = messages[messages.length - 1];
+  //   if (lastMessage?.role === 'assistant' && lastMessage.metadata) {
+  //     setShowDatePicker(lastMessage.metadata.missingDates || false);
+  //     setShowBudgetSlider(lastMessage.metadata.missingBudget || false);
+  //   }
+  // }, [messages]);
 
   // ── Load pending message from localStorage on mount ──────────────────────
   useEffect(() => {
@@ -117,20 +129,16 @@ export default function ChatPage() {
           setLoadingItinerary(false);
         });
     }
-  }, [itineraryId, setGeneratedItinerary, setConversationId]);
+  }, [itineraryId, loadingItinerary, setGeneratedItinerary, setConversationId]);
 
   useEffect(() => {
     const target: Phase = generatedItinerary ? 'itinerary' : 'chatting';
 
     if (target !== phase) {
-      setAnimating(true);
       // Small delay lets CSS read the initial state before adding the active class
       const t = setTimeout(() => {
         prevPhaseRef.current = phase;
         setPhase(target);
-        // Remove animation flag after transition completes
-        const t2 = setTimeout(() => setAnimating(false), 600);
-        return () => clearTimeout(t2);
       }, 50);
       return () => clearTimeout(t);
     }

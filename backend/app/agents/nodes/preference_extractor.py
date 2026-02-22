@@ -35,6 +35,7 @@ class ExtractedPreferences(BaseModel):
     destinations: Optional[List[str]] = Field(None, description="Lista de ciudades para viaje multi-destino")
     days: Optional[int] = Field(None, description="Número de días del viaje")
     budget: Optional[Literal["low", "medium", "high"]] = Field(None, description="Nivel de presupuesto")
+    budget_total: Optional[int] = Field(None, description="Presupuesto total del viaje en la moneda especificada")
     travel_style: Optional[List[str]] = Field(None, description="Estilos de viaje: cultural, adventure, relaxed, gastronomy, nightlife")
     travelers: Optional[int] = Field(None, description="Número de viajeros")
     start_date: Optional[str] = Field(
@@ -56,15 +57,20 @@ class ExtractedPreferences(BaseModel):
     )
     needs_clarification: bool = Field(False, description="Si se necesita más información")
     clarification_questions: List[str] = Field(default_factory=list, description="Preguntas para el usuario")
+    missing_dates: bool = Field(False, description="Si faltan fechas de viaje (start_date o end_date)")
+    missing_budget: bool = Field(False, description="Si falta presupuesto total del viaje")
 
 
 # ── Campos obligatorios vs opcionales ─────────────────────────────────────────
-# Solo destination y days son obligatorios para lanzar el pipeline.
-# El resto se puede inferir o usar defaults.
+# Campos obligatorios para lanzar el pipeline:
+# - destination: destino del viaje
+# - days: duración del viaje
+# - start_date y end_date: fechas del viaje (al menos una debe estar presente)
+# - budget_total: presupuesto total del viaje
 
-REQUIRED_FIELDS = {"destination", "days"}
+REQUIRED_FIELDS = {"destination", "days", "dates", "budget_total"}
 
-OPTIONAL_FIELDS = {"budget", "travel_style", "travelers", "start_date", "end_date"}
+OPTIONAL_FIELDS = {"budget", "travel_style", "travelers"}
 
 
 # ── Node principal ────────────────────────────────────────────────────────────
@@ -130,27 +136,44 @@ async def extract_preferences(state: TravelState) -> dict:
     #    o por lo que acaba de extraer el LLM), forzar needs_clarification=False.
     final_destination = update.get("destination") or current["destination"]
     final_days = update.get("days") or current["days"]
+    final_start_date = update.get("start_date") or current.get("start_date")
+    final_end_date = update.get("end_date") or current.get("end_date")
+    final_budget_total = update.get("budget_total") or current.get("budget_total")
 
-    if final_destination and final_days:
+    # Detectar si faltan fechas o presupuesto
+    has_dates = bool(final_start_date or final_end_date)
+    has_budget = bool(final_budget_total)
+    
+    update["missing_dates"] = not has_dates
+    update["missing_budget"] = not has_budget
+    
+    logger.info(
+        f"Validación de campos: destination={bool(final_destination)}, "
+        f"days={bool(final_days)}, has_dates={has_dates}, has_budget={has_budget}"
+    )
+
+    # TODOS los campos obligatorios deben estar presentes
+    if final_destination and final_days and has_dates and has_budget:
         # Campos obligatorios completos → proceder al pipeline
         update["needs_clarification"] = False
         update["clarification_questions"] = []
         logger.info(
-            "Guardia programática: campos obligatorios completos "
-            f"(destination={final_destination}, days={final_days}). "
+            "Guardia programática: TODOS los campos obligatorios completos. "
+            f"(destination={final_destination}, days={final_days}, "
+            f"dates={has_dates}, budget={has_budget}). "
             "Forzando needs_clarification=False."
         )
     else:
-        # Solo mantener preguntas sobre campos OBLIGATORIOS faltantes
-        update["needs_clarification"] = result.needs_clarification
+        # Mantener preguntas sobre campos OBLIGATORIOS faltantes
+        update["needs_clarification"] = True
         update["clarification_questions"] = _filter_questions(
             result.clarification_questions,
             current
         )
         # Si después de filtrar no quedan preguntas, generar las necesarias
-        if update["needs_clarification"] and not update["clarification_questions"]:
+        if not update["clarification_questions"]:
             update["clarification_questions"] = _generate_missing_questions(
-                current, update
+                current, update, final_destination, final_days, has_dates, has_budget
             )
 
     # ── 6. Actualizar accumulated_summary ─────────────────────────────────
@@ -175,6 +198,7 @@ def _read_current_fields(state: TravelState) -> dict:
         "destinations": state.get("destinations"),
         "days": state.get("days"),
         "budget": state.get("budget"),
+        "budget_total": state.get("budget_total"),
         "travel_style": state.get("travel_style"),
         "travelers": state.get("travelers"),
         "start_date": state.get("start_date"),
@@ -205,10 +229,25 @@ def _build_field_snapshot(current: dict) -> tuple[str, str]:
     else:
         missing_required.append("❌ Días: NO definido (OBLIGATORIO)")
 
+    # Fechas (al menos una debe estar presente)
+    if current["start_date"] or current["end_date"]:
+        if current["start_date"]:
+            confirmed.append(f"✅ Fecha inicio: {current['start_date']}")
+        if current["end_date"]:
+            confirmed.append(f"✅ Fecha fin: {current['end_date']}")
+    else:
+        missing_required.append("❌ Fechas: NO definidas (OBLIGATORIO - al menos fecha de inicio o fin)")
+
+    # Presupuesto total
+    if current.get("budget_total"):
+        confirmed.append(f"✅ Presupuesto total: {current['budget_total']}")
+    else:
+        missing_required.append("❌ Presupuesto total: NO definido (OBLIGATORIO)")
+
     # -- Campos opcionales: solo se listan como confirmados si existen,
     #    pero NUNCA como faltantes.
     if current["budget"]:
-        confirmed.append(f"✅ Presupuesto: {current['budget']}")
+        confirmed.append(f"✅ Nivel de presupuesto: {current['budget']}")
 
     if current["travel_style"]:
         style_str = ", ".join(current["travel_style"]) if isinstance(current["travel_style"], list) else current["travel_style"]
@@ -216,12 +255,6 @@ def _build_field_snapshot(current: dict) -> tuple[str, str]:
 
     if current["travelers"]:
         confirmed.append(f"✅ Viajeros: {current['travelers']}")
-
-    if current["start_date"]:
-        confirmed.append(f"✅ Fecha inicio: {current['start_date']}")
-
-    if current["end_date"]:
-        confirmed.append(f"✅ Fecha fin: {current['end_date']}")
 
     confirmed_str = "\n".join(confirmed) if confirmed else "Ninguno"
     missing_str = "\n".join(missing_required) if missing_required else "Ninguno — ¡listos para proceder!"
@@ -254,18 +287,29 @@ Tu objetivo es extraer información NUEVA del último mensaje del usuario.
 ════════════════════════════════════════════
   REGLA DE ORO
 ════════════════════════════════════════════
-Si DESTINO y DÍAS ya están en "INFORMACIÓN YA CONFIRMADA",
+Para proceder a generar el itinerario, TODOS estos campos son OBLIGATORIOS:
+1. DESTINO (ciudad o región de Perú)
+2. DÍAS (duración del viaje)
+3. FECHAS (al menos start_date O end_date)
+4. PRESUPUESTO TOTAL (budget_total en número)
+
+Si TODOS estos campos están en "INFORMACIÓN YA CONFIRMADA",
 entonces SIEMPRE pon needs_clarification = false y clarification_questions = [].
-No importa si faltan datos opcionales: el sistema los resolverá automáticamente.
+
+Si falta CUALQUIERA de estos campos obligatorios, pon needs_clarification = true
+y genera preguntas SOLO para los campos obligatorios faltantes.
 
 REGLAS CRÍTICAS:
 1. NUNCA re-preguntes algo que ya está en "INFORMACIÓN YA CONFIRMADA".
 2. Solo pregunta por lo que está en "CAMPOS OBLIGATORIOS QUE FALTAN".
-3. NO preguntes por presupuesto, estilo, viajeros ni fechas como obligatorios.
+3. NO preguntes por estilo de viaje ni número de viajeros (son opcionales).
 4. Si el usuario ya dijo el destino (ej: "Arequipa"), NO preguntes zona ni región.
-5. Si el usuario da destino + días en el mismo mensaje, pon needs_clarification=false.
-6. Si el usuario menciona una fecha, extráela en formato YYYY-MM-DD.
-7. Extrae CUALQUIER información nueva del mensaje actual, incluso opcional.
+5. Si el usuario menciona una fecha, extráela en formato YYYY-MM-DD.
+6. Extrae CUALQUIER información nueva del mensaje actual, incluso opcional.
+7. IMPORTANTE: Si el usuario NO menciona fechas (start_date/end_date), pon missing_dates=true.
+8. IMPORTANTE: Si el usuario NO menciona presupuesto total (budget_total), pon missing_budget=true.
+9. Si el usuario menciona un presupuesto numérico (ej: "tengo 3000 soles", "mi presupuesto es $1500"), extráelo como budget_total.
+10. Si el usuario dice algo como "plan mochilero" o "económico", extrae budget="low", pero TAMBIÉN pide el presupuesto total numérico.
 
 DESTINOS VÁLIDOS EN PERÚ:
 Lima, Cusco, Arequipa, Puno, Iquitos, Trujillo, Chiclayo, Piura, Paracas, Nazca,
@@ -294,10 +338,16 @@ def _merge_extracted(result: ExtractedPreferences) -> dict:
         update["days"] = result.days
     if result.budget:
         update["budget"] = result.budget
+    if result.budget_total:
+        update["budget_total"] = result.budget_total
     if result.travel_style:
         update["travel_style"] = result.travel_style
     if result.travelers:
         update["travelers"] = result.travelers
+
+    # Flags para widgets condicionales
+    update["missing_dates"] = result.missing_dates
+    update["missing_budget"] = result.missing_budget
 
     # Parse date strings → Python date objects
     if result.start_date:
@@ -362,19 +412,28 @@ def _filter_questions(
     return filtered
 
 
-def _generate_missing_questions(current: dict, update: dict) -> list[str]:
+def _generate_missing_questions(
+    current: dict, 
+    update: dict, 
+    final_destination: str, 
+    final_days: int, 
+    has_dates: bool, 
+    has_budget: bool
+) -> list[str]:
     """
     Genera preguntas solo para campos OBLIGATORIOS que aún faltan.
     Esto se usa como fallback si el LLM no generó preguntas útiles.
     """
     questions = []
-    final_destination = update.get("destination") or current.get("destination")
-    final_days = update.get("days") or current.get("days")
 
     if not final_destination:
         questions.append("¿A qué ciudad o región de Perú te gustaría viajar?")
     if not final_days:
         questions.append("¿Cuántos días durará tu viaje?")
+    if not has_dates:
+        questions.append("¿Cuándo planeas viajar? (fecha de inicio y/o fin)")
+    if not has_budget:
+        questions.append("¿Cuál es tu presupuesto total para el viaje?")
 
     return questions
 
@@ -394,8 +453,14 @@ def _build_accumulated_summary(current: dict, update: dict) -> str:
         parts.append(f"Destino: {merged['destination']}")
     if merged.get("days"):
         parts.append(f"Días: {merged['days']}")
+    if merged.get("start_date"):
+        parts.append(f"Fecha inicio: {merged['start_date']}")
+    if merged.get("end_date"):
+        parts.append(f"Fecha fin: {merged['end_date']}")
+    if merged.get("budget_total"):
+        parts.append(f"Presupuesto total: {merged['budget_total']}")
     if merged.get("budget"):
-        parts.append(f"Presupuesto: {merged['budget']}")
+        parts.append(f"Nivel: {merged['budget']}")
     if merged.get("travel_style"):
         style = merged["travel_style"]
         if isinstance(style, list):
@@ -403,10 +468,6 @@ def _build_accumulated_summary(current: dict, update: dict) -> str:
         parts.append(f"Estilo: {style}")
     if merged.get("travelers"):
         parts.append(f"Viajeros: {merged['travelers']}")
-    if merged.get("start_date"):
-        parts.append(f"Fecha inicio: {merged['start_date']}")
-    if merged.get("end_date"):
-        parts.append(f"Fecha fin: {merged['end_date']}")
 
     if not parts:
         return ""

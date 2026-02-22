@@ -10,54 +10,46 @@
  * slides up carrying the conversation.
  */
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect } from 'react';
 import { MessageBubble } from './MessageBubble';
 import { MessageInput } from './MessageInput';
 import { TypingIndicator } from './TypingIndicator';
-import { DateRangePicker } from './widgets/DateRangePicker';
-import { BudgetSlider, CURRENCY_CONFIG } from './widgets/BudgetSlider';
-import { useCurrencyStore } from '@/store/currencyStore';
-import { ChevronDown, ChevronUp, SlidersHorizontal } from 'lucide-react';
 import { type DateRange } from 'react-day-picker';
-import Image from 'next/image';
+import { type ProgressStep } from './widgets/ProgressIndicator';
 
 interface Message {
     role: 'user' | 'assistant' | 'system';
     content: string;
     timestamp: string;
+    metadata?: {
+        needsClarification?: boolean;
+        clarificationQuestions?: string[];
+        progressSteps?: ProgressStep[];
+        missingDates?: boolean;
+        missingBudget?: boolean;
+    };
 }
 
 interface ChatPanelProps {
     messages: Message[];
     isLoading: boolean;
-    onSendMessage: (text: string, meta?: { dateRange?: DateRange; budgetRange?: [number, number]; currency?: string }) => void;
+    onSendMessage: (text: string, meta?: { dateRange?: DateRange; budgetTotal?: number; currency?: string }) => void;
 }
 
 export function ChatPanel({ messages, isLoading, onSendMessage }: ChatPanelProps) {
     const bottomRef = useRef<HTMLDivElement>(null);
-    const [filtersOpen, setFiltersOpen] = useState(false);
-    const { currency } = useCurrencyStore();
-    const config = CURRENCY_CONFIG[currency];
-
-    // Widget state
-    const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
-    const [budgetRange, setBudgetRange] = useState<[number, number]>(config.default);
-
-    // Reset budget range when currency changes
-    useEffect(() => {
-        setBudgetRange(CURRENCY_CONFIG[currency].default);
-    }, [currency]);
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, isLoading]);
 
     const handleSend = (text: string) => {
-        onSendMessage(text, {
-            dateRange,
-            budgetRange,
-            currency,
-        });
+        onSendMessage(text);
+    };
+
+    const handleWidgetSubmit = (data: { dateRange?: DateRange; budgetTotal?: number; currency?: string }) => {
+        // Enviar un mensaje automático con la información del widget
+        onSendMessage('Información adicional proporcionada', data);
     };
 
     return (
@@ -80,40 +72,14 @@ export function ChatPanel({ messages, isLoading, onSendMessage }: ChatPanelProps
                 {/* Messages scroll area */}
                 <div className="flex-1 overflow-y-auto px-6 py-4 space-y-1">
                     {messages.map((msg, idx) => (
-                        <MessageBubble key={idx} message={msg} />
+                        <MessageBubble 
+                            key={idx} 
+                            message={msg}
+                            onWidgetSubmit={handleWidgetSubmit}
+                        />
                     ))}
                     {isLoading && <TypingIndicator />}
                     <div ref={bottomRef} />
-                </div>
-
-                {/* Filters panel (collapsible) */}
-                <div className="border-t border-gray-100 dark:border-gray-800">
-                    <button
-                        type="button"
-                        onClick={() => setFiltersOpen(!filtersOpen)}
-                        className="flex items-center gap-2 w-full px-6 py-2.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-                    >
-                        <SlidersHorizontal className="h-3.5 w-3.5" />
-                        Filtros de alojamiento
-                        {filtersOpen ? (
-                            <ChevronUp className="h-3.5 w-3.5 ml-auto" />
-                        ) : (
-                            <ChevronDown className="h-3.5 w-3.5 ml-auto" />
-                        )}
-                    </button>
-
-                    {filtersOpen && (
-                        <div className="px-6 pb-4 space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
-                            <DateRangePicker
-                                dateRange={dateRange}
-                                onDateRangeChange={setDateRange}
-                            />
-                            <BudgetSlider
-                                value={budgetRange}
-                                onValueChange={setBudgetRange}
-                            />
-                        </div>
-                    )}
                 </div>
 
                 {/* Input area */}

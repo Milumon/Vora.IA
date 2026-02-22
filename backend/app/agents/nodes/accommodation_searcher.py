@@ -64,25 +64,40 @@ async def search_accommodation(state: TravelState) -> dict:
 
     # ── Currency & budget from state ────────────────────────────────────────
     currency = state.get("currency") or "PEN"
-    budget_min = state.get("budget_min") or 0
-    budget_max = state.get("budget_max") or 0   # 0 = sin límite superior en Apify
+    budget_min = 0  # Siempre 0 como solicitado
+    budget_max = state.get("budget_max") or 0
 
-    # If using the old string-based budget, map to price ranges
-    budget_str = state.get("budget")
-    if budget_str and not state.get("budget_max"):
-        if currency == "PEN":
-            budget_ranges = {
-                "low": (0, 200),
-                "medium": (150, 500),
-                "high": (400, 2000),
-            }
-        else:  # USD
-            budget_ranges = {
-                "low": (0, 60),
-                "medium": (40, 150),
-                "high": (100, 600),
-            }
-        budget_min, budget_max = budget_ranges.get(budget_str, (0, 600))
+    # Si hay budget_total, usar el 90% para alojamiento
+    budget_total = state.get("budget_total")
+    if budget_total:
+        # 90% del presupuesto total para alojamiento
+        accommodation_budget = int(budget_total * 0.9)
+        # Dividir por número de noches para obtener precio máximo por noche
+        nights = (check_out - start_date).days
+        if nights > 0:
+            budget_max = accommodation_budget // nights
+            logger.info(
+                "accommodation_searcher: usando 90%% del presupuesto total (%d %s) = %d %s para alojamiento → %d %s/noche",
+                budget_total, currency, accommodation_budget, currency, budget_max, currency
+            )
+
+    # If using the old string-based budget, map to price ranges (fallback)
+    if not budget_total:
+        budget_str = state.get("budget")
+        if budget_str and not state.get("budget_max"):
+            if currency == "PEN":
+                budget_ranges = {
+                    "low": (0, 200),
+                    "medium": (150, 500),
+                    "high": (400, 2000),
+                }
+            else:  # USD
+                budget_ranges = {
+                    "low": (0, 60),
+                    "medium": (40, 150),
+                    "high": (100, 600),
+                }
+            budget_min, budget_max = budget_ranges.get(budget_str, (0, 600))
 
     logger.info(
         "accommodation_searcher: %s | %s → %s | %d adulto(s) | %s %d–%d",

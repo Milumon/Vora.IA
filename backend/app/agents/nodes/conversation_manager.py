@@ -25,10 +25,11 @@ _FIELD_KEYWORDS: dict[str, list[str]] = {
     "destination": ["destino", "lugar", "ciudad", "zona", "región", "dónde", "donde", "qué parte", "que parte"],
     "days": ["días", "duración", "cuánto tiempo", "cuanto tiempo", "cuántos días", "cuantos dias"],
     "budget": ["presupuesto", "budget", "gastar", "costo", "económico"],
+    "budget_total": ["presupuesto total", "presupuesto", "budget", "cuánto", "cuanto", "dinero", "soles", "dólares", "dolares"],
     "travel_style": ["estilo", "tipo de viaje", "experiencia", "aventura", "cultural", "relajado"],
     "travelers": ["viajeros", "personas", "cuántos van", "cuantos van", "grupo", "acompañante"],
-    "start_date": ["fecha", "cuándo", "cuando", "salida", "partida", "inicio"],
-    "end_date": ["regreso", "vuelta", "fin del viaje"],
+    "start_date": ["fecha", "cuándo", "cuando", "salida", "partida", "inicio", "fecha de inicio"],
+    "end_date": ["regreso", "vuelta", "fin del viaje", "fecha de fin", "fecha final"],
 }
 
 # Frases que indican frustración del usuario
@@ -57,6 +58,7 @@ async def generate_response(state: TravelState) -> dict:
     destination = state.get("destination")
     days = state.get("days")
     budget = state.get("budget")
+    budget_total = state.get("budget_total")
     travel_style = state.get("travel_style")
     travelers = state.get("travelers")
     start_date = state.get("start_date")
@@ -80,6 +82,7 @@ async def generate_response(state: TravelState) -> dict:
         destination=destination,
         days=days,
         budget=budget,
+        budget_total=budget_total,
         travel_style=travel_style,
         travelers=travelers,
         start_date=start_date,
@@ -101,6 +104,7 @@ async def generate_response(state: TravelState) -> dict:
             destination=destination,
             days=days,
             budget=budget,
+            budget_total=budget_total,
             travel_style=travel_style,
             travelers=travelers,
             start_date=start_date,
@@ -116,6 +120,7 @@ async def generate_response(state: TravelState) -> dict:
             destination=destination,
             days=days,
             budget=budget,
+            budget_total=budget_total,
             travel_style=travel_style,
             travelers=travelers,
             start_date=start_date,
@@ -160,6 +165,7 @@ def _filter_confirmed_questions(
     destination,
     days,
     budget,
+    budget_total,
     travel_style,
     travelers,
     start_date,
@@ -175,6 +181,7 @@ def _filter_confirmed_questions(
         "destination": destination,
         "days": days,
         "budget": budget,
+        "budget_total": budget_total,
         "travel_style": travel_style,
         "travelers": travelers,
         "start_date": start_date,
@@ -205,6 +212,7 @@ async def _generate_clarification_response(
     destination,
     days,
     budget,
+    budget_total,
     travel_style,
     travelers,
     start_date,
@@ -225,11 +233,12 @@ async def _generate_clarification_response(
 ═══ INFORMACIÓN CONFIRMADA ═══
 - Destino: {destination}
 - Días: {days}
-- Presupuesto: {budget}
-- Estilo: {travel_style}
-- Viajeros: {travelers}
 - Fecha inicio: {start_date}
 - Fecha fin: {end_date}
+- Presupuesto total: {budget_total}
+- Nivel de presupuesto: {budget}
+- Estilo: {travel_style}
+- Viajeros: {travelers}
 
 {frustration_instruction}
 
@@ -260,6 +269,8 @@ Tu respuesta DEBE seguir esta estructura:
 - PROHIBIDO preguntar sobre campos que ya están en INFORMACIÓN CONFIRMADA
 - Si destino está confirmado, NO preguntes zona, región, ni lugar
 - Si días está confirmado, NO preguntes duración
+- Si fechas están confirmadas, NO preguntes cuándo viaja
+- Si presupuesto total está confirmado, NO preguntes cuánto quiere gastar
 - Solo haz preguntas sobre lo que REALMENTE falta
 - No uses bullet points ni listas, usa texto con saltos de línea
 
@@ -277,11 +288,12 @@ Conversación previa:
     result = await chain.ainvoke({
         "destination": destination or "No especificado aún",
         "days": days or "No especificado aún",
+        "start_date": start_date or "No especificada",
+        "end_date": end_date or "No especificada",
+        "budget_total": budget_total or "No especificado aún",
         "budget": budget or "No especificado aún",
         "travel_style": travel_style or "No especificado aún",
         "travelers": travelers or "No especificado aún",
-        "start_date": start_date or "No especificada",
-        "end_date": end_date or "No especificada",
         "accumulated_summary": accumulated or "Sin información previa",
         "frustration_instruction": frustration_instruction,
         "questions": "\n".join(f"- {q}" for q in questions),
@@ -297,6 +309,7 @@ async def _generate_confirmation_response(
     destination,
     days,
     budget,
+    budget_total,
     travel_style,
     travelers,
     start_date,
@@ -313,11 +326,12 @@ confirmando que vas a generar su itinerario.
 INFORMACIÓN DEL VIAJE:
 - Destino: {destination}
 - Días: {days}
-- Presupuesto: {budget}
-- Estilo: {travel_style}
-- Viajeros: {travelers}
 - Fecha inicio: {start_date}
 - Fecha fin: {end_date}
+- Presupuesto total: {budget_total}
+- Nivel: {budget}
+- Estilo: {travel_style}
+- Viajeros: {travelers}
 
 Genera una respuesta que:
 1. Resuma la información de forma compacta (máximo 3 líneas)
@@ -334,11 +348,12 @@ IMPORTANTE: Máximo 4 líneas de respuesta total.
     result = await chain.ainvoke({
         "destination": destination,
         "days": days,
+        "start_date": start_date or "No especificada",
+        "end_date": end_date or "No especificada",
+        "budget_total": budget_total or "No especificado",
         "budget": budget or "Flexible",
         "travel_style": travel_style or "Variado",
         "travelers": travelers or "No especificado",
-        "start_date": start_date or "No especificada",
-        "end_date": end_date or "No especificada",
     })
 
     return result.content

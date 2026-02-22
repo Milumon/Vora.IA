@@ -108,6 +108,8 @@ interface Message {
   metadata?: {
     needsClarification?: boolean;
     clarificationQuestions?: string[];
+    missingDates?: boolean;
+    missingBudget?: boolean;
     progressSteps?: Array<{
       id: string;
       label: string;

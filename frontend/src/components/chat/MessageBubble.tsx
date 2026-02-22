@@ -6,21 +6,35 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import Image from 'next/image';
 import { User } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import { AdditionalInfoWidget } from './widgets/AdditionalInfoWidget';
+import { ProgressIndicator, type ProgressStep } from './widgets/ProgressIndicator';
+import { type DateRange } from 'react-day-picker';
 
 interface MessageBubbleProps {
   message: {
     role: 'user' | 'assistant' | 'system';
     content: string;
     timestamp?: string;
+    metadata?: {
+      needsClarification?: boolean;
+      clarificationQuestions?: string[];
+      progressSteps?: ProgressStep[];
+      missingDates?: boolean;
+      missingBudget?: boolean;
+    };
   };
+  onWidgetSubmit?: (data: { dateRange?: DateRange; budgetTotal?: number; currency?: string }) => void;
 }
 
-export function MessageBubble({ message }: MessageBubbleProps) {
+export function MessageBubble({ message, onWidgetSubmit }: MessageBubbleProps) {
   const { user } = useAuth();
   const isUser = message.role === 'user';
   const isSystem = message.role === 'system';
   const userAvatar = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
   const userName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || '';
+
+  const showWidgets = !isUser && (message.metadata?.missingDates || message.metadata?.missingBudget);
+  const showProgress = !isUser && message.metadata?.progressSteps && message.metadata.progressSteps.length > 0;
 
   if (isSystem) {
     return (
@@ -62,7 +76,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
       {/* Message Content */}
       <div
         className={cn(
-          'flex flex-col gap-1 max-w-[85%]',
+          'flex flex-col gap-3 max-w-[85%]',
           isUser ? 'items-end' : 'items-start'
         )}
       >
@@ -82,6 +96,24 @@ export function MessageBubble({ message }: MessageBubbleProps) {
             </div>
           )}
         </div>
+
+        {/* Progress Indicator */}
+        {showProgress && (
+          <div className="w-full">
+            <ProgressIndicator steps={message.metadata!.progressSteps!} />
+          </div>
+        )}
+
+        {/* Additional Info Widget */}
+        {showWidgets && onWidgetSubmit && (
+          <div className="w-full">
+            <AdditionalInfoWidget
+              onSubmit={onWidgetSubmit}
+              showDatePicker={message.metadata?.missingDates}
+              showBudgetSlider={message.metadata?.missingBudget}
+            />
+          </div>
+        )}
 
         {/* Timestamp */}
         {message.timestamp && (
