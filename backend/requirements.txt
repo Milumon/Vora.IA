@@ -27,3 +27,8 @@ dateparser>=1.2.0
 
 # SDK de Anthropic (para integración con tu agente Claude)
 anthropic>=0.34.0
+
+# Dependencias faltantes detectadas
+amadeus>=9.0.0
+openai>=1.0.0
+email-validator>=2.0.0

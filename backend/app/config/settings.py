@@ -42,6 +42,10 @@ class Settings(BaseSettings):
     # Apify (Airbnb Scraper)
     APIFY_API_TOKEN: str = ""
     
+    # Amadeus
+    AMADEUS_CLIENT_ID: str = ""
+    AMADEUS_CLIENT_SECRET: str = ""
+    
     # Rate Limiting
     RATE_LIMIT_PER_MINUTE: int = 60
     
