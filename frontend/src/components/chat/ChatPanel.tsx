@@ -10,11 +10,10 @@
 
 import { useCallback } from 'react';
 import Image from 'next/image';
-import { User, Plane, Building, MapPin as MapPinIcon, CheckCircle2, Send } from 'lucide-react';
+import { User } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { type DateRange } from 'react-day-picker';
-import { type ProgressStep } from './widgets/ProgressIndicator';
 import { useChatStore } from '@/store/chatStore';
 
 /* ── AI Element components ────────────────────────────────────── */
@@ -24,15 +23,11 @@ import {
   ConversationScrollButton,
 } from '@/components/ai-elements/conversation';
 import { Message, MessageContent, MessageResponse } from '@/components/ai-elements/message';
-import {
-  ChainOfThought,
-  ChainOfThoughtHeader,
-  ChainOfThoughtContent,
-  ChainOfThoughtStep,
-} from '@/components/ai-elements/chain-of-thought';
+
 
 /* ── Chat-specific components ─────────────────────────────────── */
 import { ItineraryMessage } from './ItineraryMessage';
+import { TypingIndicator } from './TypingIndicator';
 import { AdditionalInfoWidget } from './widgets/AdditionalInfoWidget';
 import { MessageInput } from './MessageInput';
 
@@ -43,7 +38,6 @@ interface ChatMessage {
     metadata?: {
         needsClarification?: boolean;
         clarificationQuestions?: string[];
-        progressSteps?: ProgressStep[];
         missingDates?: boolean;
         missingBudget?: boolean;
     };
@@ -55,17 +49,10 @@ interface ChatPanelProps {
     onSendMessage: (text: string, meta?: { dateRange?: DateRange; budgetTotal?: number; currency?: string }) => void;
 }
 
-/** Map step IDs to lucide icons for ChainOfThought */
-function getStepIcon(stepId: string) {
-  if (stepId === 'transport') return Plane;
-  if (stepId === 'accommodation') return Building;
-  if (stepId.startsWith('day-')) return MapPinIcon;
-  return CheckCircle2;
-}
-
 export function ChatPanel({ messages, isLoading, onSendMessage }: ChatPanelProps) {
     const { user } = useAuth();
     const generatedItinerary = useChatStore((s) => s.generatedItinerary);
+    const progressPercent = useChatStore((s) => s.progressPercent);
 
     const userName =
       user?.user_metadata?.full_name ||
@@ -111,10 +98,6 @@ export function ChatPanel({ messages, isLoading, onSendMessage }: ChatPanelProps
                       const showWidgets =
                         !isUser &&
                         (msg.metadata?.missingDates || msg.metadata?.missingBudget);
-                      const showProgress =
-                        !isUser &&
-                        msg.metadata?.progressSteps &&
-                        msg.metadata.progressSteps.length > 0;
 
                       /* System messages */
                       if (isSystem) {
@@ -190,31 +173,6 @@ export function ChatPanel({ messages, isLoading, onSendMessage }: ChatPanelProps
                               </div>
                             )}
 
-                            {/* Progress (ChainOfThought) — appear SECOND */}
-                            {showProgress && (
-                              <ChainOfThought defaultOpen className="mt-2">
-                                <ChainOfThoughtHeader>
-                                  Generando tu itinerario…
-                                </ChainOfThoughtHeader>
-                                <ChainOfThoughtContent>
-                                  {msg.metadata!.progressSteps!.map((step) => (
-                                    <ChainOfThoughtStep
-                                      key={step.id}
-                                      label={step.label}
-                                      icon={getStepIcon(step.id)}
-                                      status={
-                                        step.completed
-                                          ? 'complete'
-                                          : step.active
-                                            ? 'active'
-                                            : 'pending'
-                                      }
-                                    />
-                                  ))}
-                                </ChainOfThoughtContent>
-                              </ChainOfThought>
-                            )}
-
                             {/* Timestamp */}
                             {msg.timestamp && (
                               <span className="text-xs text-muted-foreground mt-1 px-1">
@@ -229,28 +187,9 @@ export function ChatPanel({ messages, isLoading, onSendMessage }: ChatPanelProps
                       );
                     })}
 
-                    {/* Typing indicator */}
+                    {/* Typing indicator with progress percentage */}
                     {isLoading && (
-                      <div className="flex gap-3">
-                        <div className="h-8 w-8 shrink-0 rounded-full overflow-hidden bg-white dark:bg-black flex items-center justify-center">
-                          <Image
-                            src="/images/Vora.webp"
-                            alt="Vora"
-                            width={32}
-                            height={32}
-                            className="h-8 w-8 object-cover"
-                          />
-                        </div>
-                        <Message from="assistant">
-                          <MessageContent>
-                            <div className="flex gap-1 py-2">
-                              <div className="w-2 h-2 bg-muted-foreground/50 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                              <div className="w-2 h-2 bg-muted-foreground/50 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                              <div className="w-2 h-2 bg-muted-foreground/50 rounded-full animate-bounce" />
-                            </div>
-                          </MessageContent>
-                        </Message>
-                      </div>
+                      <TypingIndicator percent={progressPercent} />
                     )}
 
                     {/* Inline itinerary (while still in chat phase) */}

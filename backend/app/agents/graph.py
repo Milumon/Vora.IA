@@ -11,6 +11,7 @@ from app.agents.nodes.accommodation_searcher import search_accommodation
 from app.agents.nodes.itinerary_builder import build_itinerary
 from app.agents.nodes.refinement_delta import extract_refinement_delta
 from app.agents.nodes.refinement_handler import handle_refinement
+from app.agents.nodes.restaurant_searcher import search_restaurants
 from app.config.logging import get_logger
 
 logger = get_logger(__name__)
@@ -29,6 +30,7 @@ def create_travel_agent_graph():
     workflow.add_node("search_mobility", search_mobility)
     workflow.add_node("search_accommodation", search_accommodation)
     workflow.add_node("build_itinerary", build_itinerary)
+    workflow.add_node("search_restaurants", search_restaurants)
     
     # Refinement pipeline
     workflow.add_node("extract_refinement_delta", extract_refinement_delta)
@@ -63,7 +65,8 @@ def create_travel_agent_graph():
     workflow.add_edge("search_places", "search_mobility")
     workflow.add_edge("search_mobility", "search_accommodation")
     workflow.add_edge("search_accommodation", "build_itinerary")
-    workflow.add_edge("build_itinerary", END)
+    workflow.add_edge("build_itinerary", "search_restaurants")
+    workflow.add_edge("search_restaurants", END)
     
     # ── Refinement pipeline ───────────────────────────────────────────────
     # extract_refinement_delta → handle_refinement → route_refinement

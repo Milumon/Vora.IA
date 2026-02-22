@@ -1,11 +1,18 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Star, ChevronRight, ChevronDown, ChevronUp, MapPin, ExternalLink, Award } from 'lucide-react';
+import { Star, ChevronDown, ChevronUp, MapPin, ExternalLink, Award } from 'lucide-react';
 import Image from 'next/image';
 import type { AccommodationOption } from '@/store/chatStore';
 import { HotelDetailModal } from '@/components/map/overlays/HotelDetailModal';
 import { AccommodationDetailModal } from '@/components/map/overlays/AccommodationDetailModal';
+import {
+    Carousel,
+    CarouselContent,
+    CarouselItem,
+    CarouselNext,
+    CarouselPrevious,
+} from '@/components/ui/carousel';
 
 interface AccommodationCardProps {
     options: AccommodationOption[];
@@ -36,6 +43,11 @@ function ratingColor(r: number) {
 
 /* ─── Sub-components ──────────────────────────────────────────── */
 
+/**
+ * Carrusel de imágenes usando shadcn Carousel
+ * - Desktop: muestra 2 imágenes por slide
+ * - Mobile: muestra 1 imagen por slide
+ */
 function HotelImageCarousel({
     images,
     name,
@@ -45,8 +57,6 @@ function HotelImageCarousel({
     name: string;
     onImageClick: () => void;
 }) {
-    const [currentIndex, setCurrentIndex] = useState(0);
-
     if (images.length === 0) {
         return (
             <div className="w-full h-40 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center">
@@ -55,91 +65,43 @@ function HotelImageCarousel({
         );
     }
 
-    const goToPrevious = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
-    };
-
-    const goToNext = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
-    };
-
-    const hasMultipleImages = images.length > 1;
-
     return (
-        <div className="relative group/carousel">
-            {/* Imagen principal */}
-            <button
-                onClick={(e) => {
-                    e.stopPropagation();
-                    onImageClick();
-                }}
-                className="relative w-full h-48 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 cursor-pointer hover:opacity-95 transition-opacity"
-            >
-                <Image
-                    src={images[currentIndex]}
-                    alt={`${name} — foto ${currentIndex + 1}`}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 600px"
-                    unoptimized
-                />
-
-                {/* Indicador de posición */}
-                {hasMultipleImages && (
-                    <div className="absolute bottom-2 right-2 px-2 py-1 rounded-md bg-black/60 text-white text-xs font-medium">
-                        {currentIndex + 1} / {images.length}
-                    </div>
-                )}
-            </button>
-
-            {/* Botón izquierdo */}
-            {hasMultipleImages && (
-                <button
-                    onClick={goToPrevious}
-                    aria-label="Imagen anterior"
-                    className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full
-                     bg-white/90 dark:bg-gray-800/90 shadow-md flex items-center justify-center
-                     opacity-0 group-hover/carousel:opacity-100 hover:bg-white dark:hover:bg-gray-700 transition-all"
-                >
-                    <ChevronRight className="w-4 h-4 text-gray-700 dark:text-gray-200 rotate-180" />
-                </button>
-            )}
-
-            {/* Botón derecho */}
-            {hasMultipleImages && (
-                <button
-                    onClick={goToNext}
-                    aria-label="Imagen siguiente"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full
-                     bg-white/90 dark:bg-gray-800/90 shadow-md flex items-center justify-center
-                     opacity-0 group-hover/carousel:opacity-100 hover:bg-white dark:hover:bg-gray-700 transition-all"
-                >
-                    <ChevronRight className="w-4 h-4 text-gray-700 dark:text-gray-200" />
-                </button>
-            )}
-
-            {/* Indicadores de puntos */}
-            {hasMultipleImages && images.length <= 5 && (
-                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
-                    {images.map((_, idx) => (
+        <Carousel
+            opts={{
+                align: 'start',
+                loop: true,
+            }}
+            className="w-full"
+        >
+            <CarouselContent>
+                {images.map((image, idx) => (
+                    <CarouselItem key={idx} className="basis-full md:basis-1/2">
                         <button
-                            key={idx}
                             onClick={(e) => {
                                 e.stopPropagation();
-                                setCurrentIndex(idx);
+                                onImageClick();
                             }}
-                            className={`w-1.5 h-1.5 rounded-full transition-all ${idx === currentIndex
-                                ? 'bg-white w-4'
-                                : 'bg-white/50 hover:bg-white/75'
-                                }`}
-                            aria-label={`Ir a imagen ${idx + 1}`}
-                        />
-                    ))}
-                </div>
+                            className="relative w-full h-48 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 cursor-pointer hover:opacity-95 transition-opacity"
+                        >
+                            <Image
+                                src={image}
+                                alt={`${name} — foto ${idx + 1}`}
+                                fill
+                                className="object-cover"
+                                sizes="(max-width: 768px) 100vw, 50vw"
+                                unoptimized
+                            />
+                        </button>
+                    </CarouselItem>
+                ))}
+            </CarouselContent>
+            {images.length > 1 && (
+                <>
+                    <CarouselPrevious className="left-2" />
+                    <CarouselNext className="right-2" />
+                </>
             )}
-        </div>
+        </Carousel>
     );
 }
 

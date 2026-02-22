@@ -1,24 +1,55 @@
 'use client';
 
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Bot } from 'lucide-react';
+/**
+ * TypingIndicator — "Vora está escribiendo…" with animated dots
+ * and an optional 0-100% progress counter.
+ */
 
-export function TypingIndicator() {
+import Image from 'next/image';
+import { Message, MessageContent } from '@/components/ai-elements/message';
+
+interface TypingIndicatorProps {
+  /** 0-100 or null (null = no percentage shown) */
+  percent?: number | null;
+}
+
+export function TypingIndicator({ percent }: TypingIndicatorProps) {
   return (
-    <div className="flex gap-3 mb-4">
-      <Avatar className="h-8 w-8 shrink-0">
-        <AvatarFallback className="bg-accent text-accent-foreground">
-          <Bot className="h-4 w-4" />
-        </AvatarFallback>
-      </Avatar>
-
-      <div className="bg-accent text-accent-foreground rounded-2xl px-4 py-3 shadow-subtle">
-        <div className="flex gap-1">
-          <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.3s]" />
-          <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.15s]" />
-          <div className="w-2 h-2 bg-current rounded-full animate-bounce" />
-        </div>
+    <div className="flex gap-3">
+      {/* Avatar */}
+      <div className="h-8 w-8 shrink-0 rounded-full overflow-hidden bg-white dark:bg-black flex items-center justify-center">
+        <Image
+          src="/images/Vora.webp"
+          alt="Vora"
+          width={32}
+          height={32}
+          className="h-8 w-8 object-cover"
+        />
       </div>
+
+      {/* Bubble */}
+      <Message from="assistant">
+        <MessageContent>
+          <div className="flex items-center gap-2.5">
+            {/* Label + animated dots */}
+            <span className="text-sm text-muted-foreground select-none whitespace-nowrap">
+              Vora está escribiendo
+              <span className="inline-flex ml-0.5">
+                <span className="w-1 h-1 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.3s]" />
+                <span className="w-1 h-1 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.15s] ml-0.5" />
+                <span className="w-1 h-1 rounded-full bg-muted-foreground/60 animate-bounce ml-0.5" />
+              </span>
+            </span>
+
+            {/* Percentage counter */}
+            {percent != null && (
+              <span className="ml-1 min-w-[3ch] text-right tabular-nums text-xs font-semibold text-orange-600 dark:text-orange-400">
+                {percent}%
+              </span>
+            )}
+          </div>
+        </MessageContent>
+      </Message>
     </div>
   );
 }

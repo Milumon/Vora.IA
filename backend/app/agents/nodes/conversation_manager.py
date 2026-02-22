@@ -273,6 +273,10 @@ Tu respuesta DEBE seguir esta estructura:
 - Si presupuesto total está confirmado, NO preguntes cuánto quiere gastar
 - Solo haz preguntas sobre lo que REALMENTE falta
 - No uses bullet points ni listas, usa texto con saltos de línea
+- PROHIBIDO incluir nombres de variables técnicas como (start_date), (end_date), (budget_total) en la respuesta
+- PROHIBIDO incluir formatos de fecha técnicos como YYYY-MM-DD, DD-MM-YYYY o similares en la respuesta
+- Pide las fechas de forma natural: "¿Cuándo planeas viajar?" o "¿En qué fechas?", NUNCA con formato técnico
+- Pide el presupuesto de forma natural: "¿Cuánto presupuesto tienes?" o "¿Cuánto quieres gastar?", sin variables
 
 PREGUNTAS PENDIENTES (solo estas, NO inventes otras):
 {questions}

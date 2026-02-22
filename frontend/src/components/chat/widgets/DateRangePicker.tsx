@@ -46,10 +46,13 @@ export function DateRangePicker({ dateRange, onDateRangeChange }: DateRangePicke
                             defaultMonth={dateRange?.from || addDays(new Date(), 7)}
                             selected={dateRange}
                             onSelect={(range) => {
-                                onDateRangeChange(range);
-                                // Close after both dates selected
-                                if (range?.from && range?.to) {
-                                    setTimeout(() => setIsOpen(false), 300);
+                                // Solo actualizar si hay un cambio válido
+                                if (range) {
+                                    onDateRangeChange(range);
+                                    // Cerrar solo cuando ambas fechas estén seleccionadas
+                                    if (range.from && range.to) {
+                                        setTimeout(() => setIsOpen(false), 300);
+                                    }
                                 }
                             }}
                             numberOfMonths={typeof window !== 'undefined' && window.innerWidth >= 768 ? 2 : 1}

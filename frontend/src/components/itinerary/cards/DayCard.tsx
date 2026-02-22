@@ -3,6 +3,13 @@
 import { ArrowRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import {
+    Carousel,
+    CarouselContent,
+    CarouselItem,
+    CarouselNext,
+    CarouselPrevious,
+} from '@/components/ui/carousel';
 import type { DayPlan, PlaceInfo } from '@/store/chatStore';
 import Image from 'next/image';
 import { getPlacePhotos } from '@/lib/utils/google-places';
@@ -63,16 +70,15 @@ export function formatDateRange(startDay: DayPlan, endDay: DayPlan): string | nu
 /* ─── Image Carousel ──────────────────────────────────────────── */
 
 /**
- * Grid de 2 imágenes — muestra hasta 2 fotos de los lugares del día.
- * Layout: 2 columnas en desktop, 1 columna en mobile.
+ * Muestra una imagen por cada experiencia del día.
+ * - Si hay 4 o menos experiencias: grid responsive
+ * - Si hay más de 4 experiencias: carrusel con navegación
  */
 function DayImageCarousel({ places }: { places: PlaceInfo[] }) {
-    // Recolectar hasta 2 fotos de los lugares
+    // Recolectar una foto por cada lugar (experiencia)
     const photoItems: { url: string; placeName: string }[] = [];
     
     for (const place of places) {
-        if (photoItems.length >= 2) break;
-        
         const urls = getPlacePhotos(place.photos, 1, 600);
         const url = urls.find((u) => u && u !== '/placeholder-place.jpg') || urls[0];
         
@@ -83,8 +89,54 @@ function DayImageCarousel({ places }: { places: PlaceInfo[] }) {
 
     if (photoItems.length === 0) return null;
 
+    // Si hay más de 4 experiencias, usar carrusel
+    if (photoItems.length > 4) {
+        return (
+            <Carousel
+                opts={{
+                    align: 'start',
+                    loop: true,
+                }}
+                className="w-full"
+            >
+                <CarouselContent>
+                    {photoItems.map((item, idx) => (
+                        <CarouselItem key={`${item.placeName}-${idx}`} className="basis-full sm:basis-1/2">
+                            <div
+                                className="relative rounded-lg overflow-hidden bg-muted"
+                                style={{
+                                    aspectRatio: '16 / 9',
+                                }}
+                                title={item.placeName}
+                            >
+                                <Image
+                                    src={item.url}
+                                    alt={item.placeName}
+                                    fill
+                                    className="object-cover"
+                                    sizes="(max-width: 640px) 100vw, 50vw"
+                                />
+                            </div>
+                        </CarouselItem>
+                    ))}
+                </CarouselContent>
+                <CarouselPrevious className="left-2" />
+                <CarouselNext className="right-2" />
+            </Carousel>
+        );
+    }
+
+    // Si hay 4 o menos experiencias, usar grid responsive
+    const gridCols = photoItems.length === 1 
+        ? 'grid-cols-1' 
+        : photoItems.length === 2 
+        ? 'grid-cols-1 sm:grid-cols-2' 
+        : photoItems.length === 3
+        ? 'grid-cols-1 sm:grid-cols-3'
+        : 'grid-cols-2 sm:grid-cols-4';
+
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div className={`grid ${gridCols} gap-2`}>
             {photoItems.map((item, idx) => (
                 <div
                     key={`${item.placeName}-${idx}`}
@@ -99,7 +151,7 @@ function DayImageCarousel({ places }: { places: PlaceInfo[] }) {
                         alt={item.placeName}
                         fill
                         className="object-cover"
-                        sizes="(max-width: 640px) 100vw, 50vw"
+                        sizes="(max-width: 640px) 50vw, 25vw"
                     />
                 </div>
             ))}
@@ -144,7 +196,7 @@ interface DayCardProps {
  * A single day card in the vertical itinerary timeline.
  *
  * Shows:
- * - Grid de 2 imágenes de los lugares del día
+ * - Una imagen por cada experiencia (grid si ≤4, carrusel si >4)
  * - Tag row: day number · experience count · calendar date (e.g. "Mar 1")
  * - Sequential route chain
  * - Day summary with arrow CTA
@@ -162,7 +214,7 @@ export function DayCard({ day, onDaySelect }: DayCardProps) {
             className="cursor-pointer shadow-md hover:shadow-xl transition-all group"
         >
             <CardContent className="p-5 space-y-4">
-                {/* Grid de 2 imágenes */}
+                {/* Imágenes: grid o carrusel según cantidad de experiencias */}
                 <DayImageCarousel places={places} />
 
                 {/* Tags */}

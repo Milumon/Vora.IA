@@ -3,9 +3,10 @@
 import { useRef, useEffect, useMemo } from 'react';
 import { Clock, Calendar, MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import type { DayPlan, PlaceInfo, AccommodationOption } from '@/store/chatStore';
+import type { DayPlan, PlaceInfo, AccommodationOption, RestaurantRecommendation } from '@/store/chatStore';
 import { DayPlaceCard } from './cards/DayPlaceCard';
 import { DayReturnCard } from './cards/DayReturnCard';
+import { RestaurantCard } from './cards/RestaurantCard';
 import { formatDayDate } from './cards/DayCard';
 
 /* ─── Time helpers ──────────────────────────────────────────────────────────── */
@@ -43,7 +44,8 @@ function addMinutes(time: string, minutes: number): string {
 
 type PlaceEvent = { type: 'place' | 'lunch'; place: PlaceInfo; time: string; endTime?: string };
 type ReturnEvent = { type: 'return'; accommodation: AccommodationOption; time: string };
-type ScheduleEvent = PlaceEvent | ReturnEvent;
+type RestaurantEvent = { type: 'restaurant'; restaurants: RestaurantRecommendation[]; mealType: 'lunch' | 'dinner'; time: string; endTime?: string };
+type ScheduleEvent = PlaceEvent | ReturnEvent | RestaurantEvent;
 
 /* ─── Build schedule ────────────────────────────────────────────────────────── */
 
@@ -60,22 +62,29 @@ function buildSchedule(day: DayPlan): ScheduleEvent[] {
         cursor = addMinutes(endTime, 20); // +20 travel
     }
 
-    // Lunch block — always include at ~13:00 (unless cursor is already past 14:00)
+    // Lunch block — use real restaurant data if available, otherwise placeholder
     const lunchStart = cursor < '13:00' ? '13:00' : cursor;
     const lunchEnd = addMinutes(lunchStart, 90);
 
-    const lunchPlace: PlaceInfo = (day as any).lunch ?? {
-        place_id: `lunch-day-${day.day_number}`,
-        name: 'Restaurante recomendado',
-        address: day.morning?.[0]?.address ?? '',
-        types: ['restaurant', 'food'],
-        photos: [],
-        location: day.morning?.[0]?.location ?? day.afternoon?.[0]?.location ?? { lat: 0, lng: 0 },
-        why_visit: 'Pausa para el almuerzo en la zona. El agente recomienda probar la gastronomía local.',
-        visit_duration: '1h 30min',
-    };
+    const lunchRestaurants = (day as any).lunch_restaurants as RestaurantRecommendation[] | undefined;
 
-    events.push({ type: 'lunch', place: lunchPlace, time: lunchStart, endTime: lunchEnd });
+    if (lunchRestaurants && lunchRestaurants.length > 0) {
+        // Real restaurant recommendations from backend
+        events.push({ type: 'restaurant', restaurants: lunchRestaurants, mealType: 'lunch', time: lunchStart, endTime: lunchEnd });
+    } else {
+        // Fallback placeholder
+        const lunchPlace: PlaceInfo = (day as any).lunch ?? {
+            place_id: `lunch-day-${day.day_number}`,
+            name: 'Restaurante recomendado',
+            address: day.morning?.[0]?.address ?? '',
+            types: ['restaurant', 'food'],
+            photos: [],
+            location: day.morning?.[0]?.location ?? day.afternoon?.[0]?.location ?? { lat: 0, lng: 0 },
+            why_visit: 'Pausa para el almuerzo en la zona. El agente recomienda probar la gastronomía local.',
+            visit_duration: '1h 30min',
+        };
+        events.push({ type: 'lunch', place: lunchPlace, time: lunchStart, endTime: lunchEnd });
+    }
     cursor = addMinutes(lunchEnd, 15); // +15min travel
 
     // Afternoon
@@ -94,6 +103,15 @@ function buildSchedule(day: DayPlan): ScheduleEvent[] {
         const endTime = addMinutes(startTime, duration);
         events.push({ type: 'place', place, time: startTime, endTime });
         cursor = addMinutes(endTime, 20);
+    }
+
+    // Dinner block — use real restaurant data if available
+    const dinnerRestaurants = (day as any).dinner_restaurants as RestaurantRecommendation[] | undefined;
+    if (dinnerRestaurants && dinnerRestaurants.length > 0) {
+        const dinnerStart = cursor < '19:30' ? '19:30' : cursor;
+        const dinnerEnd = addMinutes(dinnerStart, 90);
+        events.push({ type: 'restaurant', restaurants: dinnerRestaurants, mealType: 'dinner', time: dinnerStart, endTime: dinnerEnd });
+        cursor = addMinutes(dinnerEnd, 15);
     }
 
     // Return to accommodation — ensure at least 20:00
@@ -197,7 +215,9 @@ export function DayScheduleTimeline({
                                             ? 'bg-muted-foreground/30 border-muted-foreground/40'
                                             : event.type === 'lunch'
                                                 ? 'bg-orange-400 border-orange-500'
-                                                : (event as PlaceEvent).place.place_id ===
+                                                : event.type === 'restaurant'
+                                                    ? 'bg-orange-400 border-orange-500'
+                                                    : (event as PlaceEvent).place.place_id ===
                                                     selectedPlace?.place_id
                                                     ? 'bg-primary border-primary scale-125'
                                                     : 'bg-background border-foreground/30'
@@ -210,13 +230,13 @@ export function DayScheduleTimeline({
                             </div>
 
                             {/* Time badge - positioned to the right of the node */}
-                            {event.type !== 'return' && (event as PlaceEvent).endTime && (
+                            {event.type !== 'return' && (
                                 <div className="flex-shrink-0 pt-1">
                                     <Badge 
                                         variant="outline" 
                                         className="text-xs font-mono bg-background/50 border-border/50 text-muted-foreground"
                                     >
-                                        {event.time} - {(event as PlaceEvent).endTime}
+                                        {event.time}{event.type !== 'restaurant' && (event as PlaceEvent).endTime ? ` - ${(event as PlaceEvent).endTime}` : event.type === 'restaurant' ? ` - ${(event as RestaurantEvent).endTime}` : ''}
                                     </Badge>
                                 </div>
                             )}
@@ -225,10 +245,11 @@ export function DayScheduleTimeline({
                             <div
                                 className="flex-1 pb-4"
                                 ref={(el) => {
-                                    if (event.type !== 'return' && event.type !== 'lunch') {
-                                        cardRefs.current[(event as PlaceEvent).place.place_id] = el;
-                                    } else if (event.type === 'lunch') {
-                                        cardRefs.current[(event as PlaceEvent).place.place_id] = el;
+                                    if (event.type === 'place' || event.type === 'lunch') {
+                                        const place = (event as PlaceEvent).place;
+                                        if (place?.place_id) {
+                                            cardRefs.current[place.place_id] = el;
+                                        }
                                     }
                                 }}
                             >
@@ -236,6 +257,11 @@ export function DayScheduleTimeline({
                                     <DayReturnCard
                                         time={event.time}
                                         accommodation={event.accommodation}
+                                    />
+                                ) : event.type === 'restaurant' ? (
+                                    <RestaurantCard
+                                        restaurants={(event as RestaurantEvent).restaurants}
+                                        mealType={(event as RestaurantEvent).mealType}
                                     />
                                 ) : (
                                     <DayPlaceCard

@@ -12,8 +12,8 @@ interface BudgetSliderProps {
 }
 
 const CURRENCY_CONFIG = {
-    PEN: { symbol: 'S/', min: 500, max: 10000, step: 100, default: 5000 },
-    USD: { symbol: '$', min: 150, max: 3000, step: 50, default: 1500 },
+    PEN: { symbol: 'S/', min: 100, max: 10000, step: 100, default: 600 },
+    USD: { symbol: '$', min: 50, max: 3000, step: 100, default: 200 },
 };
 
 export function BudgetSlider({ value, onValueChange }: BudgetSliderProps) {

@@ -1,5 +1,5 @@
 """Estado compartido del agente de viajes usando LangGraph."""
-from typing import TypedDict, Annotated, Literal, List, Dict, Optional
+from typing import TypedDict, Annotated, Literal, List, Dict, Optional, Union
 import operator
 from datetime import date
 
@@ -85,6 +85,24 @@ class AccommodationOption(TypedDict):
     check_out: str             # YYYY-MM-DD
 
 
+class RestaurantRecommendation(TypedDict):
+    """Restaurante recomendado para almuerzo o cena."""
+    place_id: str
+    name: str
+    address: str
+    rating: Optional[float]
+    user_ratings_total: Optional[int]
+    opening_hours: Optional[List[str]]       # weekday_text de Google Places
+    price_range: Optional[str]               # Rango en PEN, ej: "S/ 20 - S/ 50"
+    price_level: Optional[int]               # 1-4 de Google
+    types: List[str]
+    photos: List[str]
+    location: Dict[str, float]               # {lat, lng}
+    distance_meters: Optional[float]         # distancia al punto de referencia
+    meal_type: Literal["lunch", "dinner"]    # almuerzo o cena
+    reference_place: Optional[str]           # nombre del lugar de referencia usado
+
+
 class DayPlan(TypedDict):
     """Plan para un día específico del itinerario."""
     day_number: int
@@ -92,6 +110,8 @@ class DayPlan(TypedDict):
     morning: List[PlaceInfo]
     afternoon: List[PlaceInfo]
     evening: List[PlaceInfo]
+    lunch_restaurants: List[RestaurantRecommendation]
+    dinner_restaurants: List[RestaurantRecommendation]
     notes: str
 
 
@@ -129,6 +149,9 @@ class TravelState(TypedDict):
 
     # Datos de alojamiento
     accommodation_options: List[AccommodationOption]
+
+    # Recomendaciones de restaurantes
+    restaurant_recommendations: List[RestaurantRecommendation]
 
     # Itinerario generado
     itinerary: Optional[Dict]

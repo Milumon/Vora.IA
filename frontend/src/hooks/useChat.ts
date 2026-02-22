@@ -1,9 +1,15 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useChatStore } from '@/store/chatStore';
+import { useCurrencyStore } from '@/store/currencyStore';
 import { chatApi } from '@/lib/api/endpoints';
 import { useActiveConversation, useSaveMessage, useCreateConversation } from './useConversation';
 import { type DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
+
+/** Interval (ms) between each percentage tick */
+const TICK_INTERVAL = 400;
+/** Max percentage while waiting for backend (real 100% is set on response) */
+const MAX_WAIT_PERCENT = 92;
 
 export function useChat() {
   const {
@@ -11,6 +17,7 @@ export function useChat() {
     conversationId,
     isLoading,
     currentProgress,
+    progressPercent,
     generatedItinerary,
     showMapView,
     selectedPlace,
@@ -19,9 +26,50 @@ export function useChat() {
     setConversationId,
     setIsLoading,
     setCurrentProgress,
+    setProgressPercent,
     setGeneratedItinerary,
     setSelectedPlace,
   } = useChatStore();
+
+  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const percentRef = useRef(0);
+
+  /** Start an animated 0→~92% ticker */
+  const startPercentTicker = useCallback(() => {
+    percentRef.current = 0;
+    setProgressPercent(0);
+    tickRef.current = setInterval(() => {
+      // Ease-out: increments get smaller as we approach MAX_WAIT_PERCENT
+      const remaining = MAX_WAIT_PERCENT - percentRef.current;
+      const increment = Math.max(0.5, remaining * 0.06);
+      percentRef.current = Math.min(MAX_WAIT_PERCENT, percentRef.current + increment);
+      setProgressPercent(Math.round(percentRef.current));
+    }, TICK_INTERVAL);
+  }, [setProgressPercent]);
+
+  /** Stop ticker and jump to 100%, then clear after a brief delay */
+  const stopPercentTicker = useCallback((completed: boolean) => {
+    if (tickRef.current) {
+      clearInterval(tickRef.current);
+      tickRef.current = null;
+    }
+    if (completed) {
+      setProgressPercent(100);
+      // Keep 100% visible briefly, then clear
+      setTimeout(() => setProgressPercent(null), 1200);
+    } else {
+      setProgressPercent(null);
+    }
+  }, [setProgressPercent]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (tickRef.current) clearInterval(tickRef.current);
+    };
+  }, []);
+
+  const { currency } = useCurrencyStore();
 
   // Fetch active conversation on mount
   const { data: activeConversation } = useActiveConversation();
@@ -79,13 +127,17 @@ export function useChat() {
     }
 
     try {
-      // Build filters from metadata
-      const filters = meta ? {
-        currency: meta.currency,
-        budget_total: meta.budgetTotal,
-        check_in: meta.dateRange?.from ? format(meta.dateRange.from, 'yyyy-MM-dd') : undefined,
-        check_out: meta.dateRange?.to ? format(meta.dateRange.to, 'yyyy-MM-dd') : undefined,
-      } : undefined;
+      // Build filters — currency siempre se pasa desde el store global;
+      // check_in/check_out/budget_total solo cuando vienen de los widgets.
+      const filters = {
+        currency: meta?.currency ?? currency,
+        budget_total: meta?.budgetTotal,
+        check_in: meta?.dateRange?.from ? format(meta.dateRange.from, 'yyyy-MM-dd') : undefined,
+        check_out: meta?.dateRange?.to ? format(meta.dateRange.to, 'yyyy-MM-dd') : undefined,
+      };
+
+      // Start animated percentage indicator
+      startPercentTicker();
 
       // Send to the chat API with the current thread_id
       const response = await chatApi.sendMessage(content, currentConvId || undefined, filters);
@@ -96,42 +148,8 @@ export function useChat() {
         setConversationId(thread_id);
       }
 
-      // Determinar pasos de progreso basados en la respuesta
-      // SOLO mostrar progreso cuando NO hay preguntas de clarificación (está generando itinerario)
-      let progressSteps = undefined;
-      if (!needs_clarification && !itinerary) {
-        // Calcular número de días si hay fechas disponibles
-        let numberOfDays = 3; // default
-        if (filters?.check_in && filters?.check_out) {
-          const checkIn = new Date(filters.check_in);
-          const checkOut = new Date(filters.check_out);
-          numberOfDays = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
-        }
-
-        // Generar pasos de progreso dinámicos
-        progressSteps = [
-          { id: 'transport', label: 'Búsqueda de transporte', completed: false, active: true },
-          { id: 'accommodation', label: 'Búsqueda de alojamiento', completed: false, active: false },
-        ];
-
-        // Agregar búsqueda de lugares para cada día
-        for (let i = 1; i <= numberOfDays; i++) {
-          progressSteps.push({
-            id: `day-${i}`,
-            label: `Búsqueda de lugares para el día ${i}`,
-            completed: false,
-            active: false,
-          });
-        }
-
-        // Agregar paso final
-        progressSteps.push({
-          id: 'final',
-          label: 'Generando itinerario personalizado',
-          completed: false,
-          active: false,
-        });
-      }
+      // Stop the percentage ticker — jump to 100% if itinerary is ready
+      stopPercentTicker(!!itinerary);
 
       // Add assistant message with metadata
       const assistantMessage = {
@@ -141,7 +159,6 @@ export function useChat() {
         metadata: {
           needsClarification: needs_clarification,
           clarificationQuestions: clarification_questions,
-          progressSteps,
           missingDates: missing_dates,
           missingBudget: missing_budget,
         },
@@ -157,10 +174,6 @@ export function useChat() {
         });
       }
 
-      if (progressSteps) {
-        setCurrentProgress(progressSteps);
-      }
-
       // Detectar si se generó un itinerario
       if (itinerary) {
         setGeneratedItinerary(itinerary);
@@ -168,6 +181,9 @@ export function useChat() {
 
       return { success: true };
     } catch (error: any) {
+      // Stop progress on error
+      stopPercentTicker(false);
+
       // Add error message
       const errorMessage = {
         role: 'assistant' as const,
@@ -187,6 +203,7 @@ export function useChat() {
     threadId: conversationId,
     isLoading,
     currentProgress,
+    progressPercent,
     generatedItinerary,
     showMapView,
     selectedPlace,

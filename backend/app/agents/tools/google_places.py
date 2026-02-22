@@ -1,5 +1,6 @@
 """Cliente para Google Places API."""
 import googlemaps
+import math
 from typing import List, Dict, Optional
 from app.config.settings import get_settings
 from app.config.logging import get_logger
@@ -58,6 +59,55 @@ class GooglePlacesClient:
         except Exception as e:
             logger.error(f"Error buscando lugares: {e}")
             return []
+
+    async def search_nearby_by_coords(
+        self,
+        lat: float,
+        lng: float,
+        keyword: str = "restaurant",
+        radius: int = 6000,
+        place_type: str = "restaurant",
+        max_results: int = 10
+    ) -> List[Dict]:
+        """
+        Busca lugares cercanos usando coordenadas directas.
+
+        Args:
+            lat: Latitud del punto de referencia
+            lng: Longitud del punto de referencia
+            keyword: Palabra clave de búsqueda
+            radius: Radio de búsqueda en metros
+            place_type: Tipo de lugar de Google Places (ej: "restaurant")
+            max_results: Número máximo de resultados
+
+        Returns:
+            Lista de lugares encontrados con distancia calculada
+        """
+        try:
+            places_result = self.client.places_nearby(
+                location=(lat, lng),
+                keyword=keyword,
+                radius=radius,
+                type=place_type,
+                language="es"
+            )
+
+            places = []
+            for place in places_result.get("results", [])[:max_results]:
+                parsed = self._parse_place(place)
+                # Calcular distancia al punto de referencia
+                place_lat = parsed["location"]["lat"]
+                place_lng = parsed["location"]["lng"]
+                parsed["distance_meters"] = self._haversine_distance(
+                    lat, lng, place_lat, place_lng
+                )
+                places.append(parsed)
+
+            return places
+
+        except Exception as e:
+            logger.error(f"Error buscando lugares por coordenadas: {e}")
+            return []
     
     async def search_text(
         self,
@@ -111,7 +161,8 @@ class GooglePlacesClient:
                 fields=[
                     "name", "formatted_address", "rating", "price_level",
                     "types", "photos", "geometry", "opening_hours",
-                    "formatted_phone_number", "website", "reviews"
+                    "formatted_phone_number", "website", "reviews",
+                    "user_ratings_total"
                 ]
             )
             
@@ -157,6 +208,7 @@ class GooglePlacesClient:
             "phone": place.get("formatted_phone_number"),
             "website": place.get("website"),
             "opening_hours": place.get("opening_hours", {}).get("weekday_text", []),
+            "user_ratings_total": place.get("user_ratings_total", 0),
             "reviews": [
                 {
                     "author": review.get("author_name"),
@@ -169,3 +221,36 @@ class GooglePlacesClient:
         })
         
         return parsed
+
+    @staticmethod
+    def _haversine_distance(
+        lat1: float, lng1: float, lat2: float, lng2: float
+    ) -> float:
+        """
+        Calcula la distancia en metros entre dos coordenadas usando Haversine.
+        """
+        R = 6_371_000  # Radio de la Tierra en metros
+        phi1 = math.radians(lat1)
+        phi2 = math.radians(lat2)
+        d_phi = math.radians(lat2 - lat1)
+        d_lambda = math.radians(lng2 - lng1)
+
+        a = (
+            math.sin(d_phi / 2) ** 2
+            + math.cos(phi1) * math.cos(phi2) * math.sin(d_lambda / 2) ** 2
+        )
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        return R * c
+
+    @staticmethod
+    def price_level_to_range_pen(price_level: Optional[int]) -> Optional[str]:
+        """
+        Convierte el price_level de Google (1-4) a un rango en soles peruanos.
+        """
+        mapping = {
+            1: "S/ 5 - S/ 20",
+            2: "S/ 20 - S/ 50",
+            3: "S/ 50 - S/ 100",
+            4: "S/ 100+",
+        }
+        return mapping.get(price_level)

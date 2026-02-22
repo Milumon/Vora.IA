@@ -56,6 +56,25 @@ interface AccommodationOption {
   check_out: string;
 }
 
+/* ─── Restaurant recommendation types ───────────────────────── */
+
+interface RestaurantRecommendation {
+  place_id: string;
+  name: string;
+  address: string;
+  rating?: number;
+  user_ratings_total?: number;
+  opening_hours?: string[];         // weekday_text de Google Places
+  price_range?: string;             // "S/ 20 - S/ 50" en PEN
+  price_level?: number;             // 1-4 de Google
+  types: string[];
+  photos: string[];
+  location: { lat: number; lng: number };
+  distance_meters?: number;         // distancia al punto de referencia
+  meal_type: 'lunch' | 'dinner';    // almuerzo o cena
+  reference_place?: string;         // nombre del lugar de referencia
+}
+
 /* ─── Place types ───────────────────────────────────────────── */
 
 interface PlaceInfo {
@@ -87,6 +106,10 @@ interface DayPlan {
   mobility?: MobilitySegment;
   /** Accommodation options for this day */
   accommodation?: AccommodationOption[];
+  /** Restaurant recommendations for lunch (top 2) */
+  lunch_restaurants?: RestaurantRecommendation[];
+  /** Restaurant recommendations for dinner (top 2) */
+  dinner_restaurants?: RestaurantRecommendation[];
   /** @deprecated — backward compat for old itineraries */
   bus_transfer?: Record<string, unknown>;
 }
@@ -131,6 +154,8 @@ interface ChatState {
     completed: boolean;
     active: boolean;
   }> | null;
+  /** 0-100 percentage for the typing indicator */
+  progressPercent: number | null;
   generatedItinerary: Itinerary | null;
   showMapView: boolean;
   selectedPlace: PlaceInfo | null;
@@ -139,6 +164,7 @@ interface ChatState {
   setConversationId: (id: string) => void;
   setIsLoading: (loading: boolean) => void;
   setCurrentProgress: (progress: ChatState['currentProgress']) => void;
+  setProgressPercent: (percent: number | null) => void;
   setGeneratedItinerary: (itinerary: Itinerary) => void;
   updateItinerary: (itinerary: Itinerary) => void;
   setSelectedPlace: (place: PlaceInfo | null) => void;
@@ -151,6 +177,7 @@ export const useChatStore = create<ChatState>((set) => ({
   conversationId: null,
   isLoading: false,
   currentProgress: null,
+  progressPercent: null,
   generatedItinerary: null,
   showMapView: false,
   selectedPlace: null,
@@ -160,6 +187,7 @@ export const useChatStore = create<ChatState>((set) => ({
   setConversationId: (id) => set({ conversationId: id }),
   setIsLoading: (loading) => set({ isLoading: loading }),
   setCurrentProgress: (progress) => set({ currentProgress: progress }),
+  setProgressPercent: (percent) => set({ progressPercent: percent }),
   setGeneratedItinerary: (itinerary) =>
     set({ generatedItinerary: itinerary, showMapView: true }),
   updateItinerary: (itinerary) =>
@@ -172,10 +200,11 @@ export const useChatStore = create<ChatState>((set) => ({
       messages: [],
       conversationId: null,
       currentProgress: null,
+      progressPercent: null,
       generatedItinerary: null,
       showMapView: false,
       selectedPlace: null,
     }),
 }));
 
-export type { Itinerary, DayPlan, PlaceInfo, MobilitySegment, MobilityOption, AccommodationOption };
+export type { Itinerary, DayPlan, PlaceInfo, MobilitySegment, MobilityOption, AccommodationOption, RestaurantRecommendation };
